@@ -7,7 +7,8 @@ class AckConan(ConanFile):
     # comma-separated list of requirements
     requires = "TBB/2019_U4@conan/stable", \
             "boost_graph/1.69.0@d3d/testing", \
-            "tetgen/1.5.1@d3d/testing"
+            "tetgen/1.5.1@d3d/testing", \
+            "boost/1.69.0@d3d/testing"
     generators = "cmake"
 
     def config_options(self):
