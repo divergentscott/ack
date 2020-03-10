@@ -67,10 +67,17 @@ D3D_status overwriteMeshDataPIDs(CommonMeshData &mesh_to_modify,
                                  const CommonMeshData &source_mesh,
                                  const std::vector<int> &pids);
 
+enum RigidBodyElementType {
+	RBE2 = 2,
+	RBE3 = 3
+};
+
 struct RigidBodyElement {
-    int id;
+	RigidBodyElementType type;
+	int id;
     int virtualPointId;
-    //std::array<double, 3> virtualPoint;
+	std::string degreesOfFreedom;
+    std::array<double, 3> virtualPoint;
     std::unordered_set<int> gridIds;
 };
 
