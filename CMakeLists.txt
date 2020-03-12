@@ -23,6 +23,8 @@ add_executable(ack ack.cxx)
 target_link_libraries(ack ${CMAKE_DL_LIBS} CONAN_PKG::boost utilities meshDataLib )
 target_include_directories(ack PRIVATE "${CMAKE_SOURCE_DIR}/lib")
 
+
+#add_executable(bap bap.cxx)
 #Set properties on a target. 
 #We use this here to set -DTETLIBRARY for when compiling the
 #library

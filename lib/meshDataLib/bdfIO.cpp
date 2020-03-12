@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <unordered_map>
 
 #include <vtkCellType.h>
 
@@ -13,47 +14,41 @@ namespace d3d {
 
 namespace io {
 
-class BulkDataFileParser {
-public:
-	enum class BulkDataFileCard {
-		UNKNOWN,
-		GRIDPOINTS,
-		CELLS,
-		RIGIDBODYELEMENTS
-	};
+class NastranBulkDataFileParser {
+protected:
+	const int defaultPID = 1;
+	const int nMaterialId = 1;
+	//
+	const std::string triName = "CTRIA3  ";
+	const std::string quadName = "CQUAD4  ";
+	const std::string tetraName = "CTETRA  ";
+	const std::string hexaName = "CHEXA   ";
+	const std::string pyraName = "CPYRA   ";
+	//
+	const CellElement hexaElem =
+		CellElement("CHEXA", VTK_HEXAHEDRON, 8, 3, CellType::CHEXA);
+	const CellElement tetraElem =
+		CellElement("CTETRA", VTK_TETRA, 4, 3, CellType::CTETRA);
+	const CellElement quadElem =
+		CellElement("CQUAD4", VTK_QUAD, 4, 2, CellType::CQUAD4);
+	const CellElement triElem =
+		CellElement("CTRIA3", VTK_TRIANGLE, 3, 2, CellType::CTRIA3);
+	const CellElement pyraElem =
+		CellElement("CPYRA", VTK_PYRAMID, 5, 3, CellType::CPYRA);
+	//
+	const std::vector<CellElement> allCellElements{ hexaElem, tetraElem, quadElem,
+												   triElem, pyraElem };
+	//
+	const int standardCharSpace = 8;
+	const int extCharSpace = 16;
+	const int CONST_COL_WIDTH = 72; //I hope this column width doesn't change.
+};
 
+class NastranBulkDataFileReader : NastranBulkDataFileParser {
 	private:
 		std::string line_;
 		std::ifstream filestream_;
 
-	public:
-		const int defaultPID = 1;
-		//
-		const std::string triName = "CTRIA3  ";
-		const std::string quadName = "CQUAD4  ";
-		const std::string tetraName = "CTETRA  ";
-		const std::string hexaName = "CHEXA   ";
-		const std::string pyraName = "CPYRA   ";
-		//
-		const CellElement hexaElem =
-			CellElement("CHEXA", VTK_HEXAHEDRON, 8, 3, CellType::CHEXA);
-		const CellElement tetraElem =
-			CellElement("CTETRA", VTK_TETRA, 4, 3, CellType::CTETRA);
-		const CellElement quadElem =
-			CellElement("CQUAD4", VTK_QUAD, 4, 2, CellType::CQUAD4);
-		const CellElement triElem =
-			CellElement("CTRIA3", VTK_TRIANGLE, 3, 2, CellType::CTRIA3);
-		const CellElement pyraElem =
-			CellElement("CPYRA", VTK_PYRAMID, 5, 3, CellType::CPYRA);
-		//
-		const std::vector<CellElement> allCellElements{ hexaElem, tetraElem, quadElem,
-													   triElem, pyraElem };
-		//
-		const int standardCharSpace = 8;
-		const int extCharSpace = 16;
-		const int CONST_COL_WIDTH = 72; //I hope this column width doesn't change.
-
-		//
 		bool startsWithString(std::string line, std::string token) {
 			return (line.substr(0, token.size()) == token);
 		}
@@ -65,38 +60,6 @@ public:
 				return startsWithString(line, e.name);
 			});
 		};
-		//
-		const std::string getCellName(int nbDimension, int nbPoints) {
-			if (nbDimension == 2) {
-				if (nbPoints == 3) return triName;
-				if (nbPoints == 4) return quadName;
-			}
-			if (nbDimension == 3) {
-				if (nbPoints == 4) return tetraName;
-				if (nbPoints == 5) return pyraName;
-				if (nbPoints == 8) return hexaName;
-			}
-
-			return "UNDEFINED";
-		}
-		//
-		std::vector<int> findUniquePIDs(std::array<std::vector<int>, 4> array) {
-			std::vector<int> vec;
-			for (auto&& v : array) {
-				vec.insert(vec.end(), v.begin(), v.end());
-			}
-
-			if (vec.size() == 0)
-				vec = { defaultPID };
-			else {
-				std::sort(vec.begin(), vec.end());
-				auto it = std::unique(vec.begin(), vec.end());
-				vec.resize(std::distance(vec.begin(), it));
-			}
-
-			return vec;
-		}
-
 
 		std::string trimWhitespace(const std::string& str) {
 			size_t first = str.find_first_not_of(' ');
@@ -127,7 +90,7 @@ public:
 			return atof(line.c_str());
 		}
 
-		D3D_status readGridPoints(CommonMeshData& mesh) {
+		D3D_status readGridPoints(std::ifstream &filestream_, CommonMeshData& mesh) {
 			std::string _;
 			int countPoints = 0;
 			const int nCoords = 3;
@@ -135,7 +98,8 @@ public:
 			int gridId;
 			bool continueReading = true;
 			try {
-				do {
+				while (continueReading) {
+					line_ = trimWhitespace(line_);
 					if (startsWithString(line_, "GRID ")) {
 						gridId = atoi(line_.substr(8, standardCharSpace).c_str());
 						coords[0] = parseDouble(line_.substr(24, standardCharSpace));
@@ -175,7 +139,8 @@ public:
 					else {
 						break;
 					}
-				} while (getline(filestream_, line_));
+					continueReading = getline(filestream_, line_).good();
+				}
 			}
 			catch (...) {
 				return D3D_status::CANNOT_READ_MESH;
@@ -184,7 +149,7 @@ public:
 			return D3D_status::SUCCESS;
 		}
 
-		D3D_status readGridCells(d3d::CommonMeshData& mesh,
+		D3D_status readCells( d3d::CommonMeshData& mesh,
 			std::map<int, int>& pointMap,
 			std::array<std::vector<CommonMeshData::Cell>, 4>& tempConnectivity) {
 			std::array<int, 4> cellNumbers;
@@ -193,6 +158,7 @@ public:
 			}
 			try {
 				do {
+					line_ = trimWhitespace(line_);
 					if (!(startsWithCell(line_) || startsWithString(line_, "+"))) break;
 					int charId = standardCharSpace;
 					bool is_extended;
@@ -242,63 +208,84 @@ public:
 			catch (...) {
 				return D3D_status::CANNOT_READ_MESH;
 			}
-
 			return D3D_status::SUCCESS;
 		}
 
 
-		D3D_status readRigidBodyElements(
-			std::ifstream& femFile, std::string line, std::vector<RigidBodyElement> &rbes) {
+		D3D_status readRigidBodyElements(std::vector<RigidBodyElement> &rbes) {
 			// Parse the rbe section
 			bool continueReading = true;
-			int rbe_count = 0;
-			try {
-				RigidBodyElement rbe;
+			int rbe_count = -1;
+			//try {
 				while (continueReading) {
 					continueReading = false;
+					line_ = trimWhitespace(line_);
 					int charLoc = standardCharSpace; //If the character space can go to 16 for RBEs, this will fail. Don't know if that exists or not in usage.
-					if (startsWithString(line, "RBE2")) {
-						rbe = RigidBodyElement();
-						rbe.type = RigidBodyElementType(2);
+					if (startsWithString(line_, "RBE2")) {
+						RigidBodyElement rbe = RigidBodyElement();
+						rbes.push_back(rbe);
+						rbe_count++;
+						rbes[rbe_count].type = RigidBodyElementType::RBE2;
 						//rbe's identity number
-						rbe.id = atoi(line.substr(charLoc, standardCharSpace).c_str());
+						rbes[rbe_count].id = atoi(line_.substr(charLoc, standardCharSpace).c_str());
 						charLoc += standardCharSpace;
 						// location grid point id number
-						rbe.virtualPointId = atoi(line.substr(charLoc, standardCharSpace).c_str());
+						rbes[rbe_count].virtualPointFEMId = atoi(line_.substr(charLoc, standardCharSpace).c_str());
 						charLoc += standardCharSpace;
 						// component numbers of dependent degress of freedom
-						rbe.degreesOfFreedom = line.substr(charLoc, standardCharSpace).c_str();
+						rbes[rbe_count].degreesOfFreedom = line_.substr(charLoc, standardCharSpace).c_str();
 						charLoc += standardCharSpace;
-						while (charLoc < CONST_COL_WIDTH) {
+						while (charLoc < ((int)line_.length()) - 7) {
 							// collect gridpoints
-							rbe.gridIds.insert(atoi(line.substr(charLoc, standardCharSpace).c_str()));
+							rbes[rbe_count].gridFEMIds.insert(atoi(line_.substr(charLoc, standardCharSpace).c_str()));
 							charLoc += standardCharSpace;
 						}
-						continueReading = true;
+						continueReading = getline(filestream_, line_).good();
 					}
-					if (startsWithString(line, "+")) {
-						while (charLoc < CONST_COL_WIDTH) {
+					else if (startsWithString(line_, "+")) {
+						while (charLoc < ((int)line_.length()) - 7) {
 							// collect gridpoints
-							rbe.gridIds.insert(atoi(line.substr(charLoc, standardCharSpace).c_str()));
+							int gridid = atoi(line_.substr(charLoc, standardCharSpace).c_str());
+							rbes[rbe_count].gridFEMIds.insert(gridid);
 							charLoc += standardCharSpace;
 						}
-						continueReading = true;
+						continueReading = getline(filestream_, line_).good();
 					}
-					continueReading &= getline(femFile, line).good();
 				}
 
-			}
-			catch (...) {
-				return D3D_status::CANNOT_OPEN_FILE;
-			}
+			//}
+			//catch (...) {
+			//	return D3D_status::CANNOT_OPEN_FILE;
+			//}
 
 			return D3D_status::SUCCESS;
 		}
 
+		void getRigidBodyVirtualPoints(BulkDataFileContents &bdf_contents) {
+			// Reverse lookup for point ids: fem-id |-> commonMeshId
+			std::unordered_map<int, int> orig_to_new_ids;
+			orig_to_new_ids.reserve(bdf_contents.mesh.gridIds.size());
+			for (int foo = 0; foo < bdf_contents.mesh.gridIds.size(); foo++) {
+				orig_to_new_ids.insert({ bdf_contents.mesh.gridIds[foo], foo });
+			}
 
+			// Store the virtual point coordinates for the RigidBodyElements
+			for (auto &rbe : bdf_contents.rigidBodyElements) {
+				int vpid = rbe.virtualPointFEMId;
+				int new_vpid = orig_to_new_ids[vpid];
+				rbe.virtualPointCommonId = new_vpid;
+				std::array<double, 3> vp = bdf_contents.mesh.gridPoints[new_vpid];
+				rbe.virtualPoint = vp;
+				for (int tid : rbe.gridFEMIds) {
+					rbe.gridCommonIds.insert(orig_to_new_ids[tid]);
+				}
+			}
+		}
+
+	public:
 		D3D_status read(const boost::filesystem::path& filePath, BulkDataFileContents& bdf_contents) {
 			//Read the Nastran BDF
-			std::ifstream filestream_(filePath.string());
+			filestream_.open(filePath.string());
 
 			std::map<int, int> pointMap;
 			std::array<std::vector<CommonMeshData::Cell>, 4> tempConnectivity;
@@ -308,7 +295,7 @@ public:
 			if (filestream_.is_open()) {
 				std::string _;
 				std::string card_txt = "";
-				int section_cnt = 0;
+				int section_cnt = -1;
 				bool is_different_section = false;
 				bool is_unread = getline(filestream_, line_).good();
 				while (is_unread) {
@@ -316,9 +303,8 @@ public:
 						std::istringstream iss(line_);
 						iss >> _ >> _ >> _ >> bdf_contents.designDomainPID;
 						if (iss.fail()) {
-							iss.clear();
-							std::cout << "Design domain key could not be read."
-								<< std::endl;
+							//Design domain key could not be read.
+								iss.clear();
 							bdf_contents.designDomainPID = -1;
 						}
 					}
@@ -326,12 +312,13 @@ public:
 					//Read all gridpoints
 					if (startsWithString(line_, "GRID")) {
 						//This block should only hit once.
+						section_cnt++;
 						bdf_contents.bonusSections.push_back(card_txt);
 						card_txt = "";
 						section_cnt++;
 						bdf_contents.pointSectionPosition = section_cnt;
 						//
-						ret_code = readGridPoints(bdf_contents.mesh);
+						ret_code = readGridPoints(filestream_, bdf_contents.mesh);
 						if (ret_code != D3D_status::SUCCESS) {
 							return ret_code;
 						}
@@ -344,12 +331,13 @@ public:
 					//Read all RBEs.
 					if (startsWithString(line_, "RBE")) {
 						//This block should only hit once.
+						section_cnt++;
 						bdf_contents.bonusSections.push_back(card_txt);
 						card_txt = "";
 						section_cnt++;
 						bdf_contents.rigidBodySectionPosition = section_cnt;
 						//
-						ret_code = readRigidBodyElements(filestream_, line_, bdf_contents.rigidBodyElements);
+						ret_code = readRigidBodyElements(bdf_contents.rigidBodyElements);
 						if (ret_code != D3D_status::SUCCESS) {
 							return ret_code;
 						}
@@ -363,6 +351,7 @@ public:
 					if (startsWithCell(line_))
 					 {	
 						//This block should only hit once.
+						section_cnt++;
 						bdf_contents.bonusSections.push_back(card_txt);
 						card_txt = "";
 						section_cnt++;
@@ -373,7 +362,7 @@ public:
 						// Thats why we create a temp connectivity with the grid Ids,
 						// and we create the real connectivity after having read
 						// everything with the point map and the temp connectivity
-						ret_code = readGridCells(bdf_contents.mesh, pointMap,
+						ret_code = readCells(bdf_contents.mesh, pointMap,
 							tempConnectivity);
 						if (ret_code != D3D_status::SUCCESS) {
 							return ret_code;
@@ -385,6 +374,8 @@ public:
 					card_txt.append(line_ + "\n");
 					is_unread = getline(filestream_, line_).good();
 				}
+				section_cnt++;
+				bdf_contents.bonusSections.push_back(card_txt);
 			}
 
 			// the tempConnectivity data structure refers to the vertices by their fem
@@ -403,178 +394,289 @@ public:
 				}
 			}
 
+			// Store the virtual points for the RBEs
+			getRigidBodyVirtualPoints(bdf_contents);
+
 			return D3D_status::SUCCESS;
 		}
 
 }; //class BulkDataFileParser
 
 D3D_status readBDF(const boost::filesystem::path& filePath, BulkDataFileContents& bdf_contents) {
-	BulkDataFileParser bdfer;
+	NastranBulkDataFileReader bdfer;
 	auto status =  bdfer.read(filePath, bdf_contents);
 	return status;
 }
 
-//
-//D3D_status writeBDFFromCommonMeshData(CommonMeshData& mesh,
-//	const boost::filesystem::path& path) {
-//	if (mesh.gridPoints.size() == 0) {
-//		std::cout << "No vertices to write\n";
-//		return D3D_status::FAIL;
-//	}
-//	auto out = std::ofstream(path.string());
-//	if (!out.is_open()) return D3D_status::FAIL;
-//	int nMaterialId = 1;
+class NastranBulkDataFileWriter : NastranBulkDataFileParser {
+	private:
+		std::ofstream filestream_;
+		int point_id_offset_= 1;
 
-//	out << "TITLE = written by Divergent 3D system\n";
-//	out << "BEGIN BULK\n";
+		void getPointIdOffset(const BulkDataFileContents &bd) {
+			if (bd.rigidBodyElements.size() > 0) {
+				for (auto &rbe : bd.rigidBodyElements) {
+					point_id_offset_ = std::max(point_id_offset_, rbe.virtualPointFEMId);
+				}
+			}
+			if (bd.mesh.gridIds.size() == 0) {
+				point_id_offset_++;
+			}
+		}
 
-//	out << "MAT1    1       3.0e+07         0.3300006.5e-06 5.4e+02\n";
+		void streamGridPoint(const int id, const std::array<double,3> &coords) {
+			filestream_.precision(9);
+			filestream_ << std::scientific;
+			filestream_ << "GRID*   " << std::left << std::setw(32) << id
+				<< std::setw(16) << coords[0] << std::setw(16) << coords[1]
+				<< "*\n*       " << std::setw(16) << coords[2] << "\n";
+		}
 
-//	// if this is not empty, we need to make the connectivity refer to these ids
-//	if (mesh.gridIds.size() == 0) {
-//		std::cout << "Creating new indexing for the mesh grid points\n";
-//		for (auto ii = 0; ii < mesh.gridPoints.size(); ++ii) {
-//			mesh.gridIds.push_back(ii + 1);
-//		}
-//	}
+		void writeRBEVirtualPoints(const std::vector<RigidBodyElement> &rbes) {
+			for (auto &rbe: rbes) {
+				auto coords = rbe.virtualPoint;
+				streamGridPoint(rbe.virtualPointFEMId, coords);
+			}
+		}
 
-//	auto pids = findUniquePIDs(mesh.cellPIDs);
-//	std::for_each(pids.begin(), pids.end(), [&](int pid) {
-//		out << "PSHELL  " << std::left << std::setw(8) << pid << std::left
-//			<< std::setw(8) << nMaterialId << std::left << std::setw(8)
-//			<< 0.01 * pid << "\n";
-//	});
+		void writePIDs(const CommonMeshData& mesh) {
+			//Write down the pids as pshells?
+			filestream_ << "MAT1    1       3.0e+07         0.3300006.5e-06 5.4e+02\n";
+			auto pids = findUniquePIDs(mesh.cellPIDs);
+			std::for_each(pids.begin(), pids.end(), [&](int pid) {
+				filestream_ << "PSHELL  " << std::left << std::setw(8) << pid << std::left
+					<< std::setw(8) << nMaterialId << std::left << std::setw(8)
+					<< 0.01 * pid << "\n";
+			});
+		}
 
-//	// !! The bdf file format starts indexing at 1, so we need to add 1 to each
-//	// grid index
-//	for (auto dim = 0; dim < mesh.connectivity.size(); ++dim) {
-//		if (mesh.cellIds[dim].size() == 0) {
-//			for (auto ii = 0; ii < mesh.connectivity[dim].size(); ++ii) {
-//				mesh.cellIds[dim].push_back(ii + 1);
-//			}
-//		}
+		void writeGridPoints(CommonMeshData& mesh) {
+			// if this is not empty, we need to make the connectivity refer to these ids
+			if (mesh.gridIds.size() == 0) {
+				std::cout << "Creating new indexing for the mesh grid points\n";
+				for (auto ii = 0; ii < mesh.gridPoints.size(); ++ii) {
+					mesh.gridIds.resize(mesh.gridPoints.size());
+					mesh.gridIds.push_back(ii + point_id_offset_);
+				}
+			}
+			//
+			for (auto ii = 0; ii < mesh.gridPoints.size(); ++ii) {
+				auto coords = mesh.gridPoints[ii];
+				streamGridPoint(mesh.gridIds[ii] + point_id_offset_, coords);
+			}
+		}
+		//
+		const std::string getCellName(int nbDimension, int nbPoints) {
+			if (nbDimension == 2) {
+				if (nbPoints == 3) return triName;
+				if (nbPoints == 4) return quadName;
+			}
+			if (nbDimension == 3) {
+				if (nbPoints == 4) return tetraName;
+				if (nbPoints == 5) return pyraName;
+				if (nbPoints == 8) return hexaName;
+			}
 
-//		if (mesh.connectivity[dim].size() > 0) {
-//			for (auto ii = 0; ii < mesh.connectivity[dim].size(); ++ii) {
-//				auto cellPID = mesh.cellPIDs[dim].size() > 0
-//					? mesh.cellPIDs[dim][ii]
-//					: defaultPID;
+			return "UNDEFINED";
+		}
+		//
+		void writeCells( CommonMeshData& mesh) {
+			// Add an offset 1 to each cellid if they dont exist
+			for (auto dim = 0; dim < mesh.connectivity.size(); ++dim) {
+				if (mesh.cellIds[dim].size() == 0) {
+					for (auto ii = 0; ii < mesh.connectivity[dim].size(); ++ii) {
+						mesh.cellIds[dim].resize(mesh.connectivity[dim].size());
+						mesh.cellIds[dim].push_back(ii + 1);
+					}
+				}
 
-//				auto cell = mesh.connectivity[dim][ii];
-//				auto elemName = getCellName(dim, cell.size());
+				for (auto ii = 0; ii < mesh.connectivity[dim].size(); ++ii) {
+					auto cellPID = mesh.cellPIDs[dim].size() > 0
+						? mesh.cellPIDs[dim][ii]
+						: defaultPID;
 
-//				out << elemName << std::left << std::setw(8)
-//					<< mesh.cellIds[dim][ii] << std::left << std::setw(8)
-//					<< cellPID;
-//				for (auto jj = 0; jj < cell.size(); ++jj) {
-//					if (jj + 4 % 10 == 0) out << "\n        ";
-//					out << std::left << std::setw(8) << mesh.gridIds[cell[jj]];
-//				}
-//				out << "\n";
-//			}
-//		}
-//	}
-//	out << "PMASS   4       0.100000\n";
+					auto cell = mesh.connectivity[dim][ii];
+					auto elemName = getCellName(dim, cell.size());
 
-//	for (auto ii = 0; ii < mesh.gridPoints.size(); ++ii) {
-//		auto coords = mesh.gridPoints[ii];
+					filestream_ << elemName << std::right << std::setw(8)
+						<< mesh.cellIds[dim][ii] << std::setw(8) << cellPID;
+					int charspace = 24;
+					for (auto jj = 0; jj < cell.size(); ++jj) {
+						charspace += 8;
+						if (charspace > CONST_COL_WIDTH) {
+							charspace = 8;
+							filestream_ << "\n" << std::left << std::setw(8) << "+" << std::right;
+						}
+						filestream_ << std::setw(8) << mesh.gridIds[cell[jj]] + point_id_offset_;
+					}
+					filestream_ << "\n";
+				}
 
-//		out.precision(9);
-//		out << std::scientific;
-//		out << "GRID*   " << std::left << std::setw(32) << mesh.gridIds[ii]
-//			<< std::setw(16) << coords[0] << std::setw(16) << coords[1]
-//			<< "*\n*       " << std::setw(16) << coords[2] << "\n";
-//	}
-//	out << "ENDDATA\n";
-//	out.close();
-//	return D3D_status::SUCCESS;
-//}
+			}
+		}
+		//
+		void writeRigidBodyElements(const std::vector<RigidBodyElement> &rbes, const CommonMeshData& mesh) {
+			for (auto &rbe : rbes) {
+				if (rbe.type == RigidBodyElementType::RBE2) {
+					filestream_ << std::left << std::setw(8) << "RBE2";
+					filestream_ << std::right << std::setw(8) << rbe.id;
+					filestream_ << std::setw(8) << rbe.virtualPointFEMId;
+					filestream_ << std::setw(8) << rbe.degreesOfFreedom;
+					int charspace = 32;
+					for (int id : rbe.gridCommonIds) {
+						charspace += 8;
+						if (charspace > CONST_COL_WIDTH) {
+							charspace = 16;
+							filestream_ << "\n" << std::left << std::setw(8) << "+" << std::right;
+						}
+						filestream_ << std::setw(8) << mesh.gridIds[id] + point_id_offset_;
+					}
 
-//D3D_status readBDFToCommonMeshData(const boost::filesystem::path& meshPath,
-//	CommonMeshData& mesh) {
-//	int _;
-//	return readBDFToCommonMeshData(meshPath, mesh, _);
-//}
+				}
+				filestream_ << "\n";
+			}
+		}
+		//
+		std::vector<int> findUniquePIDs(std::array<std::vector<int>, 4> array) {
+			std::vector<int> vec;
+			for (auto&& v : array) {
+				vec.insert(vec.end(), v.begin(), v.end());
+			}
 
-//D3D_status readBDFToCommonMeshData(const boost::filesystem::path& filePath,
-//	CommonMeshData& mesh, int& designDomainPID) {
-//	std::ifstream femFile(filePath.string());
+			if (vec.size() == 0)
+				vec = { defaultPID };
+			else {
+				std::sort(vec.begin(), vec.end());
+				auto it = std::unique(vec.begin(), vec.end());
+				vec.resize(std::distance(vec.begin(), it));
+			}
 
-//	std::cout << "Read input file." << std::endl;
+			return vec;
+		}
 
-//	std::map<int, int> pointMap;
-//	std::array<std::vector<CommonMeshData::Cell>, 4> tempConnectivity;
 
-//	auto ret_code = D3D_status::SUCCESS;
+	public:
+		D3D_status write(const boost::filesystem::path& filePath, BulkDataFileContents& bdf_contents) {
+			try {
+				filestream_ = std::ofstream(filePath.string());
+				getPointIdOffset(bdf_contents);
+				int card_cnt = 0;
+				for (int foo = 0; foo < bdf_contents.bonusSections.size(); foo++) {
+					if (card_cnt == bdf_contents.pidSectionPosition) {
+						writePIDs(bdf_contents.mesh);
+						card_cnt++;
+						foo--;
+						continue;
+					}
+					if (card_cnt == bdf_contents.pointSectionPosition) {
+						writeRBEVirtualPoints(bdf_contents.rigidBodyElements);
+						writeGridPoints(bdf_contents.mesh);
+						card_cnt++;
+						foo--;
+						continue;
+					}
+					if (card_cnt == bdf_contents.cellSectionPosition) {
+						writeCells(bdf_contents.mesh);
+						card_cnt++;
+						foo--;
+						continue;
+					}
+					if (card_cnt == bdf_contents.rigidBodySectionPosition) {
+						writeRigidBodyElements(bdf_contents.rigidBodyElements, bdf_contents.mesh);
+						card_cnt++;
+						foo--;
+						continue;
+					}
+					filestream_ << bdf_contents.bonusSections[foo];
+					card_cnt++;
+				}
+			} catch (...) {
+				return D3D_status::FAIL;
+			}
+			return D3D_status::SUCCESS;
+		}
 
-//	if (femFile.is_open()) {
-//		std::string line;
-//		std::string _;
+		D3D_status writeBDFFromCommonMeshData(CommonMeshData& mesh,
+			const boost::filesystem::path& path) {
+			if (mesh.gridPoints.size() == 0) {
+				std::cout << "No vertices to write\n";
+				return D3D_status::FAIL;
+			}
+			auto out = std::ofstream(path.string());
+			if (!out.is_open()) return D3D_status::FAIL;
+			int nMaterialId = 1;
 
-//		while (getline(femFile, line)) {
-//			if (startsWithString(line, "DTPL")) {
-//				std::istringstream iss(line);
-//				iss >> _ >> _ >> _ >> designDomainPID;
-//				if (iss.fail()) {
-//					iss.clear();
-//					std::cout << "Design domain key could not be read."
-//						<< std::endl;
-//					designDomainPID = -1;
-//				}
-//			}
-//			if (startsWithString(line, "GRID")) {
-//				ret_code = readGridPoints(femFile, line, mesh);
-//				if (ret_code != D3D_status::SUCCESS) {
-//					return ret_code;
-//				}
-//				for (auto ii = 0; ii < mesh.gridIds.size(); ++ii) {
-//					pointMap[mesh.gridIds[ii]] = ii;
-//				}
-//			}
+			out << "TITLE = written by Divergent 3D system\n";
+			out << "BEGIN BULK\n";
 
-//			if (std::any_of(allCellElements.begin(), allCellElements.end(),
-//				[line](CellElement e) {
-//				return startsWithString(line, e.name);
-//			})) {
-//				// we have no guarantee that the grid Ids have been read before.
-//				// Thats why we create a temp connectivity with the grid Ids,
-//				// and we create the real connectivity after having read
-//				// everything with the point map and the temp connectivity
-//				ret_code = readGridCells(femFile, line, mesh, pointMap,
-//					tempConnectivity);
-//				if (ret_code != D3D_status::SUCCESS) {
-//					return ret_code;
-//				}
-//			}
-//		}
+			out << "MAT1    1       3.0e+07         0.3300006.5e-06 5.4e+02\n";
 
-//		auto numCells = 0;
-//		std::for_each(
-//			tempConnectivity.begin(), tempConnectivity.end(),
-//			[&](std::vector<std::vector<int>> vec) { numCells += vec.size(); });
+			// if this is not empty, we need to make the connectivity refer to these ids
+			if (mesh.gridIds.size() == 0) {
+				std::cout << "Creating new indexing for the mesh grid points\n";
+				for (auto ii = 0; ii < mesh.gridPoints.size(); ++ii) {
+					mesh.gridIds.push_back(ii + 1);
+				}
+			}
 
-//		std::cout << "Finished reading " << mesh.gridPoints.size()
-//			<< " points and " << numCells << " cells." << std::endl;
-//	}
+			auto pids = findUniquePIDs(mesh.cellPIDs);
+			std::for_each(pids.begin(), pids.end(), [&](int pid) {
+				out << "PSHELL  " << std::left << std::setw(8) << pid << std::left
+					<< std::setw(8) << nMaterialId << std::left << std::setw(8)
+					<< 0.01 * pid << "\n";
+			});
 
-//	// the tempConnectivity data structure refers to the vertices by their fem
-//	// grid ids. We use the point map to instead make them refer to their ids in
-//	// the new vectors
+			// !! The bdf file format starts indexing at 1, so we need to add 1 to each
+			// grid index
+			for (auto dim = 0; dim < mesh.connectivity.size(); ++dim) {
+				if (mesh.cellIds[dim].size() == 0) {
+					for (auto ii = 0; ii < mesh.connectivity[dim].size(); ++ii) {
+						mesh.cellIds[dim].push_back(ii + 1);
+					}
+				}
 
-//	for (auto ndim = 0; ndim < tempConnectivity.size(); ++ndim) {
-//		mesh.connectivity[ndim] =
-//			std::vector<std::vector<int>>(tempConnectivity[ndim].size());
-//		for (auto ii = 0; ii < tempConnectivity[ndim].size(); ++ii) {
-//			auto newCell = std::vector<int>(tempConnectivity[ndim][ii].size());
-//			for (auto jj = 0; jj < tempConnectivity[ndim][ii].size(); ++jj) {
-//				newCell[jj] = pointMap[tempConnectivity[ndim][ii][jj]];
-//			}
-//			mesh.connectivity[ndim][ii] = newCell;
-//		}
-//	}
+				if (mesh.connectivity[dim].size() > 0) {
+					for (auto ii = 0; ii < mesh.connectivity[dim].size(); ++ii) {
+						auto cellPID = mesh.cellPIDs[dim].size() > 0
+							? mesh.cellPIDs[dim][ii]
+							: defaultPID;
 
-//	return D3D_status::SUCCESS;
-//}
+						auto cell = mesh.connectivity[dim][ii];
+						auto elemName = getCellName(dim, cell.size());
+
+						out << elemName << std::left << std::setw(8)
+							<< mesh.cellIds[dim][ii] << std::left << std::setw(8)
+							<< cellPID;
+						for (auto jj = 0; jj < cell.size(); ++jj) {
+							if (jj + 4 % 10 == 0) out << "\n        ";
+							out << std::left << std::setw(8) << mesh.gridIds[cell[jj]];
+						}
+						out << "\n";
+					}
+				}
+			}
+			out << "PMASS   4       0.100000\n";
+
+			for (auto ii = 0; ii < mesh.gridPoints.size(); ++ii) {
+				auto coords = mesh.gridPoints[ii];
+				out.precision(9);
+				out << std::scientific;
+				out << "GRID*   " << std::left << std::setw(32) << mesh.gridIds[ii]
+					<< std::setw(16) << coords[0] << std::setw(16) << coords[1]
+					<< "*\n*       " << std::setw(16) << coords[2] << "\n";
+			}
+			out << "ENDDATA\n";
+			out.close();
+			return D3D_status::SUCCESS;
+		}
+
+};
+
+D3D_status writeBDF(const boost::filesystem::path& filePath, BulkDataFileContents& bdf_contents) {
+	NastranBulkDataFileWriter bdfer;
+	auto status = bdfer.write(filePath, bdf_contents);
+	return status;
+}
 
 }  // namespace io
 
