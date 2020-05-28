@@ -5,10 +5,9 @@ from conans import ConanFile, CMake
 class AckConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     # comma-separated list of requirements
-    requires = "boost/1.70.0@conan/stable", "VTK-mini/1.3@d3d/testing"
-    #
+    requires = "boost/1.69.0@d3d/testing", "VTK-mini/1.4@d3d/testing", "eigen/3.3.7@d3d/testing"
 #    "TBB/2019_U4@conan/stable", \
-#            "boost_graph/1.69.0@d3d/testing", \
+#            , \
 #            "tetgen/1.5.1@d3d/testing", \
 #            "boost/1.69.0@d3d/testing"
     generators = "cmake"
