@@ -74,11 +74,13 @@ enum RigidBodyElementType {
 
 struct RigidBodyElement {
 	RigidBodyElementType type;
-	int id;
-    int virtualPointId;
+	int id = -1;
+    int virtualPointFEMId;
+	int virtualPointCommonId;
 	std::string degreesOfFreedom;
     std::array<double, 3> virtualPoint;
-    std::unordered_set<int> gridIds;
+    std::unordered_set<int> gridFEMIds;
+	std::unordered_set<int> gridCommonIds;
 };
 
 }  // namespace d3d

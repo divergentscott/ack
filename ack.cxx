@@ -1,7 +1,9 @@
 #include <array>
 #include <iostream>
 #include <limits>
+#include <unordered_map>
 #include <vector>
+
 #include <Eigen/Dense>
 static const double repsilon = std::sqrt(std::numeric_limits<double>::epsilon());
 
@@ -164,6 +166,60 @@ struct VacancySide{
     };
 };
 
+struct Vacancy{
+    std::vector<VacancySide> edges;
+    std::vector<int> next_edge;
+    std::vector<int> prev_edge;
+//    std::vector<int> local_leftmost;
+//    std::vector<int> local_rightmost;
+    Vacancy(const std::vector<Eigen::Vector2d> &grid_points, const std::vector<std::array<int,2>> &lines){
+        edges.resize(lines.size());
+        for (int foo=0; foo < lines.size(); foo++){
+            int p0 = lines[foo][0];
+            int p1 = lines[foo][1];
+            std::array<Eigen::Vector2d,2> foopts = {grid_points[p0], grid_points[p1]};
+            VacancySide vs(lines[foo], foopts);
+            edges[foo] = vs;
+            std::cout << foo << std::endl;
+            std::cout << " pt " << vs.point_ids[0] << " @ " << vs.points[0].transpose() << std::endl;
+            std::cout << " pt " << vs.point_ids[1] << " @ " << vs.points[1].transpose() << std::endl;
+            std::cout << "length " << vs.length << " ";
+            if (vs.orientation == EdgeOrientation::kEast) std::cout << "east" << std::endl;
+            if (vs.orientation == EdgeOrientation::kNorth) std::cout << "north" << std::endl;
+        }
+        // Construct a point to edge lookup
+//        std::vector<std::vector<int>> point_to_edges;
+//        point_to_edges.resize(grid_points.size());
+//        for (int foo=0; foo<edges.size(); foo++){
+//            for (int p : edges[foo].point_ids){
+//                if (point_to_edges[p].size()==0){
+//                    point_to_edges[p].push_back(foo);
+//                }
+//                if ((point_to_edges[p].size() == 1) & (point_to_edges[p][0] != foo)){
+//                    point_to_edges[p].push_back(foo);
+//                }
+//            }
+//        }
+        // Construct an edge to edge lookup
+//        std::vector<std::vector<int>> edges_to_edges;
+//        edges_to_edges.resize(edges.size());
+//        for (int foo=0; foo<edges.size(); foo++){
+//            std::vector<int> ngbs;
+//            for( int bar : {0,1}){
+//                for (int ngb : point_to_edges[edges[foo].point_ids[bar]]){
+//                    if (ngb != foo) edges_to_edges[foo].push_back(ngb);
+//                }
+//            }
+//        }
+        //
+//        for (VacancySide &ve : edges){
+//            if (ve.orientation == EdgeOrientation::kNorth){
+//
+//            }
+//        }
+    };
+};
+
 
 void example1(){
     
@@ -204,27 +260,15 @@ void example1(){
         {14,15},
         {15,12},
     };
+    Vacancy(grid_points, lines);
 
     std::vector<std::array<int,2>> point_to_line;
     std::vector<EdgeOrientation> line_orientation;
     std::vector<OutsideSide> line_outside_side;
-    for (int foo=0; foo < lines.size(); foo++){
-        int p0 = lines[foo][0];
-        int p1 = lines[foo][1];
-        std::array<Eigen::Vector2d,2> foopts = {grid_points[p0], grid_points[p1]};
-        VacancySide vs(lines[foo], foopts);
-        std::cout << foo << std::endl;
-        std::cout << " pt " << vs.point_ids[0] << " @ " << vs.points[0].transpose() << std::endl;
-        std::cout << " pt " << vs.point_ids[1] << " @ " << vs.points[1].transpose() << std::endl;
-        std::cout << "length " << vs.length << " ";
-        if (vs.orientation == EdgeOrientation::kEast) std::cout << "east" << std::endl;
-        if (vs.orientation == EdgeOrientation::kNorth) std::cout << "north" << std::endl;
-    }
 };
 
 
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
     example1();
-
 }
