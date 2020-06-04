@@ -5,54 +5,12 @@
 #include <vector>
 
 #include <Eigen/Dense>
+
+#include "cabby_curve_collection.h"
+
 static const double repsilon = std::sqrt(std::numeric_limits<double>::epsilon());
 
-Eigen::Vector2d ray_segment_intersect(const Eigen::Vector2d orig,
-                                                 const Eigen::Vector2d dir,
-                                                 const Eigen::Vector2d a,
-                                                 const Eigen::Vector2d b) {
-    // Compute ray, line segment intersection.
-    // Ray has origin orig and direction r. That is: { orig + t * r | t>0 }
-    // Line segment endpoints a b. That is: { a * s + b * (1-s) | s in [0,1] }
-    // Computes the parameter t and s at intersection.
-    // If the ray and segment are colinear, there may be infinitely many
-    // solutions. In that case return the s = 0 solution,
-    // so t is such that: orig + t * r = b.
-    double a01 = b[0] - a[0];
-    double a11 = b[1] - a[1];
-    double det = dir[0] * a11 - a01 * dir[1];
-    if (std::abs(det) > repsilon) {
-        // Noncolinear
-        double s0 = b[0] - orig[0];
-        double s1 = b[1] - orig[1];
-        double t0 = (a11 * s0 - a01 * s1) / det;
-        double t1 = (dir[0] * s1 - dir[1] * s0) / det;
-        return {t0, t1};
-    }
-    // Colinear
-    double t1;
-    if (a01 > repsilon) {
-        t1 = (b[0] - orig[0]) / a01;
-    } else {
-        t1 = (b[1] - orig[1]) / a11;
-    }
-    if ((-repsilon < t1) & (t1 < 1 + repsilon)) {
-        return {0.0, t1};
-    }
-    if (dir[0] > repsilon) {
-        return {(b[0] - orig[0]) / dir[0], 0.0};
-    }
-    return {(b[1] - orig[1]) / dir[1], 0.0};
-}
 
-bool is_ray_segment_intersect(const Eigen::Vector2d orig,
-                              const Eigen::Vector2d dir,
-                              const Eigen::Vector2d a,
-                              const Eigen::Vector2d b) {
-    Eigen::Vector2d t = ray_segment_intersect(orig, dir, a, b);
-    return (t[0] > -repsilon) & (-repsilon < t[1]) &
-           (t[1] < 1 + repsilon);
-}
 
 /* fix this interiority check
 bool is_point_in(Eigen::Vector2d point) {
@@ -127,14 +85,27 @@ enum class OutsideSide{
     kRight
 };
 
+enum class NeighborhoodShape{
+    kUnknown,
+    kZag, // looks like _|-
+    //Nothches are differentiated by their opening direction
+    kNotchNorth, // looks like |_|
+    kNotchEast,
+    kNotchSouth,
+    kNotchWest
+};
+
 struct VacancySide{
     double length = 0.0;
     EdgeOrientation orientation = EdgeOrientation::kBad;
     OutsideSide outside = OutsideSide::kUnknown;
+    NeighborhoodShape neighbor_shape = NeighborhoodShape::kUnknown;
     std::array<int,2> point_ids = {0,0};
     //SS: question for future self: do you just want to represent as pt * interval?
-    std::array<Eigen::Vector2d,2> points;
-    VacancySide(const std::array<int,2> &i_point_ids, const std::array<Eigen::Vector2d,2> &i_points){
+    std::array<Eigen::Vector2d,2> points = {Eigen::Vector2d({0,0}),Eigen::Vector2d({0,0})};
+    
+    VacancySide(){};
+    VacancySide(const std::array<Eigen::Vector2d,2> &i_points, const std::array<int,2> &i_point_ids){
         //Vacancy side constructor from vertex ids and positions
         double xlen = std::abs((i_points[0][0] - i_points[1][0]));
         double ylen = std::abs((i_points[0][1] - i_points[1][1]));
@@ -167,82 +138,90 @@ struct VacancySide{
 };
 
 struct Vacancy{
-    std::vector<VacancySide> edges;
-    std::vector<int> next_edge;
-    std::vector<int> prev_edge;
-//    std::vector<int> local_leftmost;
-//    std::vector<int> local_rightmost;
-    Vacancy(const std::vector<Eigen::Vector2d> &grid_points, const std::vector<std::array<int,2>> &lines){
-        edges.resize(lines.size());
+    CabbyCurveCollection curves;
+    std::vector<VacancySide> vsides_;
+    int westmost_frontier_id_ = 0;
+    
+    Vacancy(){};
+    
+    void insertCurves(const std::vector<std::array<double,3>> &grid_points, const std::vector<std::vector<int>> &lines){
+        curves.insertEdges(grid_points, lines);
+        vsides_.resize(lines.size());
         for (int foo=0; foo < lines.size(); foo++){
             int p0 = lines[foo][0];
             int p1 = lines[foo][1];
-            std::array<Eigen::Vector2d,2> foopts = {grid_points[p0], grid_points[p1]};
-            VacancySide vs(lines[foo], foopts);
-            edges[foo] = vs;
-            std::cout << foo << std::endl;
-            std::cout << " pt " << vs.point_ids[0] << " @ " << vs.points[0].transpose() << std::endl;
-            std::cout << " pt " << vs.point_ids[1] << " @ " << vs.points[1].transpose() << std::endl;
-            std::cout << "length " << vs.length << " ";
-            if (vs.orientation == EdgeOrientation::kEast) std::cout << "east" << std::endl;
-            if (vs.orientation == EdgeOrientation::kNorth) std::cout << "north" << std::endl;
+            Eigen::Vector2d p0coor = {grid_points[p0][0], grid_points[p0][1]};
+            Eigen::Vector2d p1coor {grid_points[p1][0], grid_points[p1][1]};
+            std::array<Eigen::Vector2d,2> foopts = {p0coor, p1coor};
+            VacancySide vs(foopts, {p0,p1});
+            vsides_[foo] = vs;
         }
-        // Construct a point to edge lookup
-//        std::vector<std::vector<int>> point_to_edges;
-//        point_to_edges.resize(grid_points.size());
-//        for (int foo=0; foo<edges.size(); foo++){
-//            for (int p : edges[foo].point_ids){
-//                if (point_to_edges[p].size()==0){
-//                    point_to_edges[p].push_back(foo);
-//                }
-//                if ((point_to_edges[p].size() == 1) & (point_to_edges[p][0] != foo)){
-//                    point_to_edges[p].push_back(foo);
-//                }
-//            }
-//        }
-        // Construct an edge to edge lookup
-//        std::vector<std::vector<int>> edges_to_edges;
-//        edges_to_edges.resize(edges.size());
-//        for (int foo=0; foo<edges.size(); foo++){
-//            std::vector<int> ngbs;
-//            for( int bar : {0,1}){
-//                for (int ngb : point_to_edges[edges[foo].point_ids[bar]]){
-//                    if (ngb != foo) edges_to_edges[foo].push_back(ngb);
-//                }
-//            }
-//        }
-        //
-//        for (VacancySide &ve : edges){
-//            if (ve.orientation == EdgeOrientation::kNorth){
-//
-//            }
-//        }
+        //Populate the neighborhood shapes.
+        for (int foo=0; foo<vsides_.size(); foo++){
+            std::cout << foo;
+            VacancySide vs_foo = vsides_[foo];
+            int dim_of_interest = vs_foo.orientation == EdgeOrientation::kNorth ? 0 : 1;
+            auto edgefoo = curves.get_points_of_edge(foo);
+            int pfoos = edgefoo[0];
+            int pfoot = edgefoo[1];
+            int pnext = curves.get_next_point(pfoot);
+            int pprev = curves.get_prev_point(pfoos);
+            std::cout << pprev <<" " << pfoos <<" " << pfoot << " " << pnext << std::endl;
+            double pos_foo = curves.get_point(pfoos)[dim_of_interest];
+            double pos_prev = curves.get_point(pprev)[dim_of_interest];
+            double pos_next = curves.get_point(pnext)[dim_of_interest];
+            bool is_prev_foo = pos_prev < pos_foo;
+            bool is_foo_next = pos_foo < pos_next;
+            if ((is_prev_foo & is_foo_next) | (!is_prev_foo & !is_foo_next)) {
+                vs_foo.neighbor_shape = NeighborhoodShape::kZag;
+                std::cout << "zag " << std::endl;
+            } else {
+                if (is_prev_foo & !is_foo_next){
+                    if (dim_of_interest == 1){
+                        std::cout << "sout " << std::endl;
+                        vs_foo.neighbor_shape = NeighborhoodShape::kNotchSouth;
+                    }
+                    if (dim_of_interest == 0){
+                    std::cout << "west " << std::endl; vs_foo.neighbor_shape = NeighborhoodShape::kNotchWest;
+                    }
+                }
+                if (!is_prev_foo & is_foo_next){
+                    if (dim_of_interest == 1){
+                        std::cout << "north " << std::endl;
+                        vs_foo.neighbor_shape = NeighborhoodShape::kNotchNorth;
+                    }
+                    if (dim_of_interest == 0) {
+                        std::cout << "east " << std::endl;
+                        vs_foo.neighbor_shape = NeighborhoodShape::kNotchEast;
+                    }
+                }
+            }
+            //side foo is at this position
+        }
     };
 };
 
-
-void example1(){
-    
-    std::vector<Eigen::Vector2d> grid_points = {
-        {0, 0},
-        {5, 0},
-        {5, 1},
-        {6, 1},
-        {6, 2},
-        {5, 2},
-        {5, 3},
-        {1, 3},
-        {1, 2},
-        {2, 2},
-        {2, 1},
-        {0, 1},
-        {3, 1},
-        {4, 1},
-        {4, 2},
-        {3, 2},
+namespace exda{
+    std::vector<std::array<double,3>> grid_points = {
+        {0, 0, 0},
+        {5, 0, 0},
+        {5, 1, 0},
+        {6, 1, 0},
+        {6, 2, 0},
+        {5, 2, 0},
+        {5, 3, 0},
+        {1, 3, 0},
+        {1, 2, 0},
+        {2, 2, 0},
+        {2, 1, 0},
+        {0, 1, 0},
+        {3, 1, 0},
+        {4, 1, 0},
+        {4, 2, 0},
+        {3, 2, 0},
     };
-    
-    std::vector<std::array<int,2>> lines = {
+
+    std::vector<std::vector<int>> lines = {
         {0,1},
         {1,2},
         {2,3},
@@ -258,17 +237,45 @@ void example1(){
         {12,13},
         {13,14},
         {14,15},
-        {15,12},
+        {15,12}
     };
-    Vacancy(grid_points, lines);
+}
 
-    std::vector<std::array<int,2>> point_to_line;
-    std::vector<EdgeOrientation> line_orientation;
-    std::vector<OutsideSide> line_outside_side;
+void example1(){
+    CabbyCurveCollection ccc;
+    ccc.insertEdges(exda::grid_points, exda::lines);
+    std::cout << ccc.get_number_of_points();
+    for (int foo=0; foo<exda::lines.size(); foo++){
+        std::cout << "e " << foo << " prev " << ccc.get_prev_edge(foo) << " next " << ccc.get_next_edge(foo) << std::endl;
+    }
+    std::cout << "true is " << true << std::endl;
+    std::cout << "false is " << false << std::endl;
+    std::cout << "(3.5,1.5) is out " << ccc.is_point_in({3.5,1.5}) << std::endl;
+    std::cout << "(2.5,1.5) is in " << ccc.is_point_in({2.5,1.5}) << std::endl;
+    std::cout << "(1.5,1.5) is out " << ccc.is_point_in({1.5,1.5}) << std::endl;
+
+    // ccc should have a cyclic ordering of the points
+    // if we have a point to edge look up we can manage a traversal
+};
+
+void example2(){
+    Vacancy vac;
+    vac.insertCurves(exda::grid_points, exda::lines);
+    for (int foo=0; foo<vac.vsides_.size(); foo++){
+        std::cout << foo << std::endl;
+        VacancySide vs = vac.vsides_[foo];
+        std::cout << " pt " << vs.point_ids[0] << " @ " << vs.points[0].transpose() << std::endl;
+        std::cout << " pt " << vs.point_ids[1] << " @ " << vs.points[1].transpose() << std::endl;
+        std::cout << "length " << vs.length << " ";
+        if (vs.orientation == EdgeOrientation::kEast) std::cout << "east";
+        if (vs.orientation == EdgeOrientation::kNorth) std::cout << "north";
+        if (vs.neighbor_shape == NeighborhoodShape::kZag)            std::cout << "zag" << std::endl;
+
+    }
 };
 
 
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
-    example1();
+    example2();
 }
