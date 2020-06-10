@@ -1,12 +1,17 @@
 #include <array>
+#include <deque>
 #include <iostream>
 #include <limits>
+#include <list>
 #include <unordered_map>
 #include <vector>
 
 #include <Eigen/Dense>
 
 #include "cabby_curve_collection.h"
+
+using vedge = std::array<Eigen::Vector2d,2>;
+using hedge = std::array<Eigen::Vector2d,2>;
 
 static const double repsilon = std::sqrt(std::numeric_limits<double>::epsilon());
 
@@ -96,6 +101,7 @@ enum class NeighborhoodShape{
 };
 
 struct VacancySide{
+    int edge_id;
     double length = 0.0;
     EdgeOrientation orientation = EdgeOrientation::kBad;
     OutsideSide outside = OutsideSide::kUnknown;
@@ -105,8 +111,9 @@ struct VacancySide{
     std::array<Eigen::Vector2d,2> points = {Eigen::Vector2d({0,0}),Eigen::Vector2d({0,0})};
     
     VacancySide(){};
-    VacancySide(const std::array<Eigen::Vector2d,2> &i_points, const std::array<int,2> &i_point_ids){
+    VacancySide(const int edge_id_0, const std::array<Eigen::Vector2d,2> &i_points, const std::array<int,2> &i_point_ids){
         //Vacancy side constructor from vertex ids and positions
+        edge_id = edge_id_0;
         double xlen = std::abs((i_points[0][0] - i_points[1][0]));
         double ylen = std::abs((i_points[0][1] - i_points[1][1]));
         if ( (xlen < repsilon) & (ylen > repsilon) ){
@@ -137,12 +144,68 @@ struct VacancySide{
     };
 };
 
+struct Patrol{
+    std::list<Eigen::Vector2d> landmarks_high;
+    std::list<Eigen::Vector2d> landmarks_low;
+    VacancySide start;
+    VacancySide terminus;
+};
+
 struct Vacancy{
     CabbyCurveCollection curves;
     std::vector<VacancySide> vsides_;
     int westmost_frontier_id_ = 0;
+    int eastmost_frontier_id_ = 0;
     
     Vacancy(){};
+    
+    void findFrontier(){
+        int westmost = 0;
+        double westest = vsides_[0].points[0][0];
+        int eastmost = 0;
+        double eastest = vsides_[0].points[0][0];
+        for(int foo=0; foo<vsides_.size(); foo++){
+            if (vsides_[foo].orientation == EdgeOrientation::kNorth){
+                double longitude = vsides_[foo].points[0][0];
+                if (longitude < westest){
+                    westmost = foo;
+                    westest = longitude;
+                }
+                if (eastest < longitude){
+                    eastmost = foo;
+                    eastest = longitude;
+                }
+            }
+        }
+        westmost_frontier_id_ = westmost;
+        eastmost_frontier_id_ = eastmost;
+    };
+    
+    NeighborhoodShape getNeighborhoodShape(int dim_of_interest, double pos_prev, double pos_foo, double pos_next){
+        bool is_prev_foo = pos_prev < pos_foo;
+        bool is_foo_next = pos_foo < pos_next;
+        if ((is_prev_foo & is_foo_next) | (!is_prev_foo & !is_foo_next)) {
+            return NeighborhoodShape::kZag;
+        } else {
+            if (is_prev_foo & !is_foo_next){
+                if (dim_of_interest == 1){
+                    return NeighborhoodShape::kNotchSouth;
+                }
+                if (dim_of_interest == 0){
+                    return NeighborhoodShape::kNotchWest;
+                }
+            }
+            if (!is_prev_foo & is_foo_next){
+                if (dim_of_interest == 1){
+                    return NeighborhoodShape::kNotchNorth;
+                }
+                if (dim_of_interest == 0) {
+                   return NeighborhoodShape::kNotchEast;
+                }
+            }
+        }
+        return NeighborhoodShape::kUnknown;
+    };
     
     void insertCurves(const std::vector<std::array<double,3>> &grid_points, const std::vector<std::vector<int>> &lines){
         curves.insertEdges(grid_points, lines);
@@ -153,53 +216,161 @@ struct Vacancy{
             Eigen::Vector2d p0coor = {grid_points[p0][0], grid_points[p0][1]};
             Eigen::Vector2d p1coor {grid_points[p1][0], grid_points[p1][1]};
             std::array<Eigen::Vector2d,2> foopts = {p0coor, p1coor};
-            VacancySide vs(foopts, {p0,p1});
+            VacancySide vs(foo, foopts, {p0,p1});
             vsides_[foo] = vs;
-        }
+        };
+    };
+    
+    void populateNeighbors(){
         //Populate the neighborhood shapes.
         for (int foo=0; foo<vsides_.size(); foo++){
             std::cout << foo;
-            VacancySide vs_foo = vsides_[foo];
+            VacancySide &vs_foo = vsides_[foo];
             int dim_of_interest = vs_foo.orientation == EdgeOrientation::kNorth ? 0 : 1;
             auto edgefoo = curves.get_points_of_edge(foo);
             int pfoos = edgefoo[0];
             int pfoot = edgefoo[1];
             int pnext = curves.get_next_point(pfoot);
             int pprev = curves.get_prev_point(pfoos);
-            std::cout << pprev <<" " << pfoos <<" " << pfoot << " " << pnext << std::endl;
             double pos_foo = curves.get_point(pfoos)[dim_of_interest];
             double pos_prev = curves.get_point(pprev)[dim_of_interest];
             double pos_next = curves.get_point(pnext)[dim_of_interest];
-            bool is_prev_foo = pos_prev < pos_foo;
-            bool is_foo_next = pos_foo < pos_next;
-            if ((is_prev_foo & is_foo_next) | (!is_prev_foo & !is_foo_next)) {
-                vs_foo.neighbor_shape = NeighborhoodShape::kZag;
-                std::cout << "zag " << std::endl;
+            vs_foo.neighbor_shape = getNeighborhoodShape(dim_of_interest, pos_prev, pos_foo, pos_next);
+            if (vs_foo.neighbor_shape == NeighborhoodShape::kNotchEast){
+                Eigen::Vector2d left_p = 0.5 * (vs_foo.points[0] + vs_foo.points[1]) + Eigen::Vector2d(-10 * repsilon, 0.0);
+                bool is_left_in = curves.is_point_in(left_p);
+                vs_foo.outside = is_left_in ? OutsideSide::kRight : OutsideSide::kLeft;
+            }
+        };
+    };
+    
+    void nextCollideNorth(const Eigen::Vector2d &origin, const bool &is_following_orientation, int &point_at, int &edge_at, Eigen::Vector2d &impact){
+        //Continue along, testing horizontal edges for an impact
+        //Advances the point and edge location.
+        bool is_impact = false;
+        if (is_following_orientation){
+            edge_at = curves.get_next_edge(edge_at);
+            point_at = curves.get_next_point(point_at);
+        } else {
+            edge_at = curves.get_prev_edge(edge_at);
+            point_at = curves.get_prev_point(point_at);
+        }
+        while (!is_impact){
+            if (is_following_orientation){
+                edge_at = curves.get_next_edge(edge_at);
+                point_at = curves.get_next_point(point_at);
             } else {
-                if (is_prev_foo & !is_foo_next){
-                    if (dim_of_interest == 1){
-                        std::cout << "sout " << std::endl;
-                        vs_foo.neighbor_shape = NeighborhoodShape::kNotchSouth;
+                edge_at = curves.get_prev_edge(edge_at);
+                point_at = curves.get_prev_point(point_at);
+            }
+            if (vsides_[edge_at].orientation == EdgeOrientation::kEast){
+                is_impact = curves.rayTraceNorth(origin, vsides_[edge_at].points, impact);
+                std::cout << edge_at << " has impact " << is_impact << std::endl;
+            }
+        }
+    }
+    
+    Patrol spawnPatrol(int start_edge_id){
+        Patrol patrol;
+        patrol.start = vsides_[start_edge_id];
+        //first the lower edge of the patrol
+        
+        //Determine which direction to traverse.
+        int p_at;
+        int p_next;
+        std::cout << "start at " << start_edge_id << " points " << patrol.start.point_ids[0] << " " << patrol.start.point_ids[1] << std::endl;
+        bool is_following_orient;
+        if (patrol.start.outside == OutsideSide::kLeft){
+            p_at = patrol.start.point_ids[0];
+            p_next = curves.get_next_point(p_at);
+            is_following_orient = (p_next != patrol.start.point_ids[1]);
+        } else {
+            p_at = patrol.start.point_ids[1];
+            p_next = curves.get_next_point(p_at);
+            is_following_orient = (p_next != patrol.start.point_ids[0]);
+        }
+        //The BOTTOM
+        std::cout << "BOTTOM " << std::endl;
+        std::cout<< "TRUTH " << true << std::endl;
+        std::cout << "with orientation " << is_following_orient << std::endl;
+        bool is_end_found = false;
+        int e_at = start_edge_id;
+        patrol.landmarks_low.push_back(curves.get_point(p_at));
+        while(!is_end_found){
+            if (is_following_orient){
+                e_at = curves.get_next_edge(e_at);
+                p_at = curves.get_next_point(p_at);
+            } else {
+                e_at = curves.get_prev_edge(e_at);
+                p_at = curves.get_prev_point(p_at);
+            }
+            if (vsides_[e_at].neighbor_shape == NeighborhoodShape::kNotchWest){
+                patrol.terminus = vsides_[e_at];
+                std::cout << "end at " << e_at << std::endl;
+                is_end_found = true;
+            } else {
+                patrol.landmarks_low.push_back(curves.get_point(p_at));
+                std::cout << "add point " << p_at << std::endl;
+            }
+        }
+        //TOP
+        std::cout << "TOP " << std::endl;
+        is_following_orient = !is_following_orient;
+        is_end_found = false;
+        e_at = start_edge_id;
+        if (patrol.start.outside == OutsideSide::kLeft){
+            p_at = patrol.start.point_ids[1];
+        } else {
+            Eigen::Vector2d impact;
+            p_at = patrol.start.point_ids[0];
+            Eigen::Vector2d loc = curves.get_point(p_at);
+            nextCollideNorth(loc, is_following_orient, p_at, e_at, impact);
+            patrol.landmarks_high.push_back(impact);
+        }
+        patrol.landmarks_high.push_back(curves.get_point(p_at));
+        std::cout << " add point " << curves.get_point(p_at).transpose() << std::endl;
+        while(!is_end_found){
+            //Advance to next edge
+            if (is_following_orient){
+                e_at = curves.get_next_edge(e_at);
+                p_at = curves.get_next_point(p_at);
+            } else {
+                e_at = curves.get_prev_edge(e_at);
+                p_at = curves.get_prev_point(p_at);
+            }
+            //check for the end
+            if ((e_at == patrol.terminus.edge_id) | (e_at == eastmost_frontier_id_)){
+                patrol.terminus = vsides_[e_at];
+                std::cout << "end at " << e_at << std::endl;
+                is_end_found = true;
+            } else {
+                //check if the you hit a westnotch and need to project north
+                if(vsides_[e_at].neighbor_shape == NeighborhoodShape::kNotchWest){
+                    Eigen::Vector2d impact;
+                    int p_prev;
+                    if (is_following_orient){
+                        p_prev = curves.get_prev_point(p_at);
+                    } else {
+                        p_prev = curves.get_next_point(p_at);
                     }
-                    if (dim_of_interest == 0){
-                    std::cout << "west " << std::endl; vs_foo.neighbor_shape = NeighborhoodShape::kNotchWest;
-                    }
-                }
-                if (!is_prev_foo & is_foo_next){
-                    if (dim_of_interest == 1){
-                        std::cout << "north " << std::endl;
-                        vs_foo.neighbor_shape = NeighborhoodShape::kNotchNorth;
-                    }
-                    if (dim_of_interest == 0) {
-                        std::cout << "east " << std::endl;
-                        vs_foo.neighbor_shape = NeighborhoodShape::kNotchEast;
-                    }
+                    Eigen::Vector2d loc = curves.get_point(p_prev);
+                    nextCollideNorth(loc, is_following_orient, p_at, e_at, impact);
+                    patrol.landmarks_high.push_back(impact);
+                    Eigen::Vector2d landmark = curves.get_point(p_at);
+                    patrol.landmarks_high.push_back(landmark);
+                    std::cout << "add point " << p_at << " location " << landmark.transpose() << std::endl;
+                } else {
+                    Eigen::Vector2d landmark = curves.get_point(p_at);
+                    patrol.landmarks_high.push_back(landmark);
+                    std::cout << "add point " << p_at << " location " << landmark.transpose() << std::endl;
                 }
             }
-            //side foo is at this position
         }
-    };
+        return patrol;
+    }
 };
+
+
 
 namespace exda{
     std::vector<std::array<double,3>> grid_points = {
@@ -261,21 +432,142 @@ void example1(){
 void example2(){
     Vacancy vac;
     vac.insertCurves(exda::grid_points, exda::lines);
+    vac.populateNeighbors();
+    vac.findFrontier();
+    std::cout << "frontier west" << vac.westmost_frontier_id_ << std::endl;
+    std::cout << "frontire east" << vac.eastmost_frontier_id_ << std::endl;
+    
     for (int foo=0; foo<vac.vsides_.size(); foo++){
         std::cout << foo << std::endl;
         VacancySide vs = vac.vsides_[foo];
         std::cout << " pt " << vs.point_ids[0] << " @ " << vs.points[0].transpose() << std::endl;
         std::cout << " pt " << vs.point_ids[1] << " @ " << vs.points[1].transpose() << std::endl;
         std::cout << "length " << vs.length << " ";
-        if (vs.orientation == EdgeOrientation::kEast) std::cout << "east";
-        if (vs.orientation == EdgeOrientation::kNorth) std::cout << "north";
+        if (vs.orientation == EdgeOrientation::kEast) std::cout << "horiz";
+        if (vs.orientation == EdgeOrientation::kNorth) std::cout << "verti" ;
         if (vs.neighbor_shape == NeighborhoodShape::kZag)            std::cout << "zag" << std::endl;
-
+        if (vs.neighbor_shape == NeighborhoodShape::kNotchNorth)            std::cout << "north" << std::endl;
+        if (vs.neighbor_shape == NeighborhoodShape::kNotchEast)            std::cout << "east" << std::endl;
+        if (vs.neighbor_shape == NeighborhoodShape::kNotchSouth)            std::cout << "south" << std::endl;
+        if (vs.neighbor_shape == NeighborhoodShape::kNotchWest)            std::cout << "west" << std::endl;
     }
+    
+    std::cout << "Patrol down from 11 " << std::endl;
+    Patrol patty11 = vac.spawnPatrol(11);
+    Patrol patty7 = vac.spawnPatrol(7);
+    
 };
 
+bool rayTraceEast(const Eigen::Vector2d &origin, const vedge &segment, Eigen::Vector2d &impact){
+    //Returns true if there is an impact, otherwise false.
+    //If true, impact_location is populated with the impact point on the line segment.
+    //Assumes segment is vertical AND ordered with segment[0][1] < segment[1][1] and segment[0][0] == semgent[1][0]
+    if ((origin[0] > segment[0][0]) | (segment[0][1] > origin[1]) | (origin[1] > segment[1][1])) return false;
+    impact[1] = origin[1];
+    impact[0] = segment[0][0];
+    return true;
+}
+
+struct CaliperSlider{
+    std::list<Eigen::Vector2d> caliper_spots_;
+    std::list<vedge> landmarks_;
+    Eigen::Vector2d support_;
+    std::deque<Eigen::Vector2d> deck_;
+    double length_;
+    Eigen::Vector2d caliper_pos_;
+    //
+    CaliperSlider(){};
+    //
+    std::list<Eigen::Vector2d> bottomCaliperPositions(std::list<vedge> landmarks, double length){
+    // for now landmarks are paired as edges low, high
+        landmarks_ = landmarks;
+        length_ = length;
+        std::list<vedge>::iterator landmark_it = landmarks.begin();
+        vedge line0 = *landmark_it;
+        caliper_pos_ = line0[0] - Eigen::Vector2d({length,0});
+        caliper_spots_.push_back(caliper_pos_);
+        //
+        landmark_it++;
+        //find the support
+        rayTraceEast(caliper_pos_, *landmark_it, support_);
+        slide(1);
+        for (std::list<Eigen::Vector2d>::iterator it=caliper_spots_.begin(); it != caliper_spots_.end(); ++it){
+            //Need to purge thie points that are problems
+        }
+        
+        return caliper_spots_;
+    }
+    void slide(int start_position){
+        const int num_landmarks = landmarks_.size();
+        while (start_position <= num_landmarks){
+            int ii = start_position;
+            std::list<vedge>::iterator landmark_it = landmarks_.begin();
+            for (int foo=0; foo<ii; foo++) landmark_it++;
+//            vedge landmark = ;
+            //slide on support
+            double x_patrol_spot = (*landmark_it)[0][0];
+            while(x_patrol_spot <= support_[0] + length_){
+                double top_y = (*landmark_it)[1][1];
+                if (top_y > caliper_pos_[1]){
+                    //vedge pushes the caliper up
+                    caliper_pos_ = {(*landmark_it)[1][0] - length_, top_y};
+                    caliper_spots_.push_back(caliper_pos_);
+                    deck_.clear();
+                    landmark_it++;
+                    rayTraceEast(caliper_pos_, *landmark_it, support_);
+                    slide(ii+11);
+                    break;
+                } else if (ii == num_landmarks){
+                    break;
+                } else {
+                    landmark_it++;
+                    ii++;
+                    x_patrol_spot = (*landmark_it)[0][0];
+                }
+            }
+            //fall down to the next support
+            caliper_pos_ = support_;
+            caliper_spots_.push_back(caliper_pos_);
+            std::deque<Eigen::Vector2d> ondeck = setup(start_position, ii);
+            merge(deck_, ondeck);
+            hedge segment = *deck.begin();
+            deck_.pop_front();
+            caliper_pos_[1] = segment[0][1];
+            caliper_spots_.push_back(caliper_pos_);
+            start_position = ii;
+            support_ = segment[1];
+        }
+    };
+    
+    std::deque<Eigen::Vector2d> setup(int start_position, int end){
+        std::deque<Eigen::Vector2d> ondeck;
+        int ii = end - 1;
+        
+        while( ii > start_position ){
+        }
+    };
+    
+    void merge(std::deque<Eigen::Vector2d> &q_0, std::deque<Eigen::Vector2d> &q_1){
+        
+    };
+};
+    
+    
+    
+
+void example3(){
+    std::list<std::array<Eigen::Vector2d,2>> landmarks_low;
+    landmarks_low.push_back({Eigen::Vector2d({0,0}),Eigen::Vector2d({0,1})});
+    landmarks_low.push_back({Eigen::Vector2d({2,-1}),Eigen::Vector2d({2,0})});
+    landmarks_low.push_back({Eigen::Vector2d({5,-1}),Eigen::Vector2d({5,3})});
+    landmarks_low.push_back({Eigen::Vector2d({6,0}),Eigen::Vector2d({6,1})});
+    landmarks_low.push_back({Eigen::Vector2d({7,0}),Eigen::Vector2d({7,1})});
+    landmarks_low.push_back({Eigen::Vector2d({8,0}),Eigen::Vector2d({8,1})});
+    CaliperSlider cs;
+    auto calipos = cs.bottomCaliperPositions(landmarks_low, 2.4);
+};
 
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
-    example2();
+    example3();
 }
