@@ -14,6 +14,8 @@
 
 #include "Eigen/Dense"
 
+static const double repsilon = std::sqrt(std::numeric_limits<double>::epsilon());
+
 class CurveCollection {
 protected:
     bool is_valid_ = true;

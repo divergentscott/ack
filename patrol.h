@@ -8,6 +8,5 @@
 #ifndef patrol_hpp
 #define patrol_hpp
 
-#include <stdio.h>
 
 #endif /* patrol_hpp */
