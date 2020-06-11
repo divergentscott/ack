@@ -137,11 +137,18 @@ void example3(){
     std::cout << "Hike!" << std::endl;
     CaliperHiker calh(3.1, t);
     calh.hikeTrail();
-    //
-//    std::cout << "New hike!" << std::endl;
+    // Answer:
+    /*
+     camp at -3.1    0
+     camp at 1.9   0
+     camp at 1.9   3
+     camp at 6 3
+     camp at 6 1
+     */
+    std::cout << "New hike!" << std::endl;
 
-//    CaliperHiker calj(0.9, t);
-//    calj.hikeTrail();
+    CaliperHiker calj(0.9, t);
+    calj.hikeTrail();
     // Answer:
     /*
      camp at -0.9    0
@@ -153,8 +160,6 @@ void example3(){
      camp at 6 1
      camp at 7 1
      camp at 7 0
-     camp at 7.1   0
-     camp at 7.1   1
      */
 };
 

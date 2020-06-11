@@ -62,13 +62,16 @@ void CaliperHiker::hikeTrail(){
 
 void CaliperHiker::headEast(int start_east){
     int index_east = start_east;
-    while(start_east < num_walls_){
-        double east_reach = get_wall_valley_(index_east)[0][0];
-        double north_reach = get_wall_valley_(index_east)[1][1];
+    while(start_east < num_walls_-1){
+        vedge wall = get_wall_valley_(index_east);
+        double east_reach = wall[0][0];
+        double north_reach = wall[1][1];
         while(east_reach < obstruction_[0] + width_){
             // Try to slide the caliper straight east along the obstruction
             // But head north if a wall gets in the way.
-            if (north_reach > position_[1]){
+            if (index_east == num_walls_-1){
+                break;
+            }else if (north_reach > position_[1]){
                 //There is a valley wall in the way of east
                 position_ = {east_reach - width_, obstruction_[1]};
                 camps_valley_.push_back(position_);
@@ -80,8 +83,6 @@ void CaliperHiker::headEast(int start_east){
                 rayTraceEast(position_, get_wall_valley_(index_east+1), obstruction_);
                 headEast(index_east+1);
                 return;
-            } else if (index_east == num_walls_-1){
-                break;
             } else {
                 index_east++;
                 vedge wall = get_wall_valley_(index_east);
