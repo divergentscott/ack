@@ -55,7 +55,6 @@ void CaliperHiker::hikeTrail(){
     vedge obs = get_wall_valley_(0);
     rayTraceEast(position_, obs, obstruction_);
     camps_valley_.push_back(position_);
-    std::cout << "camp at " << position_.transpose() << std::endl;
     headEast(0);
     eraseBadCamps();
 }
@@ -75,10 +74,8 @@ void CaliperHiker::headEast(int start_east){
                 //There is a valley wall in the way of east
                 position_ = {east_reach - width_, obstruction_[1]};
                 camps_valley_.push_back(position_);
-                std::cout << "camp at " << position_.transpose() << std::endl;
                 position_ = {east_reach - width_, north_reach};
                 camps_valley_.push_back(position_);
-                std::cout << "camp at " << position_.transpose() << std::endl;
                 obstruct_que_.clear();
                 rayTraceEast(position_, get_wall_valley_(index_east+1), obstruction_);
                 headEast(index_east+1);
@@ -93,14 +90,12 @@ void CaliperHiker::headEast(int start_east){
         // Head south to a new obstruction
         position_ = obstruction_;
         camps_valley_.push_back(position_);
-        std::cout << "camp at " << position_.transpose() << std::endl;
         std::deque<hedge> obstructions_in_view = scanObstructions(start_east, index_east);
         mergeObsQue(obstruct_que_, obstructions_in_view);
         vedge topfloor = obstruct_que_[0];
         obstruct_que_.pop_front();
         position_ = {position_[0], topfloor[0][1]};
         camps_valley_.push_back(position_);
-        std::cout << "camp at " << position_.transpose() << std::endl;
         start_east = index_east;
         obstruction_ = topfloor[1];
     }

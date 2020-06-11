@@ -71,6 +71,45 @@ namespace exda{
         {14,15},
         {15,12}
     };
+
+    std::vector<std::array<double,3>> splotchpoints = {
+        {0,0},
+        {2,0},
+        {2,-1},
+        {5,-1},
+        {5,3},
+        {6,3},
+        {6,1},
+        {7,1},
+        {7,0},
+        {8,0},
+        {8,1},
+        {7.5,1},
+        {7.5,4},
+        {1,4},
+        {1,2},
+        {0,2}
+    };
+
+    std::vector<std::vector<int>> splotchlines = {
+        {0,1},
+        {1,2},
+        {2,3},
+        {3,4},
+        {4,5},
+        {5,6},
+        {6,7},
+        {7,8},
+        {8,9},
+        {9,10},
+        {10,11},
+        {11,12},
+        {12,13},
+        {13,14},
+        {14,15},
+        {15,0}
+    };
+
 }
 
 void example1(){
@@ -163,7 +202,29 @@ void example3(){
      */
 };
 
+void example4(){
+    Vacancy vac;
+    vac.insertCurves(exda::splotchpoints, exda::splotchlines);
+    vac.populateNeighbors();
+    vac.findFrontier();
+    Trail peopleheadeast = vac.spawnPatrol(15);
+    std::cout << "Valley landmarks: " << std::endl;
+    for (auto p : peopleheadeast.landmarks_valley){
+        std::cout << p.transpose() << std::endl;
+    }
+    std::cout << "Mountain landmarks: " << std::endl;
+    for (auto p : peopleheadeast.landmarks_mountain){
+        std::cout << p.transpose() << std::endl;
+    }
+    CaliperHiker calj(3.3, peopleheadeast);
+    calj.hikeTrail();
+    std::cout << "Valley camps:" << std::endl;
+    for (auto p : calj.camps_valley_){
+        std::cout << p.transpose() << std::endl;
+    };
+};
+
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
-    example3();
+    example4();
 }

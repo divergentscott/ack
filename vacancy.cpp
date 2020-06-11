@@ -104,7 +104,6 @@ void Vacancy::insertCurves(const std::vector<std::array<double,3>> &grid_points,
 void Vacancy::populateNeighbors(){
     //Populate the neighborhood shapes.
     for (int foo=0; foo<vsides_.size(); foo++){
-        std::cout << foo;
         VacancySide &vs_foo = vsides_[foo];
         int dim_of_interest = vs_foo.orientation == EdgeOrientation::kNorth ? 0 : 1;
         auto edgefoo = curves.get_points_of_edge(foo);
@@ -158,7 +157,6 @@ Trail Vacancy::spawnPatrol(int start_edge_id){
     //Determine which direction to traverse.
     int p_at;
     int p_next;
-    std::cout << "start at " << start_edge_id << " points " << patrol.start.point_ids[0] << " " << patrol.start.point_ids[1] << std::endl;
     bool is_following_orient;
     if (patrol.start.outside == OutsideSide::kLeft){
         p_at = patrol.start.point_ids[0];
@@ -170,9 +168,6 @@ Trail Vacancy::spawnPatrol(int start_edge_id){
         is_following_orient = (p_next != patrol.start.point_ids[0]);
     }
     //The BOTTOM
-    std::cout << "BOTTOM " << std::endl;
-    std::cout<< "TRUTH " << true << std::endl;
-    std::cout << "with orientation " << is_following_orient << std::endl;
     bool is_end_found = false;
     int e_at = start_edge_id;
     patrol.landmarks_valley.push_back(curves.get_point(p_at));
@@ -186,15 +181,13 @@ Trail Vacancy::spawnPatrol(int start_edge_id){
         }
         if (vsides_[e_at].neighbor_shape == NeighborhoodShape::kNotchWest){
             patrol.terminus = vsides_[e_at];
-            std::cout << "end at " << e_at << std::endl;
             is_end_found = true;
+            patrol.landmarks_valley.push_back(curves.get_point(p_at));
         } else {
             patrol.landmarks_valley.push_back(curves.get_point(p_at));
-            std::cout << "add point " << p_at << std::endl;
         }
     }
     //TOP
-    std::cout << "TOP " << std::endl;
     is_following_orient = !is_following_orient;
     is_end_found = false;
     e_at = start_edge_id;
@@ -208,7 +201,6 @@ Trail Vacancy::spawnPatrol(int start_edge_id){
         patrol.landmarks_mountain.push_back(impact);
     }
     patrol.landmarks_mountain.push_back(curves.get_point(p_at));
-    std::cout << " add point " << curves.get_point(p_at).transpose() << std::endl;
     while(!is_end_found){
         //Advance to next edge
         if (is_following_orient){
@@ -221,7 +213,7 @@ Trail Vacancy::spawnPatrol(int start_edge_id){
         //check for the end
         if ((e_at == patrol.terminus.edge_id) | (e_at == eastmost_frontier_id_)){
             patrol.terminus = vsides_[e_at];
-            std::cout << "end at " << e_at << std::endl;
+            patrol.landmarks_mountain.push_back(curves.get_point(p_at));
             is_end_found = true;
         } else {
             //check if the you hit a westnotch and need to project north
@@ -238,11 +230,9 @@ Trail Vacancy::spawnPatrol(int start_edge_id){
                 patrol.landmarks_mountain.push_back(impact);
                 Eigen::Vector2d landmark = curves.get_point(p_at);
                 patrol.landmarks_mountain.push_back(landmark);
-                std::cout << "add point " << p_at << " location " << landmark.transpose() << std::endl;
             } else {
                 Eigen::Vector2d landmark = curves.get_point(p_at);
                 patrol.landmarks_mountain.push_back(landmark);
-                std::cout << "add point " << p_at << " location " << landmark.transpose() << std::endl;
             }
         }
     }
