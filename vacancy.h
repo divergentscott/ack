@@ -55,14 +55,14 @@ struct Trail{
     //Trails cover the Vacancy.
     //Trails have a path of lower and upper points in R2
     //Trails do not contain east or west notches.
-    std::list<Eigen::Vector2d> landmarks_mountain;
-    std::list<Eigen::Vector2d> landmarks_valley;
+    Cabbie landmarks_mountain_;
+    Cabbie landmarks_valley_;
     VacancySide start;
     VacancySide terminus;
 };
 
 struct Vacancy{
-    CabbyCurveCollection curves;
+    CabbieCurveCollection curves;
     std::vector<VacancySide> vsides_;
     int westmost_frontier_id_ = 0;
     int eastmost_frontier_id_ = 0;

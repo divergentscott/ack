@@ -113,7 +113,7 @@ namespace exda{
 }
 
 void example1(){
-    CabbyCurveCollection ccc;
+    CabbieCurveCollection ccc;
     ccc.insertEdges(exda::grid_points, exda::lines);
     std::cout << ccc.get_number_of_points();
     for (int foo=0; foo<exda::lines.size(); foo++){
@@ -158,50 +158,6 @@ void example2(){
     
 };
 
-void example3(){
-    Trail t;
-    t.landmarks_valley = {
-        Eigen::Vector2d({0,0}),
-        Eigen::Vector2d({2,0}),
-        Eigen::Vector2d({2,-1}),
-        Eigen::Vector2d({5,-1}),
-        Eigen::Vector2d({5,3}),
-        Eigen::Vector2d({6,3}),
-        Eigen::Vector2d({6,1}),
-        Eigen::Vector2d({7,1}),
-        Eigen::Vector2d({7,0}),
-        Eigen::Vector2d({8,0}),
-        Eigen::Vector2d({8,1})
-    };
-    std::cout << "Hike!" << std::endl;
-    CaliperHiker calh(3.1, t);
-    calh.hikeTrail();
-    // Answer:
-    /*
-     camp at -3.1    0
-     camp at 1.9   0
-     camp at 1.9   3
-     camp at 6 3
-     camp at 6 1
-     */
-    std::cout << "New hike!" << std::endl;
-
-    CaliperHiker calj(0.9, t);
-    calj.hikeTrail();
-    // Answer:
-    /*
-     camp at -0.9    0
-     camp at 2 0
-     camp at  2 -1
-     camp at 4.1  -1
-     camp at 4.1   3
-     camp at 6 3
-     camp at 6 1
-     camp at 7 1
-     camp at 7 0
-     */
-};
-
 void example4(){
     Vacancy vac;
     vac.insertCurves(exda::splotchpoints, exda::splotchlines);
@@ -209,19 +165,39 @@ void example4(){
     vac.findFrontier();
     Trail peopleheadeast = vac.spawnPatrol(15);
     std::cout << "Valley landmarks: " << std::endl;
-    for (auto p : peopleheadeast.landmarks_valley){
+    for (auto p : peopleheadeast.landmarks_valley_.points_){
         std::cout << p.transpose() << std::endl;
     }
     std::cout << "Mountain landmarks: " << std::endl;
-    for (auto p : peopleheadeast.landmarks_mountain){
+    for (auto p : peopleheadeast.landmarks_mountain_.points_){
         std::cout << p.transpose() << std::endl;
     }
-    CaliperHiker calj(3.3, peopleheadeast);
-    calj.hikeTrail();
+    PlankHiker calj(peopleheadeast.landmarks_valley_, 3.3, true);
+    calj.hike();
+//    calj.hikeTrailValley();
     std::cout << "Valley camps:" << std::endl;
-    for (auto p : calj.camps_valley_){
+    for (auto p : calj.camps_.points_){
         std::cout << p.transpose() << std::endl;
     };
+    /*
+     Valley camps:
+     -3.3    0
+     1.7   0
+     1.7   3
+     6 3
+     6 1
+     */
+    PlankHiker calk(peopleheadeast.landmarks_mountain_, 3.3, false);
+    calk.hike();
+//    calj.hikeTrailValley();
+    std::cout << "Mountain camps:" << std::endl;
+    for (auto p : calk.camps_.points_){
+        std::cout << p.transpose() << std::endl;
+    };
+    /*
+     Mountain camps:
+     
+     */
 };
 
 int main() {

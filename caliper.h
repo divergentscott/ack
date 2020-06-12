@@ -17,18 +17,12 @@
 #include "cabby_curve_collection.h"
 #include "vacancy.h"
 
-using vedge = std::array<Eigen::Vector2d,2>;
-using hedge = std::array<Eigen::Vector2d,2>;
-
 struct CaliperHiker{
     double width_;
     int num_walls_;
-    std::vector<Eigen::Vector2d> landmarks_valley_;
-//    std::vector<vedge> walls_valley_; //all the places the caliper stops to measure
-//    Eigen::Vector2d valley_start_;
-//    Eigen::Vector2d valley_end_;
-//    std::vector<vedge> walls_mountain_; //all the places the caliper stops to measure
-    
+
+    Cabbie landmarks_valley_;
+
     std::vector<Eigen::Vector2d> camps_valley_;
     std::vector<Eigen::Vector2d> camps_mountain_;
 
@@ -40,22 +34,39 @@ struct CaliperHiker{
     //
     CaliperHiker(double width, Trail trail);
     //
-    vedge get_wall_valley_(int east_index);
-    //
-    hedge get_floor_valley_(int east_index);
-    //
-    void hikeTrail();
+    void hikeTrailValley();
     //compute all the lower positions for the caliper
-    
-    void headEast(int start_east);
-    //move the caliper east with
-    
-    std::deque<hedge> scanObstructions(int east_start, int east_end);
-    
-    void mergeObsQue(std::deque<hedge> &q0, std::deque<hedge> &q1);
-    
-    void eraseBadCamps();
 };
 
+struct PlankHiker{
+    /*
+     The PlankHiker moves a fixed width interval along a cabby path and notes the positions the interval can fit.
+     
+     */
+    const Cabbie landmarks_;
+    const double width_;
+    const bool is_gravity_south_;
+    int vert_index_;
+
+    Cabbie camps_;
+    Eigen::Vector2d obstruction_; //point currently preventing the caliper from expanding south (or maybe north)
+    std::deque<hedge> obstruct_que_; //points that could potentially catch the caliper
+    Eigen::Vector2d position_;
+    //
+    PlankHiker()=delete;
+    //
+    PlankHiker(const Cabbie& landmarks, const double width, const bool is_grav_south);
+    //
+    bool compareVertical(const double& x, const double &y) const;;
+    //
+    void hike();
+    //
+    void headEast(int start_east);
+    //move the plank east with
+    
+    std::deque<hedge> scanPlateaus(const int east_start, const int east_end);
+    
+    void mergeQue(std::deque<hedge> &q0, std::deque<hedge> &q1);
+};
 
 #endif /* caliper_hpp */

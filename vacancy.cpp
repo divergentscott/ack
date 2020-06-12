@@ -170,7 +170,7 @@ Trail Vacancy::spawnPatrol(int start_edge_id){
     //The BOTTOM
     bool is_end_found = false;
     int e_at = start_edge_id;
-    patrol.landmarks_valley.push_back(curves.get_point(p_at));
+    patrol.landmarks_valley_.push_back(curves.get_point(p_at));
     while(!is_end_found){
         if (is_following_orient){
             e_at = curves.get_next_edge(e_at);
@@ -182,9 +182,9 @@ Trail Vacancy::spawnPatrol(int start_edge_id){
         if (vsides_[e_at].neighbor_shape == NeighborhoodShape::kNotchWest){
             patrol.terminus = vsides_[e_at];
             is_end_found = true;
-            patrol.landmarks_valley.push_back(curves.get_point(p_at));
+            patrol.landmarks_valley_.push_back(curves.get_point(p_at));
         } else {
-            patrol.landmarks_valley.push_back(curves.get_point(p_at));
+            patrol.landmarks_valley_.push_back(curves.get_point(p_at));
         }
     }
     //TOP
@@ -198,9 +198,9 @@ Trail Vacancy::spawnPatrol(int start_edge_id){
         p_at = patrol.start.point_ids[0];
         Eigen::Vector2d loc = curves.get_point(p_at);
         nextCollideNorth(loc, is_following_orient, p_at, e_at, impact);
-        patrol.landmarks_mountain.push_back(impact);
+        patrol.landmarks_mountain_.push_back(impact);
     }
-    patrol.landmarks_mountain.push_back(curves.get_point(p_at));
+    patrol.landmarks_mountain_.push_back(curves.get_point(p_at));
     while(!is_end_found){
         //Advance to next edge
         if (is_following_orient){
@@ -213,7 +213,7 @@ Trail Vacancy::spawnPatrol(int start_edge_id){
         //check for the end
         if ((e_at == patrol.terminus.edge_id) | (e_at == eastmost_frontier_id_)){
             patrol.terminus = vsides_[e_at];
-            patrol.landmarks_mountain.push_back(curves.get_point(p_at));
+            patrol.landmarks_mountain_.push_back(curves.get_point(p_at));
             is_end_found = true;
         } else {
             //check if the you hit a westnotch and need to project north
@@ -227,12 +227,12 @@ Trail Vacancy::spawnPatrol(int start_edge_id){
                 }
                 Eigen::Vector2d loc = curves.get_point(p_prev);
                 nextCollideNorth(loc, is_following_orient, p_at, e_at, impact);
-                patrol.landmarks_mountain.push_back(impact);
+                patrol.landmarks_mountain_.push_back(impact);
                 Eigen::Vector2d landmark = curves.get_point(p_at);
-                patrol.landmarks_mountain.push_back(landmark);
+                patrol.landmarks_mountain_.push_back(landmark);
             } else {
                 Eigen::Vector2d landmark = curves.get_point(p_at);
-                patrol.landmarks_mountain.push_back(landmark);
+                patrol.landmarks_mountain_.push_back(landmark);
             }
         }
     }
