@@ -27,7 +27,7 @@ bool rayTraceNorth(const Eigen::Vector2d &origin, const std::array<Eigen::Vector
 
 bool rayTraceEast(const Eigen::Vector2d &origin, const std::array<Eigen::Vector2d,2> &segment, Eigen::Vector2d &impact);
 
-struct Cabbie{
+struct CabbiePath{
     //Cabby paths should move only alternatingly east ~(1,0) and north ~(0,1)
     int num_walls_;
     int num_plateaus_;

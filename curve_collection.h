@@ -5,8 +5,8 @@
 //  Created by Shane Scott on 5/29/20.
 //
 
-#ifndef curve_collection_hpp
-#define curve_collection_hpp
+#ifndef curve_collection_hpp4774101
+#define curve_collection_hpp4774101
 
 #include <array>
 #include <iostream>
@@ -74,22 +74,25 @@ public:
     Eigen::Vector2d get_normal(int p_id);
     
     // Point access
-    int get_number_of_points();
-
+    int get_number_of_points() const;
+    
+    int get_number_of_components() const;
+    int get_basepoint(int) const;
+    
     // Cycle information access
-    int get_prev_point(int e_id);
-    int get_next_point(int e_id);
+    int get_prev_point(const int e_id) const;
+    int get_next_point(const int e_id) const;
 
     
     // Cycle information access
-    int get_prev_edge(int e_id);
-    int get_next_edge(int e_id);
+    int get_prev_edge(const int e_id) const;
+    int get_next_edge(const int e_id) const;
 
-    Eigen::Vector2d get_point(int point_id);
+    Eigen::Vector2d get_point(const int point_id) const;
 
-    std::vector<int> get_edges_of_point(int point_id);
+    std::vector<int> get_edges_of_point(const int point_id) const;
     
-    std::array<int, 2> get_points_of_edge(int e_id);
+    std::array<int, 2> get_points_of_edge(const int e_id) const;
 
 };
 

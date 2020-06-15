@@ -1,4 +1,4 @@
-#include "cabby_curve_collection.h"
+#include "cabbie_curve_collection.h"
 
 // Tao is 2pi
 const double kConstantTao =
@@ -65,7 +65,7 @@ bool CurveCollection::is_ray_segment_intersect(const Eigen::Vector2d orig,
            (t[1] < 1 + kREpsilon);
 }
 
-bool CurveCollection::is_point_in(Eigen::Vector2d point) {
+bool CurveCollection::is_point_in(const Eigen::Vector2d point) {
     /* Determine if a point lies in a curve collecion via parity of a random
      * direction ray trace. */
     double theta = randomAngle();
@@ -297,12 +297,12 @@ bool CurveCollection::insertEdges(const std::vector<std::array<double,3>> &grid_
 //    writer->Update();
 //};
 
-int CurveCollection::get_number_of_points() {
+int CurveCollection::get_number_of_points() const {
     /*Point access*/
     return points_.size();
 };
 
-Eigen::Vector2d CurveCollection::get_point(int p_id) {
+Eigen::Vector2d CurveCollection::get_point(int p_id) const {
     /*Point access*/
     return points_[p_id];
 };
@@ -313,26 +313,33 @@ Eigen::Vector2d CurveCollection::get_normal(int p_id) {
     return normals_[p_id];
 };
 
-int CurveCollection::get_next_edge(int e_id){
+int CurveCollection::get_next_edge(const int e_id) const {
     return edge_order_next_[e_id];
 }
 
-int CurveCollection::get_prev_edge(int e_id){
+int CurveCollection::get_prev_edge(const int e_id) const {
     return edge_order_prev_[e_id];
 }
 
-int CurveCollection::get_next_point(int p_id){
+int CurveCollection::get_next_point(const int p_id) const {
     return edge_order_next_[p_id];
 }
 
-int CurveCollection::get_prev_point(int p_id){
+int CurveCollection::get_prev_point(const int p_id) const {
     return edge_order_prev_[p_id];
 }
 
 
-std::array<int,2> CurveCollection::get_points_of_edge(int e_id){
+std::array<int,2> CurveCollection::get_points_of_edge(const int e_id) const {
     return edges_[e_id];
 }
+
+int CurveCollection::get_number_of_components() const {
+    return basepoints_.size();
+};
+int CurveCollection::get_basepoint(int x) const {
+    return basepoints_[x];
+};
 
 //void CurveCollection::update_polydata() {
 //    if (!is_normals_computed_) compute_normals();

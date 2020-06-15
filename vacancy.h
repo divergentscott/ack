@@ -11,7 +11,7 @@
 #include <array>
 #include <list>
 
-#include "cabby_curve_collection.h"
+#include "cabbie_curve_collection.h"
 #include "patrol.h"
 
 enum class EdgeOrientation{
@@ -55,8 +55,8 @@ struct Trail{
     //Trails cover the Vacancy.
     //Trails have a path of lower and upper points in R2
     //Trails do not contain east or west notches.
-    Cabbie landmarks_mountain_;
-    Cabbie landmarks_valley_;
+    CabbiePath landmarks_mountain_;
+    CabbiePath landmarks_valley_;
     VacancySide start;
     VacancySide terminus;
 };

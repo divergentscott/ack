@@ -6,6 +6,7 @@
 #include <Eigen/Dense>
 
 #include "caliper.h"
+#include "vacancy_visualize.h"
 
 /*
  A vacancy is a polygon (or possible a non-simply connected region with polygon boundaries) that has only vertical and horizontal edges.
@@ -172,7 +173,7 @@ void example4(){
     for (auto p : peopleheadeast.landmarks_mountain_.points_){
         std::cout << p.transpose() << std::endl;
     }
-    PlankHiker calj(peopleheadeast.landmarks_valley_, 3.3, true);
+    PlankHiker calj(peopleheadeast.landmarks_valley_, 0.5, true);//3.3, false);
     calj.hike();
 //    calj.hikeTrailValley();
     std::cout << "Valley camps:" << std::endl;
@@ -181,13 +182,13 @@ void example4(){
     };
     /*
      Valley camps:
-     -3.3    0
+     0    0
      1.7   0
      1.7   3
      6 3
      6 1
      */
-    PlankHiker calk(peopleheadeast.landmarks_mountain_, 3.3, false);
+    PlankHiker calk(peopleheadeast.landmarks_mountain_, 0.5, false);//3.3, false);
     calk.hike();
 //    calj.hikeTrailValley();
     std::cout << "Mountain camps:" << std::endl;
@@ -196,11 +197,37 @@ void example4(){
     };
     /*
      Mountain camps:
-     
+     0    2
+     1 2
+     1 4
+     4.2   4
+     4.2   1
      */
+};
+
+void example5(){
+    Vacancy vac;
+    vac.insertCurves(exda::splotchpoints, exda::splotchlines);
+    vac.populateNeighbors();
+    vac.findFrontier();
+    Trail peopleheadeast = vac.spawnPatrol(15);
+    double wheight = 0.5;
+    double wweight = 0.4;
+    CaliperHiker calh(peopleheadeast, wweight, wheight);
+    calh.hike();
+    VacancyVisualize vv;
+    vv.addCabbieCurveCollection(vac.curves);
+    vv.addRectangles(calh.valid_, wweight, wheight);
+    vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example5.svg");
+    std::cout << "Valids: " << std::endl;
+    for (auto p : calh.valid_){
+        std::cout << p.transpose() << std::endl;
+    }
 };
 
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
-    example4();
+    example5();
 }
+
+
