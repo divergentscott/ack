@@ -9,20 +9,14 @@
 #define vacancy_visualizevtk_h_20
 
 #include <vtkContext2D.h>
-#include <vtkSVGExporter.h>
 
 #include "vacancy.h"
 
 struct VacancyVisualizeVTK{
-    std::vector<std::string> topstack = {};
-    std::vector<std::string> botstack = {};
-    double min_x_;
-    double min_y_;
-    double max_x_;
-    double max_y_;
-    double stroke_width_ = 0.1;
+//    vtkSmartPointer<vtkContext2D> context_ = vtkSmartPointer<vtkContext2D>::New();
+    
     //
-    VacancyVisualize();
+    VacancyVisualizeVTK();
     void setStroke(const double&);
     void setViewBox(const Eigen::Vector2d& position, const double& width, const double& height);
     void addRectangle(const Eigen::Vector2d& position, const double& width, const double& height);

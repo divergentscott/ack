@@ -218,7 +218,7 @@ void example5(){
     VacancyVisualize vv;
     vv.addCabbieCurveCollection(vac.curves);
     vv.addRectangles(calh.valid_, wweight, wheight);
-    vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example5.svg");
+    vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/ackler.svg");
     std::cout << "Valids: " << std::endl;
     for (auto p : calh.valid_){
         std::cout << p.transpose() << std::endl;
