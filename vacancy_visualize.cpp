@@ -93,6 +93,21 @@ void VacancyVisualize::addCabbieCurveCollection(const CabbieCurveCollection& ccc
     };
 }
 
+void VacancyVisualize::addCabbiePath(const CabbiePath &cp, const std::string& color, const double& stroke){
+    svgvis::Polyline plyl;
+    plyl.stroke_color = color;
+    plyl.stroke_width = stroke;
+    if (stroke < 0) plyl.stroke_width = default_stroke_width_;
+    for (const auto & pp : cp.points_){
+        min_x_ = std::min(pp[0], min_x_);
+        min_y_ = std::min(pp[1], min_y_);
+        max_x_ = std::max(pp[0], max_x_);
+        max_y_ = std::max(pp[1], max_y_);
+    }
+    plyl.points = cp.points_;
+    polylines.push_back(plyl);
+};
+
 void VacancyVisualize::writeScalableVectorGraphics(const std::string& outfilepath){
     std::ofstream file;
     file.open(outfilepath.c_str());

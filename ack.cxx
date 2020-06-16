@@ -216,8 +216,15 @@ void example5(){
     CaliperHiker calh(peopleheadeast, wweight, wheight);
     calh.hike();
     VacancyVisualize vv;
-    vv.addCabbieCurveCollection(vac.curves);
-    vv.addRectangles(calh.valid_, wweight, wheight);
+    std::vector<std::string> funcolors = {"#F75C03",
+    "#D90368",
+    "#820263",
+    "#291720",
+        "#04A777"};
+    vv.addCabbieCurveCollection(vac.curves, funcolors[2]);
+    vv.addCabbiePath(peopleheadeast.landmarks_valley_, funcolors[0]);
+    vv.addCabbiePath(peopleheadeast.landmarks_mountain_,  funcolors[1]);
+    vv.addRectangles(calh.valid_, wweight, wheight, funcolors[3]);
     vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/ackler.svg");
     std::cout << "Valids: " << std::endl;
     for (auto p : calh.valid_){
