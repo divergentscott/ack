@@ -131,7 +131,7 @@ void example1(){
 };
 
 void example2(){
-    Vacancy vac;
+    Wilderness vac;
     vac.insertCurves(exda::grid_points, exda::lines);
     vac.populateNeighbors();
     vac.findFrontier();
@@ -154,17 +154,17 @@ void example2(){
     }
     
     std::cout << "Patrol down from 11 " << std::endl;
-    Trail patty11 = vac.spawnPatrol(11);
-    Trail patty7 = vac.spawnPatrol(7);
+    Trail patty11 = vac.trailblaze(11);
+    Trail patty7 = vac.trailblaze(7);
     
 };
 
 void example4(){
-    Vacancy vac;
+    Wilderness vac;
     vac.insertCurves(exda::splotchpoints, exda::splotchlines);
     vac.populateNeighbors();
     vac.findFrontier();
-    Trail peopleheadeast = vac.spawnPatrol(15);
+    Trail peopleheadeast = vac.trailblaze(15);
     std::cout << "Valley landmarks: " << std::endl;
     for (auto p : peopleheadeast.landmarks_valley_.points_){
         std::cout << p.transpose() << std::endl;
@@ -206,11 +206,11 @@ void example4(){
 };
 
 void example5(double width = 0.5, double height = 0.5, std::string afile = "/Users/sscott/Programs/ack/ackler2.svg"){
-    Vacancy vac;
+    Wilderness vac;
     vac.insertCurves(exda::splotchpoints, exda::splotchlines);
     vac.populateNeighbors();
     vac.findFrontier();
-    Trail peopleheadeast = vac.spawnPatrol(15);
+    Trail peopleheadeast = vac.trailblaze(15);
     CaliperHiker calh(peopleheadeast,width, height);
     calh.hike();
     VacancyVisualize vv;
@@ -239,12 +239,17 @@ void example5(double width = 0.5, double height = 0.5, std::string afile = "/Use
      */
 };
 
+void example6(double width = 1, double height = 1){
+    Wilderness vac;
+    vac.insertCurves({{0,0},{10,0},{10,10},{0,10}}, {{0,1},{1,2},{2,3},{3,0}});
+    vac.populateNeighbors();
+    vac.findFrontier();
+    vac.trailblaze();
+}
+
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
-    std::vector<std::vector<double>> hws = {{0.1,0.1},{2,0.1},{0.1,2},{2,2},{3,0.1},{0.1,3},{3,3}};
-    for (int foo=0; foo< hws.size(); foo++){
-        example5(hws[foo][0], hws[foo][1], "/Users/sscott/Programs/ack/hw"+std::to_string(foo)+".svg");
-    }
+    example6();
 }
 
 

@@ -52,22 +52,24 @@ struct VacancySide{
 };
 
 struct Trail{
-    //Trails cover the Vacancy.
+    //Trails cover the Wilderness.
     //Trails have a path of lower and upper points in R2
     //Trails do not contain east or west notches.
     CabbiePath landmarks_mountain_;
     CabbiePath landmarks_valley_;
     VacancySide start;
     VacancySide terminus;
+    void removeRectangle(const Eigen::Vector2d& position, const double& width, const double& height);
 };
 
-struct Vacancy{
+struct Wilderness{
     CabbieCurveCollection curves;
     std::vector<VacancySide> vsides_;
     int westmost_frontier_id_ = 0;
     int eastmost_frontier_id_ = 0;
+    std::vector<Trail> trails_;
     
-    Vacancy(){};
+    Wilderness(){};
     
     void findFrontier();
     
@@ -79,7 +81,9 @@ struct Vacancy{
     
     void nextCollideNorth(const Eigen::Vector2d &origin, const bool &is_following_orientation, int &point_at, int &edge_at, Eigen::Vector2d &impact);
     
-    Trail spawnPatrol(int start_edge_id);
+    Trail trailblaze(int start_edge_id);
+    
+    void trailblaze();
 };
 
 

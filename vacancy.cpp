@@ -5,6 +5,8 @@
 //  Created by Shane Scott on 6/9/20.
 //
 
+#include <unordered_map>
+
 #include "vacancy.h"
 
 VacancySide::VacancySide(const int edge_id_0, const std::array<Eigen::Vector2d,2> &i_points, const std::array<int,2> &i_point_ids){
@@ -39,7 +41,7 @@ VacancySide::VacancySide(const int edge_id_0, const std::array<Eigen::Vector2d,2
     }
 };
 
-void Vacancy::findFrontier(){
+void Wilderness::findFrontier(){
     int westmost = 0;
     double westest = vsides_[0].points[0][0];
     int eastmost = 0;
@@ -61,7 +63,7 @@ void Vacancy::findFrontier(){
     eastmost_frontier_id_ = eastmost;
 };
 
-NeighborhoodShape Vacancy::getNeighborhoodShape(int dim_of_interest, double pos_prev, double pos_foo, double pos_next){
+NeighborhoodShape Wilderness::getNeighborhoodShape(int dim_of_interest, double pos_prev, double pos_foo, double pos_next){
     bool is_prev_foo = pos_prev < pos_foo;
     bool is_foo_next = pos_foo < pos_next;
     if ((is_prev_foo & is_foo_next) | (!is_prev_foo & !is_foo_next)) {
@@ -87,7 +89,7 @@ NeighborhoodShape Vacancy::getNeighborhoodShape(int dim_of_interest, double pos_
     return NeighborhoodShape::kUnknown;
 };
 
-void Vacancy::insertCurves(const std::vector<std::array<double,3>> &grid_points, const std::vector<std::vector<int>> &lines){
+void Wilderness::insertCurves(const std::vector<std::array<double,3>> &grid_points, const std::vector<std::vector<int>> &lines){
     curves.insertEdges(grid_points, lines);
     vsides_.resize(lines.size());
     for (int foo=0; foo < lines.size(); foo++){
@@ -101,7 +103,7 @@ void Vacancy::insertCurves(const std::vector<std::array<double,3>> &grid_points,
     };
 };
 
-void Vacancy::populateNeighbors(){
+void Wilderness::populateNeighbors(){
     //Populate the neighborhood shapes.
     for (int foo=0; foo<vsides_.size(); foo++){
         VacancySide &vs_foo = vsides_[foo];
@@ -123,7 +125,7 @@ void Vacancy::populateNeighbors(){
     };
 };
     
-void Vacancy::nextCollideNorth(const Eigen::Vector2d &origin, const bool &is_following_orientation, int &point_at, int &edge_at, Eigen::Vector2d &impact){
+void Wilderness::nextCollideNorth(const Eigen::Vector2d &origin, const bool &is_following_orientation, int &point_at, int &edge_at, Eigen::Vector2d &impact){
     //Continue along, testing horizontal edges for an impact
     //Advances the point and edge location.
     bool is_impact = false;
@@ -149,7 +151,7 @@ void Vacancy::nextCollideNorth(const Eigen::Vector2d &origin, const bool &is_fol
     }
 };
 
-Trail Vacancy::spawnPatrol(int start_edge_id){
+Trail Wilderness::trailblaze(int start_edge_id){
     Trail patrol;
     patrol.start = vsides_[start_edge_id];
     //first the lower edge of the patrol
@@ -239,3 +241,51 @@ Trail Vacancy::spawnPatrol(int start_edge_id){
     return patrol;
 };
 
+void Wilderness::trailblaze(){
+    for (int foo=0; foo<vsides_.size(); foo++){
+        if (vsides_[foo].neighbor_shape == NeighborhoodShape::kNotchWest){
+            trails_.push_back(trailblaze(foo));
+        }
+    }
+};
+
+enum class segmentRelation{
+    kDisjoint,
+    kSupersegment,
+    kSubsegment,
+    kDirectStack,
+    kReverseStack
+};
+
+segmentRelation hedgeIntersection(hedge a, hedge b){
+    if ( std::abs(a[0][1] - b[0][1]) < repsilon ) return segmentRelation::kDisjoint;
+    //So a and b have sufficiently close y.
+    if (a[0][0] <= b[0][0]) {
+        if (a[1][0] < b[0][0]) return segmentRelation::kDisjoint;
+        //So b[0][0] <= a[1][0]
+        if (b[1][0] <= a[1][0]) return segmentRelation::kSupersegment;
+        //So a[1][0] < b[1][0]
+        return segmentRelation::kDirectStack;
+    }
+    // So b[0][0]<a[0][0]
+    if (b[1][0] < a[0][0]) return segmentRelation::kDisjoint;
+    //
+    if (a[1][0] <= b[1][0]) return segmentRelation::kSubsegment;
+    //So a[1][0] < b[1][0]
+    return segmentRelation::kReverseStack;
+};
+
+void Trail::removeRectangle(const Eigen::Vector2d& position, const double& width, const double& height){
+    //Specifically assuming bottom left placement style.
+    //First find all the bottom edges that are in contact with the rectangle placement.
+    std::unordered_map<int,segmentRelation> contacts;
+    hedge rect_bot ={position, {position[0]+width, position[1]}};
+    for (int foo=0; foo < landmarks_valley_.num_plateaus_; foo++){
+        hedge platfoo = landmarks_valley_.getPlateau(foo);
+        if ( position[0] + width < platfoo[0][0] ) break;
+        if ( platfoo[1][0] < position[0] ) continue;
+        segmentRelation contact_type = hedgeIntersection(rect_bot, platfoo);
+        if (contact_type != segmentRelation::kDisjoint) contacts[foo] = contact_type;
+    }
+    //if there is a single contact
+}

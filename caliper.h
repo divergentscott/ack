@@ -18,8 +18,8 @@
 #include "vacancy.h"
 
 struct CaliperHiker{
-    const double height_;
     const double width_;
+    const double height_;
     const CabbiePath& landmarks_valley_;
     const CabbiePath& landmarks_mountain_;
     CabbiePath camps_valley_;
