@@ -205,36 +205,46 @@ void example4(){
      */
 };
 
-void example5(){
+void example5(double width = 0.5, double height = 0.5, std::string afile = "/Users/sscott/Programs/ack/ackler2.svg"){
     Vacancy vac;
     vac.insertCurves(exda::splotchpoints, exda::splotchlines);
     vac.populateNeighbors();
     vac.findFrontier();
     Trail peopleheadeast = vac.spawnPatrol(15);
-    double wheight = 0.5;
-    double wweight = 0.4;
-    CaliperHiker calh(peopleheadeast, wweight, wheight);
+    CaliperHiker calh(peopleheadeast,width, height);
     calh.hike();
     VacancyVisualize vv;
-    std::vector<std::string> funcolors = {"#F75C03",
-    "#D90368",
-    "#820263",
-    "#291720",
-        "#04A777"};
-    vv.addCabbieCurveCollection(vac.curves, funcolors[2]);
-    vv.addCabbiePath(peopleheadeast.landmarks_valley_, funcolors[0]);
-    vv.addCabbiePath(peopleheadeast.landmarks_mountain_,  funcolors[1]);
-    vv.addRectangles(calh.valid_, wweight, wheight, funcolors[3]);
-    vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/ackler.svg");
+    std::vector<std::string> funcolors = {"#F75C03", "#D90368", "#820263", "#291720", "#04A777"};
+    vv.addCabbieCurveCollection(vac.curves, funcolors[3]);
+    vv.addCabbiePath(calh.camps_valley_, funcolors[0]);
+    vv.addCabbiePath(calh.camps_mountain_,  funcolors[1]);
+    vv.addRectangles(calh.valid_, width, height, funcolors[4]);
+    vv.writeScalableVectorGraphics(afile);
     std::cout << "Valids: " << std::endl;
     for (auto p : calh.valid_){
         std::cout << p.transpose() << std::endl;
     }
+    /*
+     With width 0.5 height 0.4
+     0 0
+     1 0
+     2 0
+      2 -1
+     4.5  -1
+     4.5   3
+     6 3
+     6 1
+     7 1
+     7 0
+     */
 };
 
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
-    example5();
+    std::vector<std::vector<double>> hws = {{0.1,0.1},{2,0.1},{0.1,2},{2,2},{3,0.1},{0.1,3},{3,3}};
+    for (int foo=0; foo< hws.size(); foo++){
+        example5(hws[foo][0], hws[foo][1], "/Users/sscott/Programs/ack/hw"+std::to_string(foo)+".svg");
+    }
 }
 
 

@@ -9,10 +9,10 @@ std::string svgvis::Rectangle::getEntry() const{
     ss << " y=\"" << position[1] << "\"";
     ss << " width=\"" << width << "\"";
     ss << " height=\"" << height << "\"";
-    ss << " stroke-width=\"" << stroke_width << "\"";
-    ss << " stroke=\"" << stroke_color << "\"";
+//    ss << " stroke-width=\"" << stroke_width << "\"";
+//    ss << " stroke=\"" << stroke_color << "\"";
     ss << " fill=\"" << fill_color << "\"";
-    ss << "/>";
+    ss << " fill-opacity=\"0.7\" />";
     return ss.str();
 };
 
@@ -57,6 +57,7 @@ void VacancyVisualize::addRectangle(const Eigen::Vector2d& position, const doubl
     rec.width = width;
     rec.height = height;
     rec.stroke_color = color;
+    rec.fill_color = color;
     rec.stroke_width = stroke;
     if (stroke < 0) rec.stroke_width = default_stroke_width_;
     rectangles.push_back(rec);

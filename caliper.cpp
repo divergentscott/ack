@@ -7,9 +7,9 @@
 
 #include "caliper.h"
 
-CaliperHiker::CaliperHiker(const Trail& trail, const double& height, const double& width) :
-    height_(height),
+CaliperHiker::CaliperHiker(const Trail& trail, const double& width, const double& height) :
     width_(width),
+    height_(height),
     landmarks_valley_(trail.landmarks_valley_),
     landmarks_mountain_(trail.landmarks_mountain_)
 {};
@@ -21,11 +21,8 @@ void CaliperHiker::hike(){
     PlankHiker mountain_trail(landmarks_mountain_, width_, false);
     mountain_trail.hike();
     camps_mountain_ = mountain_trail.camps_;
-    unifyCamps();
     expandCamps();
 };
-
-void CaliperHiker::unifyCamps(){};
 
 void CaliperHiker::expandCamps(){
     //Move through the camps and measure the vertical space, saving the ones which are sufficiently high
@@ -85,16 +82,14 @@ bool PlankHiker::compareVertical(const double& x, const double &y) const {
 
 void PlankHiker::headEast(int start_east){
     int index_east = start_east;
-    while(start_east < landmarks_.num_walls_-1){
+    while(start_east < landmarks_.num_walls_){
         vedge wall = landmarks_.getWall(index_east);
         double east_reach = wall[0][0];
         double north_reach = wall[vert_index_][1];
-        while(east_reach < obstruction_[0] + width_){
+        while(east_reach <= obstruction_[0] + width_){
             // Try to slide the caliper straight east along the obstruction
             // But head north if a wall gets in the way.
-            if (index_east == landmarks_.num_walls_-1){
-                break;
-            }else if (compareVertical(position_[1], north_reach)){
+            if (compareVertical(position_[1], north_reach)){
                 //There is a valley wall in the way of east
                 position_ = {east_reach - width_, obstruction_[1]};
                 camps_.push_back(position_);
@@ -102,9 +97,12 @@ void PlankHiker::headEast(int start_east){
                 camps_.push_back(position_);
                 obstruct_que_.clear();
                 rayTraceEast(position_, landmarks_.getWall(index_east+1), obstruction_);
+                //Elevate, then head east.
                 headEast(index_east+1);
                 return;
-            } else {
+            } else if (index_east == landmarks_.num_walls_){
+                break;
+            } else{
                 index_east++;
                 vedge wall = landmarks_.getWall(index_east);
                 east_reach = wall[0][0];
@@ -164,5 +162,6 @@ void PlankHiker::nudgeFrontier(){
         camps_.num_plateaus_ = (camps_.points_.size())/2;
         camps_.num_walls_ = (camps_.points_.size()-1)/2;
     }
-    //We placed the first camp west of the western frontier.
+    //On the eastern frontier, ensure that you get the last possible point.
+    landmarks_.getPlateau(landmarks_.num_plateaus_-1);    
 }
