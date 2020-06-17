@@ -46,9 +46,12 @@ void CaliperHiker::expandCamps(){
         };
         while( (low_ii[1][0] <= high_jj[1][0]) & (ii < camps_valley_.num_plateaus_-1) ){
             ii++;
+            Eigen::Vector2d lastright = camps_valley_.getPlateau(ii-1)[1];
+            if (high_jj[0][1] - lastright[1] >= height_){
+                valid_.push_back(lastright);
+            }
             low_ii = camps_valley_.getPlateau(ii);
             if ( high_jj[0][1] - low_ii[0][1] >= height_){
-                valid_.push_back(camps_valley_.getPlateau(ii-1)[1]);
                 valid_.push_back(low_ii[0]);
             }
         };
@@ -163,5 +166,5 @@ void PlankHiker::nudgeFrontier(){
         camps_.num_walls_ = (camps_.points_.size()-1)/2;
     }
     //On the eastern frontier, ensure that you get the last possible point.
-    landmarks_.getPlateau(landmarks_.num_plateaus_-1);    
+    landmarks_.getPlateau(landmarks_.num_plateaus_-1);
 }
