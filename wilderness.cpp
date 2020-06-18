@@ -1,13 +1,6 @@
-//
-//  vacancy.cpp
-//  ack
-//
-//  Created by Shane Scott on 6/9/20.
-//
-
 #include <unordered_map>
 
-#include "vacancy.h"
+#include "wilderness.h"
 
 VacancySide::VacancySide(const int edge_id_0, const std::array<Eigen::Vector2d,2> &i_points, const std::array<int,2> &i_point_ids){
     //Vacancy side constructor from vertex ids and positions
@@ -146,33 +139,33 @@ void Wilderness::nextCollideNorth(const Eigen::Vector2d &origin, const bool &is_
         }
         if (vsides_[edge_at].orientation == EdgeOrientation::kEast){
             is_impact = rayTraceNorth(origin, vsides_[edge_at].points, impact);
-            std::cout << edge_at << " has impact " << is_impact << std::endl;
         }
     }
 };
 
 Trail Wilderness::trailblaze(int start_edge_id){
     Trail patrol;
-    patrol.start = vsides_[start_edge_id];
+    VacancySide patrol_start  = vsides_[start_edge_id];
     //first the lower edge of the patrol
     
     //Determine which direction to traverse.
     int p_at;
     int p_next;
     bool is_following_orient;
-    if (patrol.start.outside == OutsideSide::kLeft){
-        p_at = patrol.start.point_ids[0];
+    if (patrol_start.outside == OutsideSide::kLeft){
+        p_at = patrol_start.point_ids[0];
         p_next = curves.get_next_point(p_at);
-        is_following_orient = (p_next != patrol.start.point_ids[1]);
+        is_following_orient = (p_next != patrol_start.point_ids[1]);
     } else {
-        p_at = patrol.start.point_ids[1];
+        p_at = patrol_start.point_ids[1];
         p_next = curves.get_next_point(p_at);
-        is_following_orient = (p_next != patrol.start.point_ids[0]);
+        is_following_orient = (p_next != patrol_start.point_ids[0]);
     }
     //The BOTTOM
     bool is_end_found = false;
     int e_at = start_edge_id;
     patrol.landmarks_valley_.push_back(curves.get_point(p_at));
+    VacancySide patrol_terminus;
     while(!is_end_found){
         if (is_following_orient){
             e_at = curves.get_next_edge(e_at);
@@ -182,7 +175,7 @@ Trail Wilderness::trailblaze(int start_edge_id){
             p_at = curves.get_prev_point(p_at);
         }
         if (vsides_[e_at].neighbor_shape == NeighborhoodShape::kNotchWest){
-            patrol.terminus = vsides_[e_at];
+            patrol_terminus = vsides_[e_at];
             is_end_found = true;
             patrol.landmarks_valley_.push_back(curves.get_point(p_at));
         } else {
@@ -193,11 +186,11 @@ Trail Wilderness::trailblaze(int start_edge_id){
     is_following_orient = !is_following_orient;
     is_end_found = false;
     e_at = start_edge_id;
-    if (patrol.start.outside == OutsideSide::kLeft){
-        p_at = patrol.start.point_ids[1];
+    if (patrol_start.outside == OutsideSide::kLeft){
+        p_at = patrol_start.point_ids[1];
     } else {
         Eigen::Vector2d impact;
-        p_at = patrol.start.point_ids[0];
+        p_at = patrol_start.point_ids[0];
         Eigen::Vector2d loc = curves.get_point(p_at);
         nextCollideNorth(loc, is_following_orient, p_at, e_at, impact);
         patrol.landmarks_mountain_.push_back(impact);
@@ -213,8 +206,8 @@ Trail Wilderness::trailblaze(int start_edge_id){
             p_at = curves.get_prev_point(p_at);
         }
         //check for the end
-        if ((e_at == patrol.terminus.edge_id) | (e_at == eastmost_frontier_id_)){
-            patrol.terminus = vsides_[e_at];
+        if ((e_at == patrol_terminus.edge_id) | (e_at == eastmost_frontier_id_)){
+            patrol_terminus = vsides_[e_at];
             patrol.landmarks_mountain_.push_back(curves.get_point(p_at));
             is_end_found = true;
         } else {
@@ -243,49 +236,32 @@ Trail Wilderness::trailblaze(int start_edge_id){
 
 void Wilderness::trailblaze(){
     for (int foo=0; foo<vsides_.size(); foo++){
-        if (vsides_[foo].neighbor_shape == NeighborhoodShape::kNotchWest){
+        if (vsides_[foo].neighbor_shape == NeighborhoodShape::kNotchEast){
+            std::cout << "eastnotch at " << foo;
             trails_.push_back(trailblaze(foo));
         }
     }
 };
 
-enum class segmentRelation{
-    kDisjoint,
-    kSupersegment,
-    kSubsegment,
-    kDirectStack,
-    kReverseStack
+bool Wilderness::findPlacement(const double& width, const double& height, Eigen::Vector2d& placement) const {
+    bool is_placeable = false;
+    for(const Trail& t : trails_){
+        CaliperHiker caliper_hiker(t, width, height);
+        caliper_hiker.hike();
+        if (caliper_hiker.valid_.size()>0){
+            Eigen::Vector2d val = caliper_hiker.getMostValid();
+            if (is_placeable){
+                if (val[1] < placement[1]) placement = val;
+                if (std::abs(val[1]-placement[1]) < repsilon ){
+                    if (val[0] < placement[0]) placement = val;
+                }
+            } else {
+                placement = val;
+                is_placeable = true;
+            }
+        }
+    };
+    return is_placeable;
 };
 
-segmentRelation hedgeIntersection(hedge a, hedge b){
-    if ( std::abs(a[0][1] - b[0][1]) < repsilon ) return segmentRelation::kDisjoint;
-    //So a and b have sufficiently close y.
-    if (a[0][0] <= b[0][0]) {
-        if (a[1][0] < b[0][0]) return segmentRelation::kDisjoint;
-        //So b[0][0] <= a[1][0]
-        if (b[1][0] <= a[1][0]) return segmentRelation::kSupersegment;
-        //So a[1][0] < b[1][0]
-        return segmentRelation::kDirectStack;
-    }
-    // So b[0][0]<a[0][0]
-    if (b[1][0] < a[0][0]) return segmentRelation::kDisjoint;
-    //
-    if (a[1][0] <= b[1][0]) return segmentRelation::kSubsegment;
-    //So a[1][0] < b[1][0]
-    return segmentRelation::kReverseStack;
-};
 
-void Trail::removeRectangle(const Eigen::Vector2d& position, const double& width, const double& height){
-    //Specifically assuming bottom left placement style.
-    //First find all the bottom edges that are in contact with the rectangle placement.
-    std::unordered_map<int,segmentRelation> contacts;
-    hedge rect_bot ={position, {position[0]+width, position[1]}};
-    for (int foo=0; foo < landmarks_valley_.num_plateaus_; foo++){
-        hedge platfoo = landmarks_valley_.getPlateau(foo);
-        if ( position[0] + width < platfoo[0][0] ) break;
-        if ( platfoo[1][0] < position[0] ) continue;
-        segmentRelation contact_type = hedgeIntersection(rect_bot, platfoo);
-        if (contact_type != segmentRelation::kDisjoint) contacts[foo] = contact_type;
-    }
-    //if there is a single contact
-}

@@ -1,18 +1,10 @@
-//
-//  vacancy.h
-//  ack
-//
-//  Created by Shane Scott on 6/9/20.
-//
-
-#ifndef vacancy_h
-#define vacancy_h
+#ifndef wilderness_h
+#define wilderness_h
 
 #include <array>
 #include <list>
 
-#include "cabbie_curve_collection.h"
-#include "patrol.h"
+#include "caliper.h"
 
 enum class EdgeOrientation{
     kBad,
@@ -51,17 +43,6 @@ struct VacancySide{
     VacancySide(const int edge_id_0, const std::array<Eigen::Vector2d,2> &i_points, const std::array<int,2> &i_point_ids);
 };
 
-struct Trail{
-    //Trails cover the Wilderness.
-    //Trails have a path of lower and upper points in R2
-    //Trails do not contain east or west notches.
-    CabbiePath landmarks_mountain_;
-    CabbiePath landmarks_valley_;
-    VacancySide start;
-    VacancySide terminus;
-    void removeRectangle(const Eigen::Vector2d& position, const double& width, const double& height);
-};
-
 struct Wilderness{
     CabbieCurveCollection curves;
     std::vector<VacancySide> vsides_;
@@ -84,7 +65,10 @@ struct Wilderness{
     Trail trailblaze(int start_edge_id);
     
     void trailblaze();
+    
+    bool findPlacement(const double& width, const double& height, Eigen::Vector2d& placement) const;
+    
 };
 
 
-#endif /* vacancy_h */
+#endif /* wilderness_h */

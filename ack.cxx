@@ -5,8 +5,7 @@
 
 #include <Eigen/Dense>
 
-#include "caliper.h"
-#include "vacancy_visualize.h"
+#include "wilderness_cartographer_svg.h"
 
 /*
  A vacancy is a polygon (or possible a non-simply connected region with polygon boundaries) that has only vertical and horizontal edges.
@@ -213,7 +212,7 @@ void example5(double width = 0.5, double height = 0.5, std::string afile = "/Use
     Trail peopleheadeast = vac.trailblaze(15);
     CaliperHiker calh(peopleheadeast,width, height);
     calh.hike();
-    VacancyVisualize vv;
+    WildernessCartographerSVG vv;
     std::vector<std::string> funcolors = {"#F75C03", "#D90368", "#820263", "#291720", "#04A777"};
     vv.addCabbieCurveCollection(vac.curves, funcolors[3]);
     vv.addCabbiePath(calh.camps_valley_, funcolors[0]);
@@ -239,17 +238,133 @@ void example5(double width = 0.5, double height = 0.5, std::string afile = "/Use
      */
 };
 
-void example6(double width = 1, double height = 1){
+void example7(double width = 3.4, double height = 2.1){
+    std::vector<Eigen::Vector2d> notch_north_pts = {
+        {0,0},
+        {1,0},
+        {1,-1},
+        {2,-1},
+    };
+    
+    std::vector<Eigen::Vector2d> notchy_points;
+    for (int foo=0; foo< 20; foo++){
+        for (auto p : notch_north_pts){
+            auto q = p + Eigen::Vector2d({2*foo,0});
+            notchy_points.push_back(q);
+        }
+    }
+    notchy_points.push_back({40, 10});
+    notchy_points.push_back({5, 10});
+    notchy_points.push_back({5, 20});
+    notchy_points.push_back({40, 20});
+    notchy_points.push_back({40, 30});
+    notchy_points.push_back({0, 30});
+
+    for (auto foo: notchy_points){
+        std::cout << foo.transpose() << std::endl;
+    }
+    int npts = notchy_points.size();
+    std::vector<std::vector<int>> notchy_lines;
+    for (int foo=0; foo < npts; foo++){
+        notchy_lines.push_back({foo, (foo+1)%npts});
+    }
     Wilderness vac;
-    vac.insertCurves({{0,0},{10,0},{10,10},{0,10}}, {{0,1},{1,2},{2,3},{3,0}});
+    std::vector<std::array<double,3>> notchy_points_arraysstyle;
+    for (auto foo : notchy_points){
+        notchy_points_arraysstyle.push_back({foo[0],foo[1],0});
+    }
+    vac.insertCurves(notchy_points_arraysstyle, notchy_lines);
     vac.populateNeighbors();
     vac.findFrontier();
     vac.trailblaze();
+    CaliperHiker calh(vac.trails_[0], width, height);
+    calh.hike();
+    WildernessCartographerSVG vv;
+    std::vector<std::string> funcolors = {"#F75C03", "#D90368", "#820263", "#291720", "#04A777"};
+    
+    vv.addCabbieCurveCollection(vac.curves, funcolors[3]);
+    vv.addCabbiePath(calh.camps_valley_, funcolors[0]);
+    vv.addCabbiePath(calh.camps_mountain_,  funcolors[1]);
+    vv.addRectangles(calh.valid_, width, height, funcolors[4]);
+    vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/notchy.svg");
+    
+};
+
+
+
+void example_basic(std::vector<std::array<double,3>> points, double width, double height,  std::string filename){
+    int npts = points.size();
+    std::vector<std::vector<int>> lines;
+    for (int foo=0; foo < npts; foo++){
+        lines.push_back({foo, (foo+1)%npts});
+    }
+    Wilderness vac;
+    vac.insertCurves(points, lines);
+    vac.populateNeighbors();
+    vac.findFrontier();
+    vac.trailblaze();
+    std::cout << vac.trails_.size() << std::endl;
+    if (vac.trails_.size() > 0){
+        
+    }
+    CaliperHiker calh(vac.trails_[0], width, height);
+    calh.hike();
+    WildernessCartographerSVG vv;
+    std::vector<std::string> funcolors = {"#F75C03", "#D90368", "#820263", "#291720", "#04A777"};
+//
+    vv.addCabbieCurveCollection(vac.curves, funcolors[3]);
+    vv.addCabbiePath(calh.camps_valley_, funcolors[0]);
+    vv.addCabbiePath(calh.camps_mountain_,  funcolors[1]);
+    if (calh.valid_.size() > 0) vv.addRectangle(calh.getMostValid(), width, height, funcolors[4]);
+    vv.writeScalableVectorGraphics(filename);
+//
+//
+}
+
+void example_basic(std::vector<std::array<double,3>> points, std::vector<std::vector<int>> lines, double width, double height,  std::string filename){
+    Wilderness vac;
+    vac.insertCurves(points, lines);
+    vac.populateNeighbors();
+    vac.findFrontier();
+    vac.trailblaze();
+    std::cout << "Numer of trails: " << vac.trails_.size() << std::endl;
+    WildernessCartographerSVG vv;
+    std::vector<std::string> funcolors = {"#F75C03", "#D90368", "#820263", "#291720", "#04A777"};
+//
+    vv.addCabbieCurveCollection(vac.curves, funcolors[3]);
+    for (auto tt: vac.trails_){
+        CaliperHiker calh(tt, width, height);
+        calh.hike();
+        vv.addCabbiePath(calh.camps_valley_, funcolors[0]);
+        vv.addCabbiePath(calh.camps_mountain_,  funcolors[1]);
+        vv.addRectangle(calh.getMostValid(), width, height, funcolors[4]);
+    }
+    vv.writeScalableVectorGraphics(filename);
+
+
+}
+
+
+void example_sev(){
+    std::vector<std::array<double,3>> points;// = {{0,0},{10,0},{10,10},{0,10}};
+//    example_basic(points, 3.3,2,"/Users/sscott/Programs/ack/basic0.svg");
+//    points = {{0,2},{3.3,2},{3.3,0},{10,0},{10,10},{0,10}};
+//    example_basic(points, 3.2,1.6,"/Users/sscott/Programs/ack/basic1.svg");
+//    points = {{0,2},{3.3,2},{3.3,1.6},{6.5,1.6},{6.5,0},{10,0},{10,10},{0,10}};
+//    example_basic(points, 3.1,2.3,"/Users/sscott/Programs/ack/basic2.svg");
+//    points = {{0,2},{3.3,2},{3.3,1.6},{6.5,1.6},{6.5,2.3},{9.6,2.3},{9.6,0},{10,0},{10,10},{0,10}};
+//    example_basic(points, 7,1.2,"/Users/sscott/Programs/ack/basic3.svg");
+    points ={{0,3.5}, {7,3.5}, {7,2.3}, {9.6,2.3}, {9.6,0}, {10,0}, {10,10}, {0,10}, {0,2}, {3.3,2}, {3.3,1.6}, {6.5,1.6}, {6.5,2.3}, {0, 2.3}};
+    std::vector<std::vector<int>> somelines = {{0,1}, {1,2}, {2,3}, {3,4}, {4,5}, {5,6}, {6,7}, {7,0}, {8,9}, {9,10}, {10,11}, {11,12}, {12,13}, {13,8}};
+    example_basic(points, somelines, 0.3, 0.6,"/Users/sscott/Programs/ack/basic4.svg");
+
 }
 
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
-    example6();
+    example_sev();
 }
+
+
 
 

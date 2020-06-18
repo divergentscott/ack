@@ -14,10 +14,10 @@
 
 #include <Eigen/Dense>
 
-#include "cabbie_curve_collection.h"
-#include "vacancy.h"
+#include "trail.h"
 
 struct CaliperHiker{
+    //Class to hike a single trail searching for positions.
     const double width_;
     const double height_;
     const CabbiePath& landmarks_valley_;
@@ -32,6 +32,7 @@ struct CaliperHiker{
     void unifyCamps();
     void measureCamps();
     void expandCamps();
+    Eigen::Vector2d getMostValid() const;
 };
 
 struct PlankHiker{

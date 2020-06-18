@@ -1,6 +1,6 @@
 #include <fstream>
 
-#include "vacancy_visualize.h"
+#include "wilderness_cartographer_svg.h"
 
 std::string svgvis::Rectangle::getEntry() const{
     std::stringstream ss;
@@ -40,14 +40,14 @@ const std::string topline = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone
 std::stringstream ss;
 
 
-VacancyVisualize::VacancyVisualize(){
+WildernessCartographerSVG::WildernessCartographerSVG(){
 };
 
-void VacancyVisualize::setStroke(const double &x){
+void WildernessCartographerSVG::setStroke(const double &x){
     default_stroke_width_ = x;
 }
 
-void VacancyVisualize::addRectangle(const Eigen::Vector2d& position, const double& width, const double& height, const std::string& color, const double& stroke){
+void WildernessCartographerSVG::addRectangle(const Eigen::Vector2d& position, const double& width, const double& height, const std::string& color, const double& stroke){
     min_x_ = std::min(position[0], min_x_);
     min_y_ = std::min(position[1], min_y_);
     max_x_ = std::max(max_x_, position[0] + width);
@@ -60,16 +60,16 @@ void VacancyVisualize::addRectangle(const Eigen::Vector2d& position, const doubl
     rec.fill_color = color;
     rec.stroke_width = stroke;
     if (stroke < 0) rec.stroke_width = default_stroke_width_;
-    rectangles.push_back(rec);
+    rectangles_.push_back(rec);
 };
 
-void VacancyVisualize::addRectangles(const std::vector<Eigen::Vector2d>& positions, const double& width, const double& height, const std::string& color, const double& stroke){
+void WildernessCartographerSVG::addRectangles(const std::vector<Eigen::Vector2d>& positions, const double& width, const double& height, const std::string& color, const double& stroke){
     for (const auto& p : positions){
         addRectangle(p,width,height,color,stroke);
     }
 };
 
-void VacancyVisualize::addCabbieCurveCollection(const CabbieCurveCollection& ccc, const std::string& color, const double& stroke){
+void WildernessCartographerSVG::addCabbieCurveCollection(const CabbieCurveCollection& ccc, const std::string& color, const double& stroke){
     int n_components = ccc.get_number_of_components();
     for (int foo=0; foo < n_components; foo++){
         svgvis::Polyline plyl;
@@ -90,11 +90,11 @@ void VacancyVisualize::addCabbieCurveCollection(const CabbieCurveCollection& ccc
             max_x_ = std::max(pbar[0], max_x_);
             max_y_ = std::max(pbar[1], max_y_);
         } while (bar != basepoint);
-        polylines.push_back(plyl);
+        polylines_.push_back(plyl);
     };
 }
 
-void VacancyVisualize::addCabbiePath(const CabbiePath &cp, const std::string& color, const double& stroke){
+void WildernessCartographerSVG::addCabbiePath(const CabbiePath &cp, const std::string& color, const double& stroke){
     svgvis::Polyline plyl;
     plyl.stroke_color = color;
     plyl.stroke_width = stroke;
@@ -106,10 +106,10 @@ void VacancyVisualize::addCabbiePath(const CabbiePath &cp, const std::string& co
         max_y_ = std::max(pp[1], max_y_);
     }
     plyl.points = cp.points_;
-    polylines.push_back(plyl);
+    polylines_.push_back(plyl);
 };
 
-void VacancyVisualize::writeScalableVectorGraphics(const std::string& outfilepath){
+void WildernessCartographerSVG::writeScalableVectorGraphics(const std::string& outfilepath){
     std::ofstream file;
     file.open(outfilepath.c_str());
     file << topline << std::endl;
@@ -120,10 +120,10 @@ void VacancyVisualize::writeScalableVectorGraphics(const std::string& outfilepat
     double view_height = max_y_ - min_y_ + margin;
     file << "<svg width=\"100%\" height=\"100%\" viewBox=\"" << 0 << " " << 0 << " " << view_width << " " << view_height  << " \" xmlns=\"http://www.w3.org/2000/svg\">" << std::endl;
     file << "<g transform=\"translate("<< -viewx << "," << view_height + viewy <<") scale(1,-1)\">" << std::endl;
-    for (const svgvis::Polyline &q : polylines){
+    for (const svgvis::Polyline &q : polylines_){
         file << q.getEntry() << std::endl;
     }
-    for (const svgvis::Rectangle &r : rectangles){
+    for (const svgvis::Rectangle &r : rectangles_){
         file << r.getEntry() << std::endl;
     }
     file <<"</g>" << std::endl;

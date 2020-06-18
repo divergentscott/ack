@@ -29,37 +29,46 @@ void CaliperHiker::expandCamps(){
     if ((camps_valley_.num_plateaus_==0) | (camps_mountain_.num_plateaus_==0)) return;
     int ii = 0;
     int jj = 0;
+    std::cout << "ii " << ii << " jj " << jj << std::endl;
     hedge low_ii = camps_valley_.getPlateau(ii);
     hedge high_jj = camps_mountain_.getPlateau(jj);
     if (high_jj[0][1] - low_ii[0][1] >= height_){
         valid_.push_back(low_ii[0]);
+        std::cout << (valid_.end()-1)->transpose() << std::endl;
     }
     while((ii < camps_valley_.num_plateaus_-1) | (jj < camps_mountain_.num_plateaus_-1)){
         //Measure height east to west and keep any positions that are valid.
         while( (high_jj[1][0] <= low_ii[1][0]) & (jj < camps_mountain_.num_plateaus_-1) ){
             jj++;
+            std::cout << "ii " << ii << " jj " << jj << std::endl;
             high_jj = camps_mountain_.getPlateau(jj);
             if ( high_jj[0][1] - low_ii[0][1] >= height_){
                 Eigen::Vector2d position = {high_jj[0][0], low_ii[0][1]};
                 valid_.push_back(position);
+                std::cout << (valid_.end()-1)->transpose() << std::endl;
             }
         };
         while( (low_ii[1][0] <= high_jj[1][0]) & (ii < camps_valley_.num_plateaus_-1) ){
             ii++;
+            std::cout << "ii " << ii << " jj " << jj << std::endl;
             Eigen::Vector2d lastright = camps_valley_.getPlateau(ii-1)[1];
             if (high_jj[0][1] - lastright[1] >= height_){
                 valid_.push_back(lastright);
+                std::cout << (valid_.end()-1)->transpose() << std::endl;
             }
             low_ii = camps_valley_.getPlateau(ii);
             if ( high_jj[0][1] - low_ii[0][1] >= height_){
                 valid_.push_back(low_ii[0]);
+                std::cout << (valid_.end()-1)->transpose() << std::endl;
+
             }
         };
     }
-    double lastx = std::min(low_ii[0][0], high_jj[0][0]);
+    double lastx = std::min(low_ii[1][0], high_jj[1][0]);
     if ( high_jj[1][1] - low_ii[1][1] >= height_){
         Eigen::Vector2d position = {lastx, low_ii[1][1]};
         valid_.push_back(position);
+        std::cout << (valid_.end()-1)->transpose() << std::endl;
     }
 };
 
@@ -161,10 +170,21 @@ void PlankHiker::nudgeFrontier(){
     }
     camps_.points_[east_index-1][0] = western_frontier;
     if (east_index>1){
-        camps_.points_.erase(camps_.points_.begin(), camps_.points_.begin()+(east_index-2));
+        camps_.points_.erase(camps_.points_.begin(), camps_.points_.begin()+(east_index-1));
         camps_.num_plateaus_ = (camps_.points_.size())/2;
         camps_.num_walls_ = (camps_.points_.size()-1)/2;
     }
     //On the eastern frontier, ensure that you get the last possible point.
     landmarks_.getPlateau(landmarks_.num_plateaus_-1);
+}
+
+Eigen::Vector2d CaliperHiker::getMostValid() const{
+    Eigen::Vector2d best= valid_[0];
+    for (int foo=1; foo < valid_.size(); foo++){
+        if (valid_[foo][1] < best[1]) best = valid_[foo];
+        if (std::abs(valid_[foo][1]-best[1]) < repsilon ){
+            if (valid_[foo][0] < best[0]) best = valid_[foo];
+        }
+    }
+    return best;
 }
