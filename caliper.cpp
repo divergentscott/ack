@@ -29,37 +29,37 @@ void CaliperHiker::expandCamps(){
     if ((camps_valley_.num_plateaus_==0) | (camps_mountain_.num_plateaus_==0)) return;
     int ii = 0;
     int jj = 0;
-    std::cout << "ii " << ii << " jj " << jj << std::endl;
-    hedge low_ii = camps_valley_.getPlateau(ii);
-    hedge high_jj = camps_mountain_.getPlateau(jj);
+//    std::cout << "ii " << ii << " jj " << jj << std::endl;
+    Hedge low_ii = camps_valley_.getPlateau(ii);
+    Hedge high_jj = camps_mountain_.getPlateau(jj);
     if (high_jj[0][1] - low_ii[0][1] >= height_){
         valid_.push_back(low_ii[0]);
-        std::cout << (valid_.end()-1)->transpose() << std::endl;
+//        std::cout << (valid_.end()-1)->transpose() << std::endl;
     }
     while((ii < camps_valley_.num_plateaus_-1) | (jj < camps_mountain_.num_plateaus_-1)){
         //Measure height east to west and keep any positions that are valid.
         while( (high_jj[1][0] <= low_ii[1][0]) & (jj < camps_mountain_.num_plateaus_-1) ){
             jj++;
-            std::cout << "ii " << ii << " jj " << jj << std::endl;
+//            std::cout << "ii " << ii << " jj " << jj << std::endl;
             high_jj = camps_mountain_.getPlateau(jj);
             if ( high_jj[0][1] - low_ii[0][1] >= height_){
                 Eigen::Vector2d position = {high_jj[0][0], low_ii[0][1]};
                 valid_.push_back(position);
-                std::cout << (valid_.end()-1)->transpose() << std::endl;
+//                std::cout << (valid_.end()-1)->transpose() << std::endl;
             }
         };
         while( (low_ii[1][0] <= high_jj[1][0]) & (ii < camps_valley_.num_plateaus_-1) ){
             ii++;
-            std::cout << "ii " << ii << " jj " << jj << std::endl;
+//            std::cout << "ii " << ii << " jj " << jj << std::endl;
             Eigen::Vector2d lastright = camps_valley_.getPlateau(ii-1)[1];
             if (high_jj[0][1] - lastright[1] >= height_){
                 valid_.push_back(lastright);
-                std::cout << (valid_.end()-1)->transpose() << std::endl;
+//                std::cout << (valid_.end()-1)->transpose() << std::endl;
             }
             low_ii = camps_valley_.getPlateau(ii);
             if ( high_jj[0][1] - low_ii[0][1] >= height_){
                 valid_.push_back(low_ii[0]);
-                std::cout << (valid_.end()-1)->transpose() << std::endl;
+//                std::cout << (valid_.end()-1)->transpose() << std::endl;
 
             }
         };
@@ -68,7 +68,7 @@ void CaliperHiker::expandCamps(){
     if ( high_jj[1][1] - low_ii[1][1] >= height_){
         Eigen::Vector2d position = {lastx, low_ii[1][1]};
         valid_.push_back(position);
-        std::cout << (valid_.end()-1)->transpose() << std::endl;
+//        std::cout << (valid_.end()-1)->transpose() << std::endl;
     }
 };
 
@@ -80,7 +80,7 @@ PlankHiker::PlankHiker(const CabbiePath& landmarks, const double plank_width, co
 
 void PlankHiker::hike(){
     position_ = landmarks_.points_[0] - Eigen::Vector2d({width_,0});
-    vedge obs = landmarks_.getWall(0);
+    Vedge obs = landmarks_.getWall(0);
     rayTraceEast(position_, obs, obstruction_);
     camps_.push_back(position_);
     headEast(0);
@@ -95,7 +95,7 @@ bool PlankHiker::compareVertical(const double& x, const double &y) const {
 void PlankHiker::headEast(int start_east){
     int index_east = start_east;
     while(start_east < landmarks_.num_walls_){
-        vedge wall = landmarks_.getWall(index_east);
+        Vedge wall = landmarks_.getWall(index_east);
         double east_reach = wall[0][0];
         double north_reach = wall[vert_index_][1];
         while(east_reach <= obstruction_[0] + width_){
@@ -116,7 +116,7 @@ void PlankHiker::headEast(int start_east){
                 break;
             } else{
                 index_east++;
-                vedge wall = landmarks_.getWall(index_east);
+                Vedge wall = landmarks_.getWall(index_east);
                 east_reach = wall[0][0];
                 north_reach = wall[vert_index_][1];
             }
@@ -124,9 +124,9 @@ void PlankHiker::headEast(int start_east){
         // Head south to a new obstruction
         position_ = obstruction_;
         camps_.push_back(position_);
-        std::deque<hedge> obstructions_in_view = scanPlateaus(start_east, index_east);
+        std::deque<Hedge> obstructions_in_view = scanPlateaus(start_east, index_east);
         mergeQue(obstruct_que_, obstructions_in_view);
-        vedge topfloor = obstruct_que_[0];
+        Vedge topfloor = obstruct_que_[0];
         obstruct_que_.pop_front();
         position_ = {position_[0], topfloor[vert_index_][1]};
         camps_.push_back(position_);
@@ -135,9 +135,9 @@ void PlankHiker::headEast(int start_east){
     }
 };
 //
-std::deque<hedge> PlankHiker::scanPlateaus(const int east_start, const int east_end){
-    std::deque<hedge> plateau_que;
-    hedge a_plateau = landmarks_.getPlateau(east_end);
+std::deque<Hedge> PlankHiker::scanPlateaus(const int east_start, const int east_end){
+    std::deque<Hedge> plateau_que;
+    Hedge a_plateau = landmarks_.getPlateau(east_end);
     plateau_que.push_front(a_plateau);
     for (int foo = east_end - 1; foo > east_start; foo--){
         a_plateau = landmarks_.getPlateau(foo);
@@ -146,7 +146,7 @@ std::deque<hedge> PlankHiker::scanPlateaus(const int east_start, const int east_
     return plateau_que;
 };
 //
-void PlankHiker::mergeQue(std::deque<hedge> &q0, std::deque<hedge> &q1){
+void PlankHiker::mergeQue(std::deque<Hedge> &q0, std::deque<Hedge> &q1){
     bool is_an_empty = (q0.size()==0) || (q1.size()==0);
     if (!is_an_empty){
         double t1y = q1[0][0][1];

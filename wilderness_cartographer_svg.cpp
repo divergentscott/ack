@@ -1,8 +1,23 @@
 #include <fstream>
+#include <random>
 
 #include "wilderness_cartographer_svg.h"
 
-std::string svgvis::Rectangle::getEntry() const{
+namespace svgvis {
+
+std::string chaosHex(){
+    std::random_device rand_dev;
+    std::mt19937 rng(rand_dev());
+    std::uniform_int_distribution<std::mt19937::result_type> dist16(0,15);
+    std::string hexanymns = "0123456789ABCDEF";
+    std::string hex = "#";
+    for (int foo=0; foo<6; foo++){
+        hex += hexanymns[dist16(rng)];
+    }
+    return hex;
+}
+
+std::string Rectangle::getEntry() const{
     std::stringstream ss;
     ss << "<rect";
     ss << " x=\"" << position[0] << "\"";
@@ -16,7 +31,7 @@ std::string svgvis::Rectangle::getEntry() const{
     return ss.str();
 };
 
-std::string svgvis::Polyline::getEntry() const{
+std::string Polyline::getEntry() const{
     std::stringstream ss;
     ss << "<polyline";
     ss << " points=\"";
@@ -31,14 +46,9 @@ std::string svgvis::Polyline::getEntry() const{
     return ss.str();
 };
 
-
 const std::string topline = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>";
 
-//topstack.push_back("<g opacity=\"0.8\">");
-//botstack.push_back("</g>");
-
-std::stringstream ss;
-
+};//svgvis
 
 WildernessCartographerSVG::WildernessCartographerSVG(){
 };
@@ -112,7 +122,7 @@ void WildernessCartographerSVG::addCabbiePath(const CabbiePath &cp, const std::s
 void WildernessCartographerSVG::writeScalableVectorGraphics(const std::string& outfilepath){
     std::ofstream file;
     file.open(outfilepath.c_str());
-    file << topline << std::endl;
+    file << svgvis::topline << std::endl;
     double margin = 0.1 * std::max(max_x_ - min_x_, max_y_ - min_y_);
     double viewx = min_x_ - 0.5 * margin;
     double viewy = min_y_ - 0.5 * margin;

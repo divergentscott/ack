@@ -47,7 +47,7 @@ struct PlankHiker{
 
     CabbiePath camps_;
     Eigen::Vector2d obstruction_; //point currently preventing the caliper from expanding south (or maybe north)
-    std::deque<hedge> obstruct_que_; //points that could potentially catch the caliper
+    std::deque<Hedge> obstruct_que_; //points that could potentially catch the caliper
     Eigen::Vector2d position_;
     //
     PlankHiker()=delete;
@@ -61,9 +61,9 @@ struct PlankHiker{
     void headEast(int start_east);
     //move the plank east with
     
-    std::deque<hedge> scanPlateaus(const int east_start, const int east_end);
+    std::deque<Hedge> scanPlateaus(const int east_start, const int east_end);
     
-    void mergeQue(std::deque<hedge> &q0, std::deque<hedge> &q1);
+    void mergeQue(std::deque<Hedge> &q0, std::deque<Hedge> &q1);
     //
     void nudgeFrontier();
 };

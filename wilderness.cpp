@@ -237,7 +237,7 @@ Trail Wilderness::trailblaze(int start_edge_id){
 void Wilderness::trailblaze(){
     for (int foo=0; foo<vsides_.size(); foo++){
         if (vsides_[foo].neighbor_shape == NeighborhoodShape::kNotchEast){
-            std::cout << "eastnotch at " << foo;
+//            std::cout << "eastnotch at " << foo;
             trails_.push_back(trailblaze(foo));
         }
     }
@@ -252,7 +252,7 @@ bool Wilderness::findPlacement(const double& width, const double& height, Eigen:
             Eigen::Vector2d val = caliper_hiker.getMostValid();
             if (is_placeable){
                 if (val[1] < placement[1]) placement = val;
-                if (std::abs(val[1]-placement[1]) < repsilon ){
+                if (std::abs(val[1]-placement[1]) < repsilon){
                     if (val[0] < placement[0]) placement = val;
                 }
             } else {

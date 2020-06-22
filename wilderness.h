@@ -68,6 +68,8 @@ struct Wilderness{
     
     bool findPlacement(const double& width, const double& height, Eigen::Vector2d& placement) const;
     
+    void removeRectangle(const Eigen::Vector2d& position, const double& width, const double& height);
+    
 };
 
 

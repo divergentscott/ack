@@ -327,7 +327,7 @@ void example_basic(std::vector<std::array<double,3>> points, std::vector<std::ve
     vac.populateNeighbors();
     vac.findFrontier();
     vac.trailblaze();
-    std::cout << "Numer of trails: " << vac.trails_.size() << std::endl;
+//    std::cout << "Numer of trails: " << vac.trails_.size() << std::endl;
     WildernessCartographerSVG vv;
     std::vector<std::string> funcolors = {"#F75C03", "#D90368", "#820263", "#291720", "#04A777"};
 //
@@ -340,29 +340,112 @@ void example_basic(std::vector<std::array<double,3>> points, std::vector<std::ve
         vv.addRectangle(calh.getMostValid(), width, height, funcolors[4]);
     }
     vv.writeScalableVectorGraphics(filename);
-
-
 }
 
 
 void example_sev(){
-    std::vector<std::array<double,3>> points;// = {{0,0},{10,0},{10,10},{0,10}};
-//    example_basic(points, 3.3,2,"/Users/sscott/Programs/ack/basic0.svg");
-//    points = {{0,2},{3.3,2},{3.3,0},{10,0},{10,10},{0,10}};
-//    example_basic(points, 3.2,1.6,"/Users/sscott/Programs/ack/basic1.svg");
-//    points = {{0,2},{3.3,2},{3.3,1.6},{6.5,1.6},{6.5,0},{10,0},{10,10},{0,10}};
-//    example_basic(points, 3.1,2.3,"/Users/sscott/Programs/ack/basic2.svg");
-//    points = {{0,2},{3.3,2},{3.3,1.6},{6.5,1.6},{6.5,2.3},{9.6,2.3},{9.6,0},{10,0},{10,10},{0,10}};
-//    example_basic(points, 7,1.2,"/Users/sscott/Programs/ack/basic3.svg");
+    std::vector<std::array<double,3>> points = {{0,0},{10,0},{10,10},{0,10}};
+    example_basic(points, 3.3,2,"/Users/sscott/Programs/ack/basic0.svg");
+    points = {{0,2},{3.3,2},{3.3,0},{10,0},{10,10},{0,10}};
+    example_basic(points, 3.2,1.6,"/Users/sscott/Programs/ack/basic1.svg");
+    points = {{0,2},{3.3,2},{3.3,1.6},{6.5,1.6},{6.5,0},{10,0},{10,10},{0,10}};
+    example_basic(points, 3.1,2.3,"/Users/sscott/Programs/ack/basic2.svg");
+    points = {{0,2},{3.3,2},{3.3,1.6},{6.5,1.6},{6.5,2.3},{9.6,2.3},{9.6,0},{10,0},{10,10},{0,10}};
+    example_basic(points, 7,1.2,"/Users/sscott/Programs/ack/basic3.svg");
     points ={{0,3.5}, {7,3.5}, {7,2.3}, {9.6,2.3}, {9.6,0}, {10,0}, {10,10}, {0,10}, {0,2}, {3.3,2}, {3.3,1.6}, {6.5,1.6}, {6.5,2.3}, {0, 2.3}};
     std::vector<std::vector<int>> somelines = {{0,1}, {1,2}, {2,3}, {3,4}, {4,5}, {5,6}, {6,7}, {7,0}, {8,9}, {9,10}, {10,11}, {11,12}, {12,13}, {13,8}};
     example_basic(points, somelines, 0.3, 0.6,"/Users/sscott/Programs/ack/basic4.svg");
+}
 
+void example_9(){
+    std::vector<std::array<double,3>> points ={{0,3.5}, {7,3.5}, {7,2.3}, {9.6,2.3}, {9.6,0}, {10,0}, {10,10}, {0,10}, {0,2}, {3.3,2}, {3.3,1.6}, {6.5,1.6}, {6.5,2.3}, {0, 2.3}};
+    std::vector<std::vector<int>> somelines = {{0,1}, {1,2}, {2,3}, {3,4}, {4,5}, {5,6}, {6,7}, {7,0}, {8,9}, {9,10}, {10,11}, {11,12}, {12,13}, {13,8}};
+    Wilderness wild;
+    wild.insertCurves(points,somelines);
+    wild.populateNeighbors();
+    wild.findFrontier();
+    wild.trailblaze();
+    Eigen::Vector2d place;
+    bool is_placeable = wild.findPlacement(0.3, 0.6, place);
+    if (is_placeable){
+        std::cout << "Can place." << std::endl;
+        WildernessCartographerSVG vv;
+        vv.addCabbieCurveCollection(wild.curves, "black");
+        for (const Trail& t: wild.trails_){
+            vv.addCabbiePath(t.landmarks_valley_, "green");
+            vv.addCabbiePath(t.landmarks_mountain_, "blue");
+        }
+        vv.addRectangle(place, 0.3, 0.6, "red");
+        vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/ex9.svg");
+        std::cout << "Placed at " << place.transpose() << std::endl;
+    }
+}
+
+void example_10(){
+    std::vector<std::array<double,3>> points = {{0,1},{1,1},{1,0},{10,0},{10,10},{0,10}};
+    std::vector<std::vector<int>> somelines = {{0,1},{1,2},{2,3},{3,4},{4,5},{5,0}};
+    //
+    Wilderness wild;
+    wild.insertCurves(points, somelines);
+    wild.populateNeighbors();
+    wild.findFrontier();
+    wild.trailblaze();
+
+    Trail t = wild.trails_[0];
+    std::cout << " Before " << std::endl;
+    for (auto p :  t.landmarks_valley_.points_){
+        std::cout << p.transpose() << std::endl;
+    }
+
+    Eigen::Vector2d placement;
+    double width = 2.4;
+    double height = 1.7;
+    wild.findPlacement(width, height, placement);
+//    wild.removeRectangle(placement, width, height);
+    t = wild.trails_[0];
+//    removeRectangle(wild.trails_, placement, width, height);
+    std::cout << " After " << std::endl;
+    for (auto p :  t.landmarks_valley_.points_){
+        std::cout << p.transpose() << std::endl;
+    }
+    //
+};
+
+void example_11(){
+    std::vector<std::array<double,3>> points = {{0,0},{10,0},{10,10},{0,10}};
+    std::vector<std::vector<int>> somelines = {{0,1},{1,2},{2,3},{3,0}};
+    //
+    Wilderness wild;
+    wild.insertCurves(points, somelines);
+    wild.populateNeighbors();
+    wild.findFrontier();
+    wild.trailblaze();
+    //
+    WildernessCartographerSVG wsvg;
+    wsvg.addCabbieCurveCollection(wild.curves);
+    std::vector<Eigen::Vector2d> whs = {{5.4, 2.1}, {4.1, 2.4}, {3.5, 1.9}, {2.5, 2.5}, {1.9, 1.3}, {0.9, 0.8}};
+    for (auto wh : whs){
+        double width = wh[0];
+        double height = wh[1];
+        Eigen::Vector2d placement;
+        wild.findPlacement(width, height, placement);
+        for (auto &t: wild.trails_){
+            wsvg.addCabbiePath(t.landmarks_mountain_, "blue");
+            wsvg.addCabbiePath(t.landmarks_valley_, "green");
+        }
+//        removeRectangle(wild.trails_, placement, width, height);
+        wsvg.addRectangle(placement, width, height, svgvis::chaosHex());
+    }
+    wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example11.svg");
+}
+
+void example_linering(){
+    
 }
 
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
-    example_sev();
+    example_linering();
 }
 
 

@@ -12,6 +12,8 @@
 
 namespace svgvis{
 
+std::string chaosHex();
+
 struct Rectangle{
     Eigen::Vector2d position;
     double width;
