@@ -51,14 +51,7 @@ enum class SegmentRelation {
 	kReverseStagger // baba
 };
 
-std::string _debug_seg_rel_print(SegmentRelation x) {
-	if (x == SegmentRelation::kDisjoint) return "disjoint";
-	if (x == SegmentRelation::kSubsegment) return "subsegment";
-	if (x == SegmentRelation::kSupersegment) return "supersegment";
-	if (x == SegmentRelation::kDirectStagger) return "direct_stag";
-	if (x == SegmentRelation::kReverseStagger) return "rev_stag";
-	return "error";
-};
+std::string _debug_seg_rel_print(SegmentRelation x);
 
 SegmentRelation edgeIntersection(const std::array<Eigen::Vector2d, 2>& a, const std::array<Eigen::Vector2d, 2>& b, const bool is_horizontal, std::array<Eigen::Vector2d, 2>& isect);
 
