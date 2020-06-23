@@ -440,8 +440,8 @@ void example_11(){
 }
 
 void example_test_edge_intersect0(){
-	Hedge a = { Eigen::Vector2d({0,0}), Eigen::Vector2d({0,1}) };
-	Hedge b = { Eigen::Vector2d({0,0}), Eigen::Vector2d({0,1}) };
+	Hedge a = { Eigen::Vector2d({0,0}), Eigen::Vector2d({4,0}) };
+	Hedge b = { Eigen::Vector2d({0,0}), Eigen::Vector2d({4,0}) };
 	Hedge isect;
 	auto seg_rel = edgeIntersection(a,b,true,isect);
 	std::cout << _debug_seg_rel_print(seg_rel) << " isect " << isect[0].transpose() << " -> " << isect[1].transpose() << std::endl;
@@ -461,6 +461,7 @@ void example_addRectTest0() {
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
 	example_test_edge_intersect0();
+	std::cout << "end" << std::endl;
 }
 
 

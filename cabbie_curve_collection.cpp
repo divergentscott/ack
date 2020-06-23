@@ -80,42 +80,43 @@ std::string _debug_seg_rel_print(SegmentRelation x) {
 };
 
 
-SegmentRelation edgeIntersection(const std::array<Eigen::Vector2d,2>& a, const std::array<Eigen::Vector2d,2>& b, const bool is_horizontal, std::array<Eigen::Vector2d, 2>& isect) {
+SegmentRelation edgeIntersection(const std::array<Eigen::Vector2d, 2>& a, const std::array<Eigen::Vector2d, 2>& b, const bool is_horizontal, std::array<Eigen::Vector2d, 2>& isect) {
 	int dim = is_horizontal ? 0 : 1;
 	int offdim = is_horizontal ? 1 : 0;
 	if (std::abs(a[0][offdim] - b[0][offdim]) > repsilon) return SegmentRelation::kDisjoint;
 	//So a and b have sufficiently close y.
-	if (a[0][dim] <= b[0][dim]) {
-		if (a[1][dim] < b[0][dim]) return SegmentRelation::kDisjoint;
-		// pattern aa bb
-		if (b[1][dim] <= a[1][dim]) {
-			//pattern abba
-			//SegRelation::kSupersegment;
-			isect = b;
-			return SegmentRelation::kSupersegment;
+
+	if (b[0][dim] <= a[0][dim]) {
+			// So b[0][0]<a[0][0]
+		if (b[1][dim] < a[0][dim]) {
+			//pattern bb aa
+			//SegRelation::kDisjoint;
+			return SegmentRelation::kDisjoint;
 		}
-		// pattern abab
-		//SegRelation::kDirectStack;
-		isect = { b[0],a[1] };
-		return SegmentRelation::kDirectStagger;
+		//
+		if (a[1][dim] <= b[1][dim]) {
+			//SegRelation::kSubsegment;
+			//pattern baab
+			isect = a;
+			return SegmentRelation::kSubsegment;
+		}
+		//SegRelation::kReverseStack
+		//pattern baba
+		isect = { a[0], b[1] };
+		return SegmentRelation::kReverseStagger;
 	}
-	// So b[0][0]<a[0][0]
-	if (b[1][dim] < a[0][dim]) {
-		//pattern bb aa
-		//SegRelation::kDisjoint;
-		return SegmentRelation::kDisjoint;
+	if (a[1][dim] < b[0][dim]) return SegmentRelation::kDisjoint;
+	// pattern aa bb
+	if (b[1][dim] <= a[1][dim]) {
+		//pattern abba
+		//SegRelation::kSupersegment;
+		isect = b;
+		return SegmentRelation::kSupersegment;
 	}
-	//
-	if (a[1][dim] <= b[1][dim]) {
-		//SegRelation::kSubsegment;
-		//pattern baab
-		isect = a;
-		return SegmentRelation::kSubsegment;
-	}
-	//SegRelation::kReverseStack
-	//pattern baba
-	isect = { a[0], b[1] };
-	return SegmentRelation::kReverseStagger;
+	// pattern abab
+	//SegRelation::kDirectStack;
+	isect = { b[0],a[1] };
+	return SegmentRelation::kDirectStagger;
 };
 
 std::array<Eigen::Vector2d,2> edgify(const Eigen::Vector2d& a, const Eigen::Vector2d& b, bool& is_hedge){
