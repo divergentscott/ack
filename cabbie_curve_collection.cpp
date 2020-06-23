@@ -119,15 +119,17 @@ SegmentRelation edgeIntersection(const std::array<Eigen::Vector2d, 2>& a, const 
 	return SegmentRelation::kDirectStagger;
 };
 
-std::array<Eigen::Vector2d,2> edgify(const Eigen::Vector2d& a, const Eigen::Vector2d& b, bool& is_hedge){
+std::array<Eigen::Vector2d,2> edgify(const Eigen::Vector2d& a, const Eigen::Vector2d& b, bool& is_hedge, bool& is_forward){
     if (std::abs(a[1] - b[1]) < repsilon){
         is_hedge = true;
-        if (a[0]<b[0]) return {a,b};
+        is_forward = (a[0]<b[0]);
+        if (is_forward) return {a,b};
         return {b,a};
     }
     if (std::abs(a[0] - b[0]) < repsilon){
         is_hedge = false;
-        if (a[1] < b[1]) return {a,b};
+        is_forward = (a[1]<b[1]);
+        if (is_forward) return {a,b};
         return {b,a};
     }
     std::cout << "WARNING: noncardinal edge!" << std::endl;
@@ -142,8 +144,25 @@ struct ChainHit {
 	bool is_front1;
 };
 
-std::vector<PointList> addRectangleModZ2(std::vector<PointList> &chains, const Eigen::Vector2d &position, const double &width, const double &height){
+void addEdgetoPointlist(PointList & point_list, std::array<Eigen::Vector2d,2> x){
+    if (point_list.size()>0){
+        point_list = {x[0], x[1]};
+        return;
+    }
+    if ((x[0] - *(point_list.end()-1)).norm() < repsilon){
+        point_list.push_back(x[1]);
+        return;
+    }
+    if ((x[1] - *(point_list.end()-1)).norm() < repsilon){
+        point_list.push_back(x[0]);
+        return;
+    }
+    std::cout << "WARNING! Edge does not connect to point list." << std::endl;
+}
+
+ std::vector<PointList> addRectangleModZ2(std::vector<PointList> &chains, const Eigen::Vector2d &position, const double &width, const double &height){
     //
+     if (false){
     Eigen::Vector2d se = {position[0]+width, position[1]};
     Eigen::Vector2d ne = {position[0]+width, position[1]+height};
     Eigen::Vector2d nw = {position[0], position[1]+height};
@@ -165,40 +184,65 @@ std::vector<PointList> addRectangleModZ2(std::vector<PointList> &chains, const E
 	for(const auto& chain : chains){
         for (int foo=0; foo < chain.size() - 1 ; foo++){
             bool is_hedge;
-            auto edge = edgify(chain[foo], chain[foo+1], is_hedge);
+            bool is_forward;
+            auto edge = edgify(chain[foo], chain[foo+1], is_hedge, is_forward);
+            //check for intersection against all the rectangle edges
+            SegmentRelation segrel;
+            std::array<Eigen::Vector2d, 2> isect;
 			for (int rectsideii = 0; rectsideii < 4; rectsideii++) {
 				auto rectedge = rect_sides[rectsideii];
-				bool is_rect_horizontal = ((rectsideii) == 1) | ((rectsideii) == 3);
+				bool is_rect_horizontal = (rectsideii == 1) | (rectsideii == 3);
 				if (is_hedge == is_rect_horizontal) {
-					std::array<Eigen::Vector2d, 2> isect;
-					SegmentRelation segrel = edgeIntersection(rectedge, edge, is_rect_horizontal, isect);
-					if (segrel == SegmentRelation::kDisjoint) {
-						trim_chain.push_back(chain[foo]);
-					}
-					else {
-						if ((segrel == SegmentRelation::kSupersegment) | (segrel == SegmentRelation::kReverseStagger)) {
-							trim_chain.push_back(chain[foo]);
-						}
-						trim_chain.push_back(isect[0]);
-						trimmed_chains.push_back(trim_chain);
-						trim_chain = { isect[1] };
-						if ((segrel == SegmentRelation::kSupersegment) | (segrel == SegmentRelation::kDirectStagger)) {
-							trim_chain.push_back(chain[foo + 1]);
-						}
-						//Record the intersection for relinking purposes
-						ChainHit ch;
-						ch.segment = isect;
-						ch.id0 = trimmed_chains.size() - 1;
-						ch.is_front0 = false;
-						ch.id1 = trimmed_chains.size();
-						ch.is_front1 = true;
-					}
-				}
-			}
+					segrel = edgeIntersection(edge, rectedge, is_rect_horizontal, isect);
+//                    std::cout << rectsideii << " rect edge " << _debug_edge_print(rectedge) << " horizontal " << is_rect_horizontal << std::endl;
+//                    std::cout << "edge " << _debug_edge_print(edge) << " horizontal " << is_hedge << std::endl;
+//                    std::cout << "isect " << _debug_seg_rel_print(segrel) << " " << _debug_edge_print(isect) << std::endl;
+                    if (segrel != SegmentRelation::kDisjoint){
+                        break;
+                    }
+                }
+            }
+            if (segrel == SegmentRelation::kDisjoint) {
+                addEdgetoPointlist(trim_chain, edge);
+            } else {
+                if ((segrel == SegmentRelation::kSupersegment) | (segrel == SegmentRelation::kReverseStagger)) {
+                    
+                    std::array<Eigen::Vector2d,2> bit;
+//                    if (trim_chain){} else {}
+                    addEdgetoPointlist(trim_chain, {});
+                    Eigen::Vector2d pt_on_chain0 = chain[foo];
+//                    std::cout << pt_on_chain0.transpose() << std::endl;
+                    trim_chain.push_back(pt_on_chain0);
+                }
+                Eigen::Vector2d pt_on_chain1 = isect[0];
+//                std::cout << pt_on_chain1.transpose() << std::endl;
+                trim_chain.push_back(pt_on_chain1);
+                trimmed_chains.push_back(trim_chain);
+                Eigen::Vector2d pt_on_chain2 = isect[1];
+//                std::cout << pt_on_chain2.transpose() << std::endl;
+                trim_chain = { pt_on_chain2 };
+                if ((segrel == SegmentRelation::kSupersegment) | (segrel == SegmentRelation::kDirectStagger)) {
+                    trim_chain.push_back(chain[foo + 1]);
+                }
+                //Record the intersection for relinking purposes
+                ChainHit ch;
+                ch.segment = isect;
+                ch.id0 = trimmed_chains.size() - 1;
+                ch.is_front0 = false;
+                ch.id1 = trimmed_chains.size();
+                ch.is_front1 = true;
+            }
         }
 		trim_chain.push_back(*(chain.end()-1));
 		trimmed_chains.push_back(trim_chain);
 		trim_chain = {};
+    }
+    std::cout << "Trimmed chains:" << std::endl;
+    for (auto chain : trimmed_chains){
+        std::cout << " new chain " << std::endl;
+        for (auto p : chain){
+            std::cout << p.transpose() << std::endl;
+        }
     }
     //
 	//
@@ -281,7 +325,15 @@ std::vector<PointList> addRectangleModZ2(std::vector<PointList> &chains, const E
 	//
 	// PART 3: REFORGE THE CHAIN PIECES TOGETHER WITH THE RECTANGLE PIECE
 	//
+    }
 	std::vector<PointList> chainsout;
 
 	return chainsout;
+};
+
+
+std::string _debug_edge_print(std::array<Eigen::Vector2d,2> x){
+    std::stringstream ss;
+    ss << "("<< x[0].transpose() << " -> " << x[1].transpose() <<")";
+    return ss.str();
 };

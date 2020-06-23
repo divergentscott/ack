@@ -452,7 +452,7 @@ void example_addRectTest0() {
 	double height = 1;
 	Eigen::Vector2d position = { 0,0 };
 	std::vector<PointList> chains = {
-		{{-1, 0.5}, {0, 0.5}, {0, 0.25},{-1, 0.25}}//,
+		{{-1, 0.5}, {0, 0.5}, {0, 0.25}, {-1, 0.25}}//,
 //		{{2, 0.5}, {1, 0.5}, {1, 0.25},{2, 0.25}}
 	};
 	addRectangleModZ2(chains, position, width, height);
@@ -460,7 +460,7 @@ void example_addRectTest0() {
 
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
-	example_test_edge_intersect0();
+    example_addRectTest0();
 	std::cout << "end" << std::endl;
 }
 

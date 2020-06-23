@@ -53,6 +53,8 @@ enum class SegmentRelation {
 
 std::string _debug_seg_rel_print(SegmentRelation x);
 
+std::string _debug_edge_print(std::array<Eigen::Vector2d,2> x);
+
 SegmentRelation edgeIntersection(const std::array<Eigen::Vector2d, 2>& a, const std::array<Eigen::Vector2d, 2>& b, const bool is_horizontal, std::array<Eigen::Vector2d, 2>& isect);
 
 
