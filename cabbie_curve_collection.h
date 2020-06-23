@@ -43,49 +43,25 @@ struct CabbiePath{
 
 std::vector<PointList> addRectangleModZ2(std::vector<PointList> &chains, const Eigen::Vector2d &position, const double &width, const double &height);
 
-//enum class SegRelation{
-//    kDisjoint,
-//    kSupersegment,
-//    kSubsegment,
-//    kDirectStack,
-//    kReverseStack,
-//    kPerpindicularPoint
-//};
-//
-//SegRelation hedgeIntersection(Hedge a, Hedge b){
-//    if ( std::abs(a[0][1] - b[0][1]) > repsilon ) return SegRelation::kDisjoint;
-//    //So a and b have sufficiently close y.
-//    if (a[0][0] <= b[0][0]) {
-//        if (a[1][0] < b[0][0]) return SegRelation::kDisjoint;
-//        //So b[0][0] <= a[1][0]
-//        if (b[1][0] <= a[1][0]) return SegRelation::kSupersegment;
-//        //So a[1][0] < b[1][0]
-//        return SegRelation::kDirectStack;
-//    }
-//    // So b[0][0]<a[0][0]
-//    if (b[1][0] < a[0][0]) return SegRelation::kDisjoint;
-//    //
-//    if (a[1][0] <= b[1][0]) return SegRelation::kSubsegment;
-//    //So a[1][0] < b[1][0]
-//    return SegRelation::kReverseStack;
-//};
+enum class SegmentRelation {
+	kDisjoint,
+	kSubsegment, // a contained by b
+	kSupersegment, // a contains b
+	kDirectStagger, // abab
+	kReverseStagger // baba
+};
 
-//SegRelation vedgeIntersection(Vedge a, Vedge b){
-//    if ( std::abs(a[0][0] - b[0][0]) > repsilon ) return SegRelation::kDisjoint;
-//    //So a and b have sufficiently close y.
-//    if (a[0][1] <= b[0][1]) {
-//        if (a[1][1] < b[0][1]) return SegRelation::kDisjoint;
-//        //So b[0][0] <= a[1][0]
-//        if (b[1][1] <= a[1][1]) return SegRelation::kSupersegment;
-//        //So a[1][0] < b[1][0]
-//        return SegRelation::kDirectStack;
-//    }
-//    // So b[0][0]<a[0][0]
-//    if (b[1][1] < a[0][1]) return SegRelation::kDisjoint;
-//    //
-//    if (a[1][1] <= b[1][1]) return SegRelation::kSubsegment;
-//    //So a[1][0] < b[1][0]
-//    return SegRelation::kReverseStack;
-//};
+std::string _debug_seg_rel_print(SegmentRelation x) {
+	if (x == SegmentRelation::kDisjoint) return "disjoint";
+	if (x == SegmentRelation::kSubsegment) return "subsegment";
+	if (x == SegmentRelation::kSupersegment) return "supersegment";
+	if (x == SegmentRelation::kDirectStagger) return "direct_stag";
+	if (x == SegmentRelation::kReverseStagger) return "rev_stag";
+	return "error";
+};
+
+SegmentRelation edgeIntersection(const std::array<Eigen::Vector2d, 2>& a, const std::array<Eigen::Vector2d, 2>& b, const bool is_horizontal, std::array<Eigen::Vector2d, 2>& isect);
+
+
 
 #endif /* cabby_curve_collection_hpp */

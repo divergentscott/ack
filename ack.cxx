@@ -439,13 +439,28 @@ void example_11(){
     wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example11.svg");
 }
 
-void example_linering(){
-    
+void example_test_edge_intersect0(){
+	Hedge a = { Eigen::Vector2d({0,0}), Eigen::Vector2d({0,1}) };
+	Hedge b = { Eigen::Vector2d({0,0}), Eigen::Vector2d({0,1}) };
+	Hedge isect;
+	auto seg_rel = edgeIntersection(a,b,true,isect);
+	std::cout << _debug_seg_rel_print(seg_rel) << " isect " << isect[0].transpose() << " -> " << isect[1].transpose() << std::endl;
+};
+
+void example_addRectTest0() {
+	double width = 1;
+	double height = 1;
+	Eigen::Vector2d position = { 0,0 };
+	std::vector<PointList> chains = {
+		{{-1, 0.5}, {0, 0.5}, {0, 0.25},{-1, 0.25}}//,
+//		{{2, 0.5}, {1, 0.5}, {1, 0.25},{2, 0.25}}
+	};
+	addRectangleModZ2(chains, position, width, height);
 }
 
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
-    example_linering();
+	example_test_edge_intersect0();
 }
 
 
