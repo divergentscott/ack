@@ -12,8 +12,9 @@
 
 #include "curve_collection.h"
 
-using Vedge = std::array<Eigen::Vector2d,2>;
-using Hedge = std::array<Eigen::Vector2d,2>;
+using Vedge = std::array<Eigen::Vector2d, 2>; // vertical edge
+using Hedge = std::array<Eigen::Vector2d, 2>; // horizontal edge
+using Cedge = std::array<Eigen::Vector2d, 2>; // cardinal edge
 using PointList = std::vector<Eigen::Vector2d>;
 
 

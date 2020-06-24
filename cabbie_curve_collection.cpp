@@ -1,3 +1,5 @@
+#include <deque>
+
 #include "cabbie_curve_collection.h"
 
 bool rayTraceNorth(const Eigen::Vector2d &origin, const Hedge &segment, Eigen::Vector2d &impact){
@@ -119,7 +121,7 @@ SegmentRelation edgeIntersection(const std::array<Eigen::Vector2d, 2>& a, const 
 	return SegmentRelation::kDirectStagger;
 };
 
-std::array<Eigen::Vector2d,2> edgify(const Eigen::Vector2d& a, const Eigen::Vector2d& b, bool& is_hedge, bool& is_forward){
+Cedge edgify(const Eigen::Vector2d& a, const Eigen::Vector2d& b, bool& is_hedge, bool& is_forward){
     if (std::abs(a[1] - b[1]) < repsilon){
         is_hedge = true;
         is_forward = (a[0]<b[0]);
@@ -136,13 +138,6 @@ std::array<Eigen::Vector2d,2> edgify(const Eigen::Vector2d& a, const Eigen::Vect
     return {a,b};
 }
 
-struct ChainHit {
-	std::array<Eigen::Vector2d,2> segment;
-	int id0;
-	bool is_front0;
-	int id1;
-	bool is_front1;
-};
 
 void addEdgetoPointlist(PointList & point_list, std::array<Eigen::Vector2d,2> x){
     if (point_list.size()>0){
@@ -160,9 +155,88 @@ void addEdgetoPointlist(PointList & point_list, std::array<Eigen::Vector2d,2> x)
     std::cout << "WARNING! Edge does not connect to point list." << std::endl;
 }
 
+struct ChainForge {
+	// For collecting line segments with shared endpoints and organizing them into paths
+	// These are expected to be fairly few chains, if larger then we need a more sophisticated spatial search structure
+	// Already kind of a lot of copying
+	std::vector<std::deque<Eigen::Vector2d>> chains_;
+	void addLink(Cedge x){
+		bool is_matched = false;
+		for (auto& chain : chains_) {
+			if ((chain.back() - x[0]).norm() < repsilon) {
+				chain.push_back(x[1]);
+				is_matched = true;
+				break;
+			}
+			if ((chain.back() - x[1]).norm() < repsilon) {
+				chain.push_back(x[0]);
+				is_matched = true;
+				break;
+			} 
+			if ((chain.front() - x[0]).norm() < repsilon) {
+				chain.push_front(x[1]);
+				is_matched = true;
+				break;
+			}
+			if ((chain.front() - x[1]).norm() < repsilon) {
+				chain.push_front(x[0]);
+				is_matched = true;
+				break;
+			} 
+		}
+		if (!is_matched) {
+			chains_.push_back({x[0],x[1]});
+		}
+	};
+	template<class TIteratable>
+	void addChain(TIteratable x){
+		bool is_matched = false;
+		for (auto& chain : chains_) {
+			if ((chain.back() - x.front()).norm() < repsilon) {
+				for (int foo = 1; foo < x.size(); foo++) chain.push_back(x[foo]);
+				is_matched = true;
+				break;
+			}
+			if ((chain.back() - x.back()).norm() < repsilon) {
+				for (int foo = x.size()-2; foo >=0; foo--) chain.push_back(x[foo]);
+				is_matched = true;
+				break;
+			}
+			if ((chain.front() - x.front()).norm() < repsilon) {
+				for (int foo = 1; foo < x.size(); foo++) chain.push_front(x[foo]);
+				is_matched = true;
+				break;
+			}
+			if ((chain.front() - x[1]).norm() < repsilon) {
+				for (int foo = x.size() - 2; foo >= 0; foo--) chain.push_front(x[foo]);
+				is_matched = true;
+				break;
+			}
+		}
+		if (!is_matched) {
+			std::deque<Eigen::Vector2d> chain;
+			for (int foo = 0; foo < x.size(); foo++) chain.push_back(x[foo]);
+			chains_.push_back(chain);
+		}
+	};
+	void relink() {
+		//This is very inefficient.
+		ChainForge reforge;
+		for (auto &chain : chains_){
+			reforge.addChain(chain);
+		}
+		chains_ = reforge.chains_;
+	}
+	std::vector<PointList> getPointList() {
+		std::vector<PointList> pls;
+		for (auto& chain : chains_) pls.push_back({chain.begin(), chain.end()});
+		return pls;
+	}
+};
+
+
  std::vector<PointList> addRectangleModZ2(std::vector<PointList> &chains, const Eigen::Vector2d &position, const double &width, const double &height){
     //
-     if (false){
     Eigen::Vector2d se = {position[0]+width, position[1]};
     Eigen::Vector2d ne = {position[0]+width, position[1]+height};
     Eigen::Vector2d nw = {position[0], position[1]+height};
@@ -174,18 +248,19 @@ void addEdgetoPointlist(PointList & point_list, std::array<Eigen::Vector2d,2> x)
     Vedge rect_e = {se,ne};
 	std::array<std::array<Eigen::Vector2d, 2>,4> rect_sides = { rect_w, rect_n, rect_e, rect_s };
     //
-	std::array<std::vector<ChainHit>,4> hits;
+	std::array<std::vector<Cedge>,4> hits;
 	//
 	// PART 1: SHATTER THE INCOMING CHAINS
 	//
-	//Search for overlapping linesegments and trim the chains by deleting all contacts with the rectangle
-	std::vector<PointList>	trimmed_chains;
-	PointList trim_chain;
+	// Search for overlapping linesegments and trim the chains.
+	// Pieces that intersect the rectangle are recorded for deletion from the rectangle,
+	// Otherwise the get dumped into the chain forge
+	ChainForge chain_forge;
 	for(const auto& chain : chains){
         for (int foo=0; foo < chain.size() - 1 ; foo++){
             bool is_hedge;
             bool is_forward;
-            auto edge = edgify(chain[foo], chain[foo+1], is_hedge, is_forward);
+			Cedge edge = edgify(chain[foo], chain[foo + 1], is_hedge, is_forward);
             //check for intersection against all the rectangle edges
             SegmentRelation segrel;
             std::array<Eigen::Vector2d, 2> isect;
@@ -198,72 +273,55 @@ void addEdgetoPointlist(PointList & point_list, std::array<Eigen::Vector2d,2> x)
 //                    std::cout << "edge " << _debug_edge_print(edge) << " horizontal " << is_hedge << std::endl;
 //                    std::cout << "isect " << _debug_seg_rel_print(segrel) << " " << _debug_edge_print(isect) << std::endl;
                     if (segrel != SegmentRelation::kDisjoint){
+						hits[rectsideii].push_back(isect);
                         break;
                     }
                 }
             }
+			//
             if (segrel == SegmentRelation::kDisjoint) {
-                addEdgetoPointlist(trim_chain, edge);
+				chain_forge.addLink(edge);
             } else {
+				if ((segrel == SegmentRelation::kSupersegment) | (segrel == SegmentRelation::kDirectStagger)) {
+					chain_forge.addLink({edge[0],isect[0]});
+				}
                 if ((segrel == SegmentRelation::kSupersegment) | (segrel == SegmentRelation::kReverseStagger)) {
-                    
-                    std::array<Eigen::Vector2d,2> bit;
-//                    if (trim_chain){} else {}
-                    addEdgetoPointlist(trim_chain, {});
-                    Eigen::Vector2d pt_on_chain0 = chain[foo];
-//                    std::cout << pt_on_chain0.transpose() << std::endl;
-                    trim_chain.push_back(pt_on_chain0);
+					chain_forge.addLink({isect[1], edge[1]});
                 }
-                Eigen::Vector2d pt_on_chain1 = isect[0];
-//                std::cout << pt_on_chain1.transpose() << std::endl;
-                trim_chain.push_back(pt_on_chain1);
-                trimmed_chains.push_back(trim_chain);
-                Eigen::Vector2d pt_on_chain2 = isect[1];
-//                std::cout << pt_on_chain2.transpose() << std::endl;
-                trim_chain = { pt_on_chain2 };
-                if ((segrel == SegmentRelation::kSupersegment) | (segrel == SegmentRelation::kDirectStagger)) {
-                    trim_chain.push_back(chain[foo + 1]);
-                }
-                //Record the intersection for relinking purposes
-                ChainHit ch;
-                ch.segment = isect;
-                ch.id0 = trimmed_chains.size() - 1;
-                ch.is_front0 = false;
-                ch.id1 = trimmed_chains.size();
-                ch.is_front1 = true;
             }
         }
-		trim_chain.push_back(*(chain.end()-1));
-		trimmed_chains.push_back(trim_chain);
-		trim_chain = {};
     }
+	
     std::cout << "Trimmed chains:" << std::endl;
-    for (auto chain : trimmed_chains){
+    for (auto chain : chain_forge.chains_){
         std::cout << " new chain " << std::endl;
         for (auto p : chain){
             std::cout << p.transpose() << std::endl;
         }
     }
+
     //
 	//
 	// PART 2: SHATTER THE RECTANGLE
 	//
 	//order hits by going around the rectangle clockwise from west
-	std::sort(hits[0].begin(), hits[0].end(), [](const ChainHit& a, const ChainHit&b) {return a.segment[0][1] < b.segment[0][1];});
-	std::sort(hits[1].begin(), hits[1].end(), [](const ChainHit& a, const ChainHit&b) {return a.segment[0][0] < b.segment[0][0];});
-	std::sort(hits[2].begin(), hits[2].end(), [](const ChainHit& a, const ChainHit&b) {return a.segment[0][1] > b.segment[0][1];});
-	std::sort(hits[3].begin(), hits[3].end(), [](const ChainHit& a, const ChainHit&b) {return a.segment[0][0] > b.segment[0][0];});
-    //
-    //
+	std::sort(hits[0].begin(), hits[0].end(), [](const Vedge& a, const Vedge& b) {return a[0][1] < b[0][1];});
+	std::sort(hits[1].begin(), hits[1].end(), [](const Hedge& a, const Hedge& b) {return a[0][0] < b[0][0];});
+	std::sort(hits[2].begin(), hits[2].end(), [](const Vedge& a, const Vedge& b) {return a[0][1] > b[0][1];});
+	std::sort(hits[3].begin(), hits[3].end(), [](const Hedge& a, const Hedge& b) {return a[0][0] > b[0][0];});
+
+	std::cout << "Rectangle hits are:" << std::endl;
+	for (int foo = 0; foo < 4; foo++) {
+		std::cout << "Rectangle side " << foo << std::endl;
+		for (auto hit : hits[foo]) {
+			std::cout << _debug_edge_print(hit) << std::endl;
+		}
+	}
 	//Rect_segs has the connected components of the rectangle boundary - intersecting curves 
-    std::vector<PointList> rectangle_remnants;
-	std::vector<std::array<int,2>> remnant_end_ids;
-	std::vector<std::array<bool,2>> remnant_end_directions;
-	//
 	//Now we reorganize the rectangle boundary that hasn't been removed into segments
 	PointList rect_remnant;
-	std::array<int, 2> remnant_end_id;
-	std::array<bool, 2> remnant_end_direct;
+	////std::array<int, 2> remnant_end_id;
+	////std::array<bool, 2> remnant_end_direct;
 	//
 	int start = -1;
     for (int foo=0; foo<4; foo++){
@@ -271,64 +329,61 @@ void addEdgetoPointlist(PointList & point_list, std::array<Eigen::Vector2d,2> x)
             //Find the first impact
             start = foo;
             foo=0;
-            rect_remnant.push_back(hits[start][0].segment[1]);
-			remnant_end_id = { hits[start][0].id1, -1 };
-			remnant_end_direct[0] = hits[start][0].is_front1;
+            rect_remnant.push_back(hits[start][0][1]);
 			//list all the segments on start edge
 			for (int bar=1; bar < hits[start].size(); bar++){
-                rect_remnant.push_back(hits[start][bar].segment[0]);
-				remnant_end_id[1] = hits[start][bar].id0;
-				remnant_end_direct[1] = hits[start][bar].is_front0;
+                rect_remnant.push_back(hits[start][bar][0]);
 				//
-                rectangle_remnants.push_back(rect_remnant);
-				remnant_end_ids.push_back(remnant_end_id);
-				remnant_end_directions.push_back(remnant_end_direct);
+				chain_forge.addChain(rect_remnant);
 				//
-				//remnant_end_id.push_back();
-                rect_remnant = {hits[start][bar].segment[1]};
-				remnant_end_id = { hits[start][bar].id1 , -1};
-				remnant_end_direct[0] = hits[start][bar].is_front1;
+                rect_remnant = {hits[start][bar][1]};
 			}
 			//See if the you need the corner
-			if ( (rect_corners[start] - *(rect_remnant.end()-1) ).norm() < repsilon) {
+			if ( (rect_corners[start] - rect_remnant.back()).norm() > repsilon) {
 				rect_remnant.push_back(rect_corners[start]);
 			}
         } else {
             //traverse around the other edges and write down segments
             int at = (foo + start) % 4;
+			std::cout << "considered edge " << at << std::endl;
 			for (int bar = 0; bar < hits[at].size(); bar++) {
-				rect_remnant.push_back(hits[at][bar].segment[0]);	
-				remnant_end_id[1] = hits[at][bar].id0;
-				remnant_end_direct[1] = hits[at][bar].is_front0;
+				rect_remnant.push_back(hits[at][bar][0]);
 				//
-				rectangle_remnants.push_back(rect_remnant);
-				remnant_end_ids.push_back(remnant_end_id);
-				remnant_end_directions.push_back(remnant_end_direct);
+				chain_forge.addChain(rect_remnant);
 				//
-				rect_remnant = { hits[at][bar].segment[1] };
-				remnant_end_id = { hits[at][bar].id1, -1 };
-				remnant_end_direct[0] = hits[at][bar].is_front1;
+				rect_remnant = { hits[at][bar][1] };
 			}
 			//See if the you need the corner
-			if ((rect_corners[start] - *(rect_remnant.end() - 1)).norm() < repsilon) {
-				rect_remnant.push_back(rect_corners[start]);
+			if ((rect_corners[at] - *(rect_remnant.end() - 1)).norm() > repsilon) {
+				rect_remnant.push_back(rect_corners[at]);
 			}
         }
     }
-	rect_remnant.push_back(hits[start][0].segment[0]);
-	remnant_end_id[1] = hits[start][0].id0;
-	remnant_end_direct[1] = hits[start][0].is_front0;
+	rect_remnant.push_back(hits[start][0][0]);
 	//
-	rectangle_remnants.push_back(rect_remnant);
-	remnant_end_ids.push_back(remnant_end_id);
-	remnant_end_directions.push_back(remnant_end_direct);
+	chain_forge.addChain(rect_remnant);
+
+	std::cout << "After rectangle:" << std::endl;
+	for (auto chain : chain_forge.chains_) {
+		std::cout << " new chain " << std::endl;
+		for (auto p : chain) {
+			std::cout << p.transpose() << std::endl;
+		}
+	}
 	//
 	// PART 3: REFORGE THE CHAIN PIECES TOGETHER WITH THE RECTANGLE PIECE
 	//
-    }
-	std::vector<PointList> chainsout;
+	chain_forge.relink();
+	
+	std::cout << "After relinking:" << std::endl;
+	for (auto chain : chain_forge.chains_) {
+		std::cout << " new chain " << std::endl;
+		for (auto p : chain) {
+			std::cout << p.transpose() << std::endl;
+		}
+	}
 
-	return chainsout;
+	return chain_forge.getPointList();
 };
 
 
