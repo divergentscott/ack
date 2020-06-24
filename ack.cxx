@@ -448,19 +448,127 @@ void example_test_edge_intersect0(){
 };
 
 void example_addRectTest0() {
-	double width = 1;
-	double height = 1;
+	double width = 10;
+	double height = 10;
 	Eigen::Vector2d position = { 0,0 };
 	std::vector<PointList> chains = {
-		{{-1, 0.5}, {0, 0.5}, {0, 0.25}, {-1, 0.25}}//,
-//		{{2, 0.5}, {1, 0.5}, {1, 0.25},{2, 0.25}}
+		{{-1, 1}, {0, 1}, {0, 2}, {-1, 2}},
+		{{-1, 3}, {0, 3}, {0, 4}, {-1, 4}},
+		{{-1, 5}, {0, 5}, {0, 6}, {-1, 6}},
+		{{1, 12}, {1, 10}, {2, 10}, {2, 11}, {3, 11}, {3, 10}, {4,10}, {4,12}},
+		{{10,13},{10,-3}},
+		{{3,-3},{3,0},{4,0},{4,-1},{5,-1},{5,0},{6,0},{6,-3}}
 	};
-	addRectangleModZ2(chains, position, width, height);
+	WildernessCartographerSVG vv0;
+	vv0.addRectangle(position, width, height);
+	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
+	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect0_before.svg");
+
+	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
+	WildernessCartographerSVG vv;
+	vv.addRectangle(position, width, height);
+	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
+	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect0.svg");
+}
+
+void example_addRectTest1() {
+	double width = 10;
+	double height = 10;
+	Eigen::Vector2d position = { 0,0 };
+	std::vector<PointList> chains = {
+		{{0, 12}, {0, 0}, {12,0}}
+	};
+	WildernessCartographerSVG vv0;
+	vv0.addRectangle(position, width, height);
+	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
+	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect1_before.svg");
+
+	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
+	WildernessCartographerSVG vv;
+	vv.addRectangle(position, width, height);
+	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
+	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect1.svg");
+}
+
+void example_addRectTest2() {
+	double width = 10;
+	double height = 10;
+	Eigen::Vector2d position = { 0,0 };
+	std::vector<PointList> chains = {
+		{{0, 12}, {0, 0}, {10,0}, {10,12}}
+	};
+	WildernessCartographerSVG vv0;
+	vv0.addRectangle(position, width, height);
+	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
+	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect2_before.svg");
+
+	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
+	WildernessCartographerSVG vv;
+	vv.addRectangle(position, width, height);
+	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
+	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect2.svg");
+}
+
+void example_addRectTest3() {
+	double width = 10;
+	double height = 10;
+	Eigen::Vector2d position = { 0,0 };
+	std::vector<PointList> chains = {
+		{{0, 12}, {0, -2}, {5,-2}, {5,0}, {12,0}}
+	};
+	WildernessCartographerSVG vv0;
+	vv0.addRectangle(position, width, height);
+	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
+	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect3_before.svg");
+
+	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
+	WildernessCartographerSVG vv;
+	vv.addRectangle(position, width, height);
+	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
+	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect3.svg");
+}
+
+void example_addRectTest4() {
+	double width = 10;
+	double height = 10;
+	Eigen::Vector2d position = { 0,0 };
+	std::vector<PointList> chains = {
+		{{0, 12}, {0, -2}, {7,-2}, {7,0}, {8,0}, {8, -2}, {9,-2}, {9,-4},}
+	};
+	WildernessCartographerSVG vv0;
+	vv0.addRectangle(position, width, height);
+	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
+	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect4_before.svg");
+
+	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
+	WildernessCartographerSVG vv;
+	vv.addRectangle(position, width, height);
+	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
+	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect4.svg");
+}
+
+void example_addRectTest5() {
+	double width = 10;
+	double height = 10;
+	Eigen::Vector2d position = { 0,0 };
+	std::vector<PointList> chains = {
+		{{0, 12}, {0, -2}, {1,-2}, {1,0}, {2,0}, {2, -2}, {3,-2}, {3,0}, {4,0}, {4, -3}, {5,-3}, {5,0}, {6,0}, {6, -2.6}, {7,-2.6}, {7,0}, {8,0}, {8, -2}, {9,-2}, {9,-4},}
+	};
+	WildernessCartographerSVG vv0;
+	vv0.addRectangle(position, width, height);
+	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
+	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect5_before.svg");
+
+	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
+	WildernessCartographerSVG vv;
+	vv.addRectangle(position, width, height);
+	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
+	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect5.svg");
 }
 
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
-    example_addRectTest0();
+    example_addRectTest4();
 	std::cout << "end" << std::endl;
 }
 

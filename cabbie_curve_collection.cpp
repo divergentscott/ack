@@ -207,7 +207,7 @@ struct ChainForge {
 				is_matched = true;
 				break;
 			}
-			if ((chain.front() - x[1]).norm() < repsilon) {
+			if ((chain.front() - x.back()).norm() < repsilon) {
 				for (int foo = x.size() - 2; foo >= 0; foo--) chain.push_front(x[foo]);
 				is_matched = true;
 				break;
@@ -220,12 +220,17 @@ struct ChainForge {
 		}
 	};
 	void relink() {
-		//This is very inefficient.
-		ChainForge reforge;
-		for (auto &chain : chains_){
-			reforge.addChain(chain);
+		//This is EXTREMELY inefficient.
+		//Speed improve by preventing
+		bool is_continuing = true;
+		while (is_continuing) {
+			ChainForge reforge;
+			for (auto &chain : chains_) {
+				reforge.addChain(chain);
+			}
+			if (chains_.size() == reforge.chains_.size()) is_continuing = false;
+			chains_ = reforge.chains_;
 		}
-		chains_ = reforge.chains_;
 	}
 	std::vector<PointList> getPointList() {
 		std::vector<PointList> pls;
@@ -324,19 +329,21 @@ struct ChainForge {
 	////std::array<bool, 2> remnant_end_direct;
 	//
 	int start = -1;
+	int start_lead_index = 0;
     for (int foo=0; foo<4; foo++){
         if ((hits[foo].size() > 0) & (start < 0)){
             //Find the first impact
             start = foo;
             foo=0;
-            rect_remnant.push_back(hits[start][0][1]);
+			start_lead_index = 1 - start / 2;
+            rect_remnant.push_back(hits[start][0][ start_lead_index ]);
 			//list all the segments on start edge
 			for (int bar=1; bar < hits[start].size(); bar++){
-                rect_remnant.push_back(hits[start][bar][0]);
+                rect_remnant.push_back(hits[start][bar][1-start_lead_index]);
 				//
 				chain_forge.addChain(rect_remnant);
 				//
-                rect_remnant = {hits[start][bar][1]};
+                rect_remnant = {hits[start][bar][start_lead_index]};
 			}
 			//See if the you need the corner
 			if ( (rect_corners[start] - rect_remnant.back()).norm() > repsilon) {
@@ -345,13 +352,14 @@ struct ChainForge {
         } else {
             //traverse around the other edges and write down segments
             int at = (foo + start) % 4;
+			int at_lead_index = 1 - at / 2;
 			std::cout << "considered edge " << at << std::endl;
 			for (int bar = 0; bar < hits[at].size(); bar++) {
-				rect_remnant.push_back(hits[at][bar][0]);
+				rect_remnant.push_back(hits[at][bar][1-at_lead_index]);
 				//
 				chain_forge.addChain(rect_remnant);
 				//
-				rect_remnant = { hits[at][bar][1] };
+				rect_remnant = { hits[at][bar][at_lead_index] };
 			}
 			//See if the you need the corner
 			if ((rect_corners[at] - *(rect_remnant.end() - 1)).norm() > repsilon) {
@@ -359,7 +367,7 @@ struct ChainForge {
 			}
         }
     }
-	rect_remnant.push_back(hits[start][0][0]);
+	rect_remnant.push_back(hits[start][0][1-start_lead_index]);
 	//
 	chain_forge.addChain(rect_remnant);
 
