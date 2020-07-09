@@ -246,29 +246,7 @@ void CurveCollection::compute_normals() {
 }
 
 
-
-bool CurveCollection::insertEdges(const std::vector<std::array<double,2>> &grid_points, const std::vector<std::vector<int>> &one_cells) {
-    // Size allocation
-    points_.resize(grid_points.size());
-    edges_.resize(one_cells.size());
-    // Copy the points
-    for (int foo = 0; foo < grid_points.size(); foo++) {
-        points_[foo] = {grid_points[foo][0], grid_points[foo][1]};
-    }
-    // Copy the edges
-    for (int foo = 0; foo < one_cells.size(); foo++) {
-        std::vector<int> cell_foo;
-        if (cell_foo.size() != 2) is_valid_= false;
-        edges_[foo] = {cell_foo[0], cell_foo[1]};
-    }
-    // Probably should not proceed if curves are invalid.
-    if (is_valid_) {
-        is_valid_ = orient_curves();
-    }
-    return is_valid_;
-}
-
-bool CurveCollection::insertEdges(const std::vector<std::array<double,3>> &grid_points, const std::vector<std::vector<int>> &one_cells) {
+bool CurveCollection::setGridPointsAndCells(const std::vector<std::array<double,3>> &grid_points, const std::vector<std::vector<int>> &one_cells) {
     // Size allocation
     points_.resize(grid_points.size());
     edges_.resize(one_cells.size());
@@ -300,7 +278,12 @@ bool CurveCollection::insertEdges(const std::vector<std::array<double,3>> &grid_
 int CurveCollection::get_number_of_points() const {
     /*Point access*/
     return points_.size();
-};
+}
+int CurveCollection::get_number_of_edges() const
+{
+	return edges_.size();
+}
+;
 
 Eigen::Vector2d CurveCollection::get_point(int p_id) const {
     /*Point access*/
@@ -337,34 +320,44 @@ std::array<int,2> CurveCollection::get_points_of_edge(const int e_id) const {
 int CurveCollection::get_number_of_components() const {
     return basepoints_.size();
 };
+
 int CurveCollection::get_basepoint(int x) const {
     return basepoints_[x];
 };
 
-//void CurveCollection::update_polydata() {
-//    if (!is_normals_computed_) compute_normals();
-//    auto new_polydata = vtkSmartPointer<vtkPolyData>::New();
-//    auto out_points = vtkSmartPointer<vtkPoints>::New();
-//    auto out_lines = vtkSmartPointer<vtkCellArray>::New();
-//    auto out_normals = vtkSmartPointer<vtkDoubleArray>::New();
-//    out_normals->SetName("PlanarNormals");
-//    out_normals->SetNumberOfComponents(2);
-//    for (int foo = 0; foo < points_.size(); foo++) {
-//        double pt_foo[3]{points_[foo][0], points_[foo][1], 0.0};
-//        out_points->InsertNextPoint(pt_foo);
-//        auto lien = vtkSmartPointer<vtkLine>::New();
-//        lien->GetPointIds()->SetId(0, foo);
-//        lien->GetPointIds()->SetId(1, order_next_[foo]);
-//        out_lines->InsertNextCell(lien);
-//        out_normals->InsertNextTuple2(normals_[foo][0], normals_[foo][1]);
-//    }
-//    new_polydata->SetPoints(out_points);
-//    new_polydata->SetLines(out_lines);
-//    new_polydata->GetPointData()->AddArray(out_normals);
-//    polydata_ = new_polydata;
-//};
-//
-//vtkSmartPointer<vtkPolyData> CurveCollection::get_polydata() {
-//    update_polydata();
-//    return polydata_;
-//}
+std::vector<PointList> CurveCollection::getPointCycles() const {
+	std::vector<PointList> cycles;
+	cycles.reserve(get_number_of_components());
+	for (auto bp : basepoints_) {
+		PointList cycle;
+		cycle.reserve(get_number_of_points());
+		int at = bp;
+		do {
+			cycle.push_back(get_point(at));
+			at = get_next_point(at);
+		} while (at != bp);
+		cycle.push_back(get_point(bp));
+		cycles.push_back(cycle);
+	}
+	return cycles;
+};
+
+bool CurveCollection::setPointCycles(const  std::vector<PointList>& cycles){
+	//
+	int point_count = points_.size();
+	int cnt;
+	for (const auto & cycle : cycles) {
+		int basepoint = point_count;
+		cnt = point_count;
+		point_count += (cycle.size() - 1);
+		points_.reserve(point_count);
+		points_.insert(std::end(points_), std::begin(cycle), std::end(cycle)-1);
+		//Write in all the edges in the cycle.
+		edges_.reserve(point_count);
+		while (cnt < point_count-1) {
+			edges_.push_back({cnt, cnt+1});
+			cnt++;
+		}
+	}
+	return orient_curves();
+};

@@ -16,6 +16,8 @@
 
 static const double repsilon = std::sqrt(std::numeric_limits<double>::epsilon());
 
+using PointList = std::vector<Eigen::Vector2d>;
+
 class CurveCollection {
 protected:
     bool is_valid_ = true;
@@ -53,10 +55,11 @@ public:
     // Poly data must have lines forming closed curves.
 //    CabbyCurveCollection(const std::vector<std::array<double,2>> &grid_points, const std::vector<std::vector<int>> &one_cells);
 //    CabbyCurveCollection(const std::vector<std::array<double,3>> &grid_points, const std::vector<std::vector<int>> &one_cells);
-
-    bool insertEdges(const std::vector<std::array<double,2>> &grid_points, const std::vector<std::vector<int>> &one_cells);
     
-    bool insertEdges(const std::vector<std::array<double,3>> &grid_points, const std::vector<std::vector<int>> &one_cells);
+    bool setGridPointsAndCells(const std::vector<std::array<double,3>> &grid_points, const std::vector<std::vector<int>> &one_cells);
+
+	bool setPointCycles(const  std::vector<PointList>& cycles);
+	std::vector<PointList> getPointCycles() const;
 
     
     // Ray to segment intersection computation for ray trace
@@ -75,7 +78,8 @@ public:
     
     // Point access
     int get_number_of_points() const;
-    
+	int get_number_of_edges() const;
+
     int get_number_of_components() const;
     int get_basepoint(int) const;
     

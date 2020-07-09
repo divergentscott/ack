@@ -43,20 +43,25 @@ struct VacancySide{
     VacancySide(const int edge_id_0, const std::array<Eigen::Vector2d,2> &i_points, const std::array<int,2> &i_point_ids);
 };
 
-struct Wilderness{
-    CabbieCurveCollection curves_;
+struct ZoningCommisioner{
+    CardinalCurveCollection vacant_;
+	std::vector<NeighborhoodShape> shapes_;
+	std::vector<bool> is_edge_horizontals_;
+	std::vector<OutsideSide> outsidesides_;
     std::vector<VacancySide> vsides_;
     int westmost_frontier_id_ = 0;
     int eastmost_frontier_id_ = 0;
     std::vector<Trail> trails_;
     
-    Wilderness(){};
+    ZoningCommisioner(){};
     
+	void insertCurves(const std::vector<std::array<double, 3>> &grid_points, const std::vector<std::vector<int>> &lines);
+
+
     void findFrontier();
     
     NeighborhoodShape getNeighborhoodShape(int dim_of_interest, double pos_prev, double pos_foo, double pos_next);
     
-    void insertCurves(const std::vector<std::array<double,3>> &grid_points, const std::vector<std::vector<int>> &lines);
     
     void populateNeighbors();
     
@@ -67,8 +72,8 @@ struct Wilderness{
     void trailblaze();
     
     bool findPlacement(const double& width, const double& height, Eigen::Vector2d& placement) const;
-    
-    void removeRectangle(const Eigen::Vector2d& position, const double& width, const double& height);
+
+    void zoneOff(const Eigen::Vector2d& position, const double& width, const double& height);
     
 };
 

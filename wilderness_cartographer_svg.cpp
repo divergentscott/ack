@@ -79,7 +79,7 @@ void WildernessCartographerSVG::addRectangles(const std::vector<Eigen::Vector2d>
     }
 };
 
-void WildernessCartographerSVG::addCabbieCurveCollection(const CabbieCurveCollection& ccc, const std::string& color, const double& stroke){
+void WildernessCartographerSVG::addCardinalCurveCollection(const CardinalCurveCollection& ccc, const std::string& color, const double& stroke){
     int n_components = ccc.get_number_of_components();
     for (int foo=0; foo < n_components; foo++){
         svgvis::Polyline plyl;
@@ -104,7 +104,7 @@ void WildernessCartographerSVG::addCabbieCurveCollection(const CabbieCurveCollec
     };
 }
 
-void WildernessCartographerSVG::addCabbiePath(const CabbiePath &cp, const std::string& color, const double& stroke){
+void WildernessCartographerSVG::addCardinalPath(const CardinalPath &cp, const std::string& color, const double& stroke){
 	addPointList(cp.points_, color, stroke);
 };
 

@@ -8,8 +8,8 @@ struct Trail{
     //Trails cover the Wilderness.
     //Trails have a path of lower and upper points in R2
     //Trails do not contain east or west notches.
-    CabbiePath landmarks_mountain_;
-    CabbiePath landmarks_valley_;
+    CardinalPath landmarks_mountain_;
+    CardinalPath landmarks_valley_;
     Vedge getWesternFront() const;
 };
 

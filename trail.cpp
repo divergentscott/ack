@@ -28,9 +28,9 @@ void removeRectangle(std::vector<Trail> &trails, const Eigen::Vector2d& position
     shadow_extents.resize(trails.size());
     
     //
-    Eigen::Vector2d se = {position[0]+width, position[1]};
-    Eigen::Vector2d ne = {position[0]+width, position[1]+height};
-    Eigen::Vector2d nw = {position[0], position[1]+height};
+    Eigen::Vector2d se = {position[0] + width, position[1]};
+    Eigen::Vector2d ne = {position[0] + width, position[1] + height};
+    Eigen::Vector2d nw = {position[0], position[1] + height};
     Hedge rect_s = {position,se};
     Hedge rect_n = {nw,ne};
     Vedge rect_w = {position,nw};

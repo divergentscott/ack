@@ -73,7 +73,7 @@ void CaliperHiker::expandCamps(){
 };
 
 
-PlankHiker::PlankHiker(const CabbiePath& landmarks, const double plank_width, const bool is_gravity_south) : landmarks_(landmarks), width_(plank_width), is_gravity_south_(is_gravity_south)
+PlankHiker::PlankHiker(const CardinalPath& landmarks, const double plank_width, const bool is_gravity_south) : landmarks_(landmarks), width_(plank_width), is_gravity_south_(is_gravity_south)
 {
     vert_index_ = is_gravity_south_? 1 : 0;
 };

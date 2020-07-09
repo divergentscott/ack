@@ -2,6 +2,7 @@
 
 #include "cabbie_curve_collection.h"
 
+
 bool rayTraceNorth(const Eigen::Vector2d &origin, const Hedge &segment, Eigen::Vector2d &impact){
     //Returns true if there is an impact, otherwise false.
     //If true, impact_location is populated with the impact point on the line segment.
@@ -23,21 +24,21 @@ bool rayTraceEast(const Eigen::Vector2d &origin, const Vedge &segment, Eigen::Ve
     return true;
 };
 
-Vedge CabbiePath::getWall(const int &east_index) const {
+Vedge CardinalPath::getWall(const int &east_index) const {
     auto a = points_[2*east_index+1];
     auto b = points_[2*east_index+2];
     if (a[1] < b[1]) return {a,b};
     return {b,a};
 };
 
-Hedge CabbiePath::getPlateau(const int &east_index) const {
+Hedge CardinalPath::getPlateau(const int &east_index) const {
     auto a = points_[2*east_index];
     auto b = points_[2*east_index+1];
     if (a[0] < b[0]) return {a,b};
     return {b,a};
 };
 
-void CabbiePath::copyPointList(const std::list<Eigen::Vector2d> &x){
+void CardinalPath::copyPointList(const std::list<Eigen::Vector2d> &x){
     if (x.size()>0){
         points_.resize(x.size());
         num_walls_ = (x.size()-1)/2;
@@ -52,13 +53,13 @@ void CabbiePath::copyPointList(const std::list<Eigen::Vector2d> &x){
 
 };
 
-void CabbiePath::push_back(const Eigen::Vector2d &x){
+void CardinalPath::push_back(const Eigen::Vector2d &x){
     points_.push_back(x);
     num_walls_ = (points_.size()-1)/2;
     num_plateaus_ = points_.size()/2;
 };
 
-void CabbiePath::resize(const std::vector<Eigen::Vector2d>::size_type &x){
+void CardinalPath::resize(const std::vector<Eigen::Vector2d>::size_type &x){
     points_.resize(x);
     num_walls_ = (points_.size()-1)/2;
     num_plateaus_ = points_.size()/2;
@@ -239,7 +240,6 @@ struct ChainForge {
 	}
 };
 
-
  std::vector<PointList> addRectangleModZ2(std::vector<PointList> &chains, const Eigen::Vector2d &position, const double &width, const double &height){
     //
     Eigen::Vector2d se = {position[0]+width, position[1]};
@@ -394,9 +394,17 @@ struct ChainForge {
 	return chain_forge.getPointList();
 };
 
-
 std::string _debug_edge_print(std::array<Eigen::Vector2d,2> x){
     std::stringstream ss;
     ss << "("<< x[0].transpose() << " -> " << x[1].transpose() <<")";
     return ss.str();
+};
+
+void CardinalCurveCollection::removeTangentRectangle(const Eigen::Vector2d &lower_left, const double &width, const double &height) {
+	//Expects position to lie inside of cardinal curve
+	//!!!! This can be made more efficent by only locally copying the tangent edges over to the modZ2 addition.
+	auto cycles = getPointCycles();
+	auto edited_cycles = addRectangleModZ2(cycles,lower_left, width, height);
+	*this = CardinalCurveCollection();
+	setPointCycles(edited_cycles);
 };

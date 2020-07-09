@@ -15,12 +15,12 @@
 using Vedge = std::array<Eigen::Vector2d, 2>; // vertical edge
 using Hedge = std::array<Eigen::Vector2d, 2>; // horizontal edge
 using Cedge = std::array<Eigen::Vector2d, 2>; // cardinal edge
-using PointList = std::vector<Eigen::Vector2d>;
 
 
-class CabbieCurveCollection : public CurveCollection {
+
+class CardinalCurveCollection : public CurveCollection {
 public:
-
+	void removeTangentRectangle(const Eigen::Vector2d &lower_left, const double &width, const double &height);
     //Returns true if there is an impact, otherwise false.
     //If true, impact_location is populated with the impact point on the line segment.
 };
@@ -29,7 +29,7 @@ bool rayTraceNorth(const Eigen::Vector2d &origin, const std::array<Eigen::Vector
 
 bool rayTraceEast(const Eigen::Vector2d &origin, const std::array<Eigen::Vector2d,2> &segment, Eigen::Vector2d &impact);
 
-struct CabbiePath{
+struct CardinalPath{
     //Cabby paths should move only alternatingly east ~(1,0) and north ~(0,1)
     int num_walls_ = 0;
     int num_plateaus_ = 0;

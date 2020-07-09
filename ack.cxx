@@ -113,8 +113,8 @@ namespace exda{
 }
 
 void example1(){
-    CabbieCurveCollection ccc;
-    ccc.insertEdges(exda::grid_points, exda::lines);
+    CardinalCurveCollection ccc;
+    ccc.setGridPointsAndCells(exda::grid_points, exda::lines);
     std::cout << ccc.get_number_of_points();
     for (int foo=0; foo<exda::lines.size(); foo++){
         std::cout << "e " << foo << " prev " << ccc.get_prev_edge(foo) << " next " << ccc.get_next_edge(foo) << std::endl;
@@ -130,7 +130,7 @@ void example1(){
 };
 
 void example2(){
-    Wilderness vac;
+    ZoningCommisioner vac;
     vac.insertCurves(exda::grid_points, exda::lines);
     vac.populateNeighbors();
     vac.findFrontier();
@@ -159,7 +159,7 @@ void example2(){
 };
 
 void example4(){
-    Wilderness vac;
+    ZoningCommisioner vac;
     vac.insertCurves(exda::splotchpoints, exda::splotchlines);
     vac.populateNeighbors();
     vac.findFrontier();
@@ -205,7 +205,7 @@ void example4(){
 };
 
 void example5(double width = 0.5, double height = 0.5, std::string afile = "/Users/sscott/Programs/ack/ackler2.svg"){
-    Wilderness vac;
+    ZoningCommisioner vac;
     vac.insertCurves(exda::splotchpoints, exda::splotchlines);
     vac.populateNeighbors();
     vac.findFrontier();
@@ -214,9 +214,9 @@ void example5(double width = 0.5, double height = 0.5, std::string afile = "/Use
     calh.hike();
     WildernessCartographerSVG vv;
     std::vector<std::string> funcolors = {"#F75C03", "#D90368", "#820263", "#291720", "#04A777"};
-    vv.addCabbieCurveCollection(vac.curves_, funcolors[3]);
-    vv.addCabbiePath(calh.camps_valley_, funcolors[0]);
-    vv.addCabbiePath(calh.camps_mountain_,  funcolors[1]);
+    vv.addCardinalCurveCollection(vac.vacant_, funcolors[3]);
+    vv.addCardinalPath(calh.camps_valley_, funcolors[0]);
+    vv.addCardinalPath(calh.camps_mountain_,  funcolors[1]);
     vv.addRectangles(calh.valid_, width, height, funcolors[4]);
     vv.writeScalableVectorGraphics(afile);
     std::cout << "Valids: " << std::endl;
@@ -268,7 +268,7 @@ void example7(double width = 3.4, double height = 2.1){
     for (int foo=0; foo < npts; foo++){
         notchy_lines.push_back({foo, (foo+1)%npts});
     }
-    Wilderness vac;
+    ZoningCommisioner vac;
     std::vector<std::array<double,3>> notchy_points_arraysstyle;
     for (auto foo : notchy_points){
         notchy_points_arraysstyle.push_back({foo[0],foo[1],0});
@@ -282,9 +282,9 @@ void example7(double width = 3.4, double height = 2.1){
     WildernessCartographerSVG vv;
     std::vector<std::string> funcolors = {"#F75C03", "#D90368", "#820263", "#291720", "#04A777"};
     
-    vv.addCabbieCurveCollection(vac.curves_, funcolors[3]);
-    vv.addCabbiePath(calh.camps_valley_, funcolors[0]);
-    vv.addCabbiePath(calh.camps_mountain_,  funcolors[1]);
+    vv.addCardinalCurveCollection(vac.vacant_, funcolors[3]);
+    vv.addCardinalPath(calh.camps_valley_, funcolors[0]);
+    vv.addCardinalPath(calh.camps_mountain_,  funcolors[1]);
     vv.addRectangles(calh.valid_, width, height, funcolors[4]);
     vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/notchy.svg");
     
@@ -298,7 +298,7 @@ void example_basic(std::vector<std::array<double,3>> points, double width, doubl
     for (int foo=0; foo < npts; foo++){
         lines.push_back({foo, (foo+1)%npts});
     }
-    Wilderness vac;
+    ZoningCommisioner vac;
     vac.insertCurves(points, lines);
     vac.populateNeighbors();
     vac.findFrontier();
@@ -312,9 +312,9 @@ void example_basic(std::vector<std::array<double,3>> points, double width, doubl
     WildernessCartographerSVG vv;
     std::vector<std::string> funcolors = {"#F75C03", "#D90368", "#820263", "#291720", "#04A777"};
 //
-    vv.addCabbieCurveCollection(vac.curves_, funcolors[3]);
-    vv.addCabbiePath(calh.camps_valley_, funcolors[0]);
-    vv.addCabbiePath(calh.camps_mountain_,  funcolors[1]);
+    vv.addCardinalCurveCollection(vac.vacant_, funcolors[3]);
+    vv.addCardinalPath(calh.camps_valley_, funcolors[0]);
+    vv.addCardinalPath(calh.camps_mountain_,  funcolors[1]);
     if (calh.valid_.size() > 0) vv.addRectangle(calh.getMostValid(), width, height, funcolors[4]);
     vv.writeScalableVectorGraphics(filename);
 //
@@ -322,7 +322,7 @@ void example_basic(std::vector<std::array<double,3>> points, double width, doubl
 }
 
 void example_basic(std::vector<std::array<double,3>> points, std::vector<std::vector<int>> lines, double width, double height,  std::string filename){
-    Wilderness vac;
+    ZoningCommisioner vac;
     vac.insertCurves(points, lines);
     vac.populateNeighbors();
     vac.findFrontier();
@@ -331,12 +331,12 @@ void example_basic(std::vector<std::array<double,3>> points, std::vector<std::ve
     WildernessCartographerSVG vv;
     std::vector<std::string> funcolors = {"#F75C03", "#D90368", "#820263", "#291720", "#04A777"};
 //
-    vv.addCabbieCurveCollection(vac.curves_, funcolors[3]);
+    vv.addCardinalCurveCollection(vac.vacant_, funcolors[3]);
     for (auto tt: vac.trails_){
         CaliperHiker calh(tt, width, height);
         calh.hike();
-        vv.addCabbiePath(calh.camps_valley_, funcolors[0]);
-        vv.addCabbiePath(calh.camps_mountain_,  funcolors[1]);
+        vv.addCardinalPath(calh.camps_valley_, funcolors[0]);
+        vv.addCardinalPath(calh.camps_mountain_,  funcolors[1]);
         vv.addRectangle(calh.getMostValid(), width, height, funcolors[4]);
     }
     vv.writeScalableVectorGraphics(filename);
@@ -360,7 +360,7 @@ void example_sev(){
 void example_9(){
     std::vector<std::array<double,3>> points ={{0,3.5}, {7,3.5}, {7,2.3}, {9.6,2.3}, {9.6,0}, {10,0}, {10,10}, {0,10}, {0,2}, {3.3,2}, {3.3,1.6}, {6.5,1.6}, {6.5,2.3}, {0, 2.3}};
     std::vector<std::vector<int>> somelines = {{0,1}, {1,2}, {2,3}, {3,4}, {4,5}, {5,6}, {6,7}, {7,0}, {8,9}, {9,10}, {10,11}, {11,12}, {12,13}, {13,8}};
-    Wilderness wild;
+    ZoningCommisioner wild;
     wild.insertCurves(points,somelines);
     wild.populateNeighbors();
     wild.findFrontier();
@@ -370,10 +370,10 @@ void example_9(){
     if (is_placeable){
         std::cout << "Can place." << std::endl;
         WildernessCartographerSVG vv;
-        vv.addCabbieCurveCollection(wild.curves_, "black");
+        vv.addCardinalCurveCollection(wild.vacant_, "black");
         for (const Trail& t: wild.trails_){
-            vv.addCabbiePath(t.landmarks_valley_, "green");
-            vv.addCabbiePath(t.landmarks_mountain_, "blue");
+            vv.addCardinalPath(t.landmarks_valley_, "green");
+            vv.addCardinalPath(t.landmarks_mountain_, "blue");
         }
         vv.addRectangle(place, 0.3, 0.6, "red");
         vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/ex9.svg");
@@ -385,7 +385,7 @@ void example_10(){
     std::vector<std::array<double,3>> points = {{0,1},{1,1},{1,0},{10,0},{10,10},{0,10}};
     std::vector<std::vector<int>> somelines = {{0,1},{1,2},{2,3},{3,4},{4,5},{5,0}};
     //
-    Wilderness wild;
+    ZoningCommisioner wild;
     wild.insertCurves(points, somelines);
     wild.populateNeighbors();
     wild.findFrontier();
@@ -415,14 +415,14 @@ void example_11(){
     std::vector<std::array<double,3>> points = {{0,0},{10,0},{10,10},{0,10}};
     std::vector<std::vector<int>> somelines = {{0,1},{1,2},{2,3},{3,0}};
     //
-    Wilderness wild;
+    ZoningCommisioner wild;
     wild.insertCurves(points, somelines);
     wild.populateNeighbors();
     wild.findFrontier();
     wild.trailblaze();
     //
     WildernessCartographerSVG wsvg;
-    wsvg.addCabbieCurveCollection(wild.curves_);
+    wsvg.addCardinalCurveCollection(wild.vacant_);
     std::vector<Eigen::Vector2d> whs = {{5.4, 2.1}, {4.1, 2.4}, {3.5, 1.9}, {2.5, 2.5}, {1.9, 1.3}, {0.9, 0.8}};
     for (auto wh : whs){
         double width = wh[0];
@@ -430,10 +430,11 @@ void example_11(){
         Eigen::Vector2d placement;
         wild.findPlacement(width, height, placement);
         for (auto &t: wild.trails_){
-            wsvg.addCabbiePath(t.landmarks_mountain_, "blue");
-            wsvg.addCabbiePath(t.landmarks_valley_, "green");
+            wsvg.addCardinalPath(t.landmarks_mountain_, "blue");
+            wsvg.addCardinalPath(t.landmarks_valley_, "green");
         }
         //removeRectangle(wild.trails_, placement, width, height);
+		wild.zoneOff(placement, width, height);
         wsvg.addRectangle(placement, width, height, svgvis::chaosHex());
     }
     wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example11.svg");
@@ -566,15 +567,6 @@ void example_addRectTest5() {
 	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect5.svg");
 }
 
-//void example_curve_update() {
-//	std::vector<std::array<double, 3>> points = { {0,0},{10,0},{10,10},{0,10} };
-//	std::vector<std::vector<int>> somelines = { {0,1},{1,2},{2,3},{3,0} };
-//	//
-//	CabbieCurveCollection ccc;
-//	ccc.insertEdges(points, somelines);
-//	ccc.replaceEdges({}, );
-//}
-
 void example_addRectTest6() {
 	double width = 10;
 	double height = 10;
@@ -625,15 +617,26 @@ void example_addRectTest6() {
 	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect6.svg");
 }
 
+void example_curve_update() {
+	std::vector<std::array<double, 3>> points = { {0,0},{10,0},{10,10},{0,10} };
+	std::vector<std::vector<int>> somelines = { {0,1},{1,2},{2,3},{3,0} };
+	CardinalCurveCollection ccc;
+	ccc.setGridPointsAndCells(points, somelines);
+	WildernessCartographerSVG vv;
+	auto pls = ccc.getPointCycles();
+	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
+	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_curve_update.svg");
+}
+
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
     //example_addRectTest4();
-	//example_11();
-	example_addRectTest6();
+	example_11();
+	//example_curve_update();
 	std::cout << "end" << std::endl;
 }
 
-// Restructure the wilderness class to use compute trails from fully cyclic chains and then use this thingy
+// Restructure the wilderness class to use compute trails from fully cyclic chains and then use this thingy!!!!
 
 
 
