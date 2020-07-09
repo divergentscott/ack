@@ -8,14 +8,14 @@ Vedge Trail::getWesternFront() const {
     return {b,a};
 };
 
-//struct RectContact{
-//    int trail_id = -1;
-//    int wall_id = -1;
-//    int plateau_id = -1;
-//    SegRelation segment_relation;
-//};
+struct RectContact{
+    int trail_id = -1;
+    int wall_id = -1;
+    int plateau_id = -1;
+    SegmentRelation segment_relation;
+};
 
-/*
+
  
  
 void removeRectangle(std::vector<Trail> &trails, const Eigen::Vector2d& position, const double& width, const double& height){
@@ -45,8 +45,9 @@ void removeRectangle(std::vector<Trail> &trails, const Eigen::Vector2d& position
             if ( se[0] < plat[0][0] ) break;
             if ( plat[1][0] < position[0] ) continue;
             // so plateau foo is between
-            SegRelation contact_type = hedgeIntersection(rect_s, plat);
-            if (contact_type != SegRelation::kDisjoint){
+			Hedge _;
+            SegmentRelation contact_type = edgeIntersection(rect_s, plat, true, _);
+            if (contact_type != SegmentRelation::kDisjoint){
                 RectContact contact;
                 contact.trail_id = tt;
                 contact.plateau_id = plat_ii;
@@ -57,7 +58,7 @@ void removeRectangle(std::vector<Trail> &trails, const Eigen::Vector2d& position
                 RectContact contact;
                 contact.trail_id = tt;
                 contact.plateau_id = plat_ii;
-                contact.segment_relation = SegRelation::kPerpindicularPoint;
+                //contact.segment_relation = SegmentRelation::kPerpindicularPoint;
             }
             
             shadow_extents[tt] = plat_ii;
@@ -130,4 +131,4 @@ void removeRectangle(std::vector<Trail> &trails, const Eigen::Vector2d& position
         //This forces an interaction with another trail. Probably we need to redraw the whole thing to avoid topology mistakes.
 };
 
-*/
+

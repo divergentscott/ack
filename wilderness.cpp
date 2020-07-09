@@ -83,7 +83,7 @@ NeighborhoodShape Wilderness::getNeighborhoodShape(int dim_of_interest, double p
 };
 
 void Wilderness::insertCurves(const std::vector<std::array<double,3>> &grid_points, const std::vector<std::vector<int>> &lines){
-    curves.insertEdges(grid_points, lines);
+    curves_.insertEdges(grid_points, lines);
     vsides_.resize(lines.size());
     for (int foo=0; foo < lines.size(); foo++){
         int p0 = lines[foo][0];
@@ -101,18 +101,18 @@ void Wilderness::populateNeighbors(){
     for (int foo=0; foo<vsides_.size(); foo++){
         VacancySide &vs_foo = vsides_[foo];
         int dim_of_interest = vs_foo.orientation == EdgeOrientation::kNorth ? 0 : 1;
-        auto edgefoo = curves.get_points_of_edge(foo);
+        auto edgefoo = curves_.get_points_of_edge(foo);
         int pfoos = edgefoo[0];
         int pfoot = edgefoo[1];
-        int pnext = curves.get_next_point(pfoot);
-        int pprev = curves.get_prev_point(pfoos);
-        double pos_foo = curves.get_point(pfoos)[dim_of_interest];
-        double pos_prev = curves.get_point(pprev)[dim_of_interest];
-        double pos_next = curves.get_point(pnext)[dim_of_interest];
+        int pnext = curves_.get_next_point(pfoot);
+        int pprev = curves_.get_prev_point(pfoos);
+        double pos_foo = curves_.get_point(pfoos)[dim_of_interest];
+        double pos_prev = curves_.get_point(pprev)[dim_of_interest];
+        double pos_next = curves_.get_point(pnext)[dim_of_interest];
         vs_foo.neighbor_shape = getNeighborhoodShape(dim_of_interest, pos_prev, pos_foo, pos_next);
         if (vs_foo.neighbor_shape == NeighborhoodShape::kNotchEast){
             Eigen::Vector2d left_p = 0.5 * (vs_foo.points[0] + vs_foo.points[1]) + Eigen::Vector2d(-10 * repsilon, 0.0);
-            bool is_left_in = curves.is_point_in(left_p);
+            bool is_left_in = curves_.is_point_in(left_p);
             vs_foo.outside = is_left_in ? OutsideSide::kRight : OutsideSide::kLeft;
         }
     };
@@ -123,19 +123,19 @@ void Wilderness::nextCollideNorth(const Eigen::Vector2d &origin, const bool &is_
     //Advances the point and edge location.
     bool is_impact = false;
     if (is_following_orientation){
-        edge_at = curves.get_next_edge(edge_at);
-        point_at = curves.get_next_point(point_at);
+        edge_at = curves_.get_next_edge(edge_at);
+        point_at = curves_.get_next_point(point_at);
     } else {
-        edge_at = curves.get_prev_edge(edge_at);
-        point_at = curves.get_prev_point(point_at);
+        edge_at = curves_.get_prev_edge(edge_at);
+        point_at = curves_.get_prev_point(point_at);
     }
     while (!is_impact){
         if (is_following_orientation){
-            edge_at = curves.get_next_edge(edge_at);
-            point_at = curves.get_next_point(point_at);
+            edge_at = curves_.get_next_edge(edge_at);
+            point_at = curves_.get_next_point(point_at);
         } else {
-            edge_at = curves.get_prev_edge(edge_at);
-            point_at = curves.get_prev_point(point_at);
+            edge_at = curves_.get_prev_edge(edge_at);
+            point_at = curves_.get_prev_point(point_at);
         }
         if (vsides_[edge_at].orientation == EdgeOrientation::kEast){
             is_impact = rayTraceNorth(origin, vsides_[edge_at].points, impact);
@@ -154,32 +154,32 @@ Trail Wilderness::trailblaze(int start_edge_id){
     bool is_following_orient;
     if (patrol_start.outside == OutsideSide::kLeft){
         p_at = patrol_start.point_ids[0];
-        p_next = curves.get_next_point(p_at);
+        p_next = curves_.get_next_point(p_at);
         is_following_orient = (p_next != patrol_start.point_ids[1]);
     } else {
         p_at = patrol_start.point_ids[1];
-        p_next = curves.get_next_point(p_at);
+        p_next = curves_.get_next_point(p_at);
         is_following_orient = (p_next != patrol_start.point_ids[0]);
     }
     //The BOTTOM
     bool is_end_found = false;
     int e_at = start_edge_id;
-    patrol.landmarks_valley_.push_back(curves.get_point(p_at));
+    patrol.landmarks_valley_.push_back(curves_.get_point(p_at));
     VacancySide patrol_terminus;
     while(!is_end_found){
         if (is_following_orient){
-            e_at = curves.get_next_edge(e_at);
-            p_at = curves.get_next_point(p_at);
+            e_at = curves_.get_next_edge(e_at);
+            p_at = curves_.get_next_point(p_at);
         } else {
-            e_at = curves.get_prev_edge(e_at);
-            p_at = curves.get_prev_point(p_at);
+            e_at = curves_.get_prev_edge(e_at);
+            p_at = curves_.get_prev_point(p_at);
         }
         if (vsides_[e_at].neighbor_shape == NeighborhoodShape::kNotchWest){
             patrol_terminus = vsides_[e_at];
             is_end_found = true;
-            patrol.landmarks_valley_.push_back(curves.get_point(p_at));
+            patrol.landmarks_valley_.push_back(curves_.get_point(p_at));
         } else {
-            patrol.landmarks_valley_.push_back(curves.get_point(p_at));
+            patrol.landmarks_valley_.push_back(curves_.get_point(p_at));
         }
     }
     //TOP
@@ -191,24 +191,24 @@ Trail Wilderness::trailblaze(int start_edge_id){
     } else {
         Eigen::Vector2d impact;
         p_at = patrol_start.point_ids[0];
-        Eigen::Vector2d loc = curves.get_point(p_at);
+        Eigen::Vector2d loc = curves_.get_point(p_at);
         nextCollideNorth(loc, is_following_orient, p_at, e_at, impact);
         patrol.landmarks_mountain_.push_back(impact);
     }
-    patrol.landmarks_mountain_.push_back(curves.get_point(p_at));
+    patrol.landmarks_mountain_.push_back(curves_.get_point(p_at));
     while(!is_end_found){
         //Advance to next edge
         if (is_following_orient){
-            e_at = curves.get_next_edge(e_at);
-            p_at = curves.get_next_point(p_at);
+            e_at = curves_.get_next_edge(e_at);
+            p_at = curves_.get_next_point(p_at);
         } else {
-            e_at = curves.get_prev_edge(e_at);
-            p_at = curves.get_prev_point(p_at);
+            e_at = curves_.get_prev_edge(e_at);
+            p_at = curves_.get_prev_point(p_at);
         }
         //check for the end
         if ((e_at == patrol_terminus.edge_id) | (e_at == eastmost_frontier_id_)){
             patrol_terminus = vsides_[e_at];
-            patrol.landmarks_mountain_.push_back(curves.get_point(p_at));
+            patrol.landmarks_mountain_.push_back(curves_.get_point(p_at));
             is_end_found = true;
         } else {
             //check if the you hit a westnotch and need to project north
@@ -216,17 +216,17 @@ Trail Wilderness::trailblaze(int start_edge_id){
                 Eigen::Vector2d impact;
                 int p_prev;
                 if (is_following_orient){
-                    p_prev = curves.get_prev_point(p_at);
+                    p_prev = curves_.get_prev_point(p_at);
                 } else {
-                    p_prev = curves.get_next_point(p_at);
+                    p_prev = curves_.get_next_point(p_at);
                 }
-                Eigen::Vector2d loc = curves.get_point(p_prev);
+                Eigen::Vector2d loc = curves_.get_point(p_prev);
                 nextCollideNorth(loc, is_following_orient, p_at, e_at, impact);
                 patrol.landmarks_mountain_.push_back(impact);
-                Eigen::Vector2d landmark = curves.get_point(p_at);
+                Eigen::Vector2d landmark = curves_.get_point(p_at);
                 patrol.landmarks_mountain_.push_back(landmark);
             } else {
-                Eigen::Vector2d landmark = curves.get_point(p_at);
+                Eigen::Vector2d landmark = curves_.get_point(p_at);
                 patrol.landmarks_mountain_.push_back(landmark);
             }
         }

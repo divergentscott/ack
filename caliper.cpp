@@ -108,7 +108,8 @@ void PlankHiker::headEast(int start_east){
                 position_ = {east_reach - width_, north_reach};
                 camps_.push_back(position_);
                 obstruct_que_.clear();
-                rayTraceEast(position_, landmarks_.getWall(index_east+1), obstruction_);
+				if (index_east+1 < landmarks_.num_walls_) rayTraceEast(position_, landmarks_.getWall(index_east+1), obstruction_);
+				else rayTraceEast(position_, landmarks_.getWall(landmarks_.num_walls_-1), obstruction_);
                 //Elevate, then head east.
                 headEast(index_east+1);
                 return;

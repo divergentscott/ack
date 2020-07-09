@@ -44,7 +44,7 @@ struct VacancySide{
 };
 
 struct Wilderness{
-    CabbieCurveCollection curves;
+    CabbieCurveCollection curves_;
     std::vector<VacancySide> vsides_;
     int westmost_frontier_id_ = 0;
     int eastmost_frontier_id_ = 0;
