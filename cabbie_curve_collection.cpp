@@ -336,14 +336,19 @@ struct ChainForge {
             start = foo;
             foo=0;
 			start_lead_index = 1 - start / 2;
-            rect_remnant.push_back(hits[start][0][ start_lead_index ]);
+			Eigen::Vector2d non_hit_start = 
+				hits[start][0][start_lead_index];
+			rect_remnant = { non_hit_start };
 			//list all the segments on start edge
 			for (int bar=1; bar < hits[start].size(); bar++){
-                rect_remnant.push_back(hits[start][bar][1-start_lead_index]);
+				Eigen::Vector2d rem_end =
+					hits[start][bar][1 - start_lead_index];
+                rect_remnant.push_back(rem_end);
 				//
 				chain_forge.addChain(rect_remnant);
 				//
-                rect_remnant = {hits[start][bar][start_lead_index]};
+				Eigen::Vector2d rem_begin = hits[start][bar][start_lead_index];
+                rect_remnant = { rem_begin };
 			}
 			//See if the you need the corner
 			if ( (rect_corners[start] - rect_remnant.back()).norm() > repsilon) {
@@ -355,21 +360,40 @@ struct ChainForge {
 			int at_lead_index = 1 - at / 2;
 			std::cout << "considered edge " << at << std::endl;
 			for (int bar = 0; bar < hits[at].size(); bar++) {
-				rect_remnant.push_back(hits[at][bar][1-at_lead_index]);
+				//Collect the segments from the bar rectangleside
+				Eigen::Vector2d rem_end =
+					hits[at][bar][1 - at_lead_index];
+				if ((rem_end - rect_remnant.back()).norm() > repsilon) {
+					rect_remnant.push_back(rem_end);
+				}
 				//
 				chain_forge.addChain(rect_remnant);
 				//
-				rect_remnant = { hits[at][bar][at_lead_index] };
+				Eigen::Vector2d rem_begin = hits[at][bar][at_lead_index];
+				rect_remnant = { rem_begin };
 			}
 			//See if the you need the corner
-			if ((rect_corners[at] - *(rect_remnant.end() - 1)).norm() > repsilon) {
+			if ((rect_corners[at] - rect_remnant.back()).norm() > repsilon) {
 				rect_remnant.push_back(rect_corners[at]);
 			}
         }
     }
-	rect_remnant.push_back(hits[start][0][1-start_lead_index]);
-	//
-	chain_forge.addChain(rect_remnant);
+	if (start < 0) {
+		//The rectangle is disjoint from the chains.
+		rect_remnant = { position, nw, ne, se, position };
+		chain_forge.addChain(rect_remnant);
+	}
+	else {
+		Eigen::Vector2d next_remnant = hits[start][0][1 - start_lead_index];
+		if ((next_remnant - rect_remnant.back()).norm() > repsilon) {
+			//Prevent adding a lengthless remnant.
+			rect_remnant.push_back(hits[start][0][1 - start_lead_index]);
+		}
+		//
+		if (rect_remnant.size() > 1) {
+			chain_forge.addChain(rect_remnant);
+		}
+	}
 
 	std::cout << "After rectangle:" << std::endl;
 	for (auto chain : chain_forge.chains_) {
@@ -405,6 +429,6 @@ void CardinalCurveCollection::removeTangentRectangle(const Eigen::Vector2d &lowe
 	//!!!! This can be made more efficent by only locally copying the tangent edges over to the modZ2 addition.
 	auto cycles = getPointCycles();
 	auto edited_cycles = addRectangleModZ2(cycles,lower_left, width, height);
-	*this = CardinalCurveCollection();
+	clear();
 	setPointCycles(edited_cycles);
 };

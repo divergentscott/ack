@@ -166,13 +166,13 @@ bool CurveCollection::orient_curves() {
     // First initialize the orientation by the edge list.
     point_order_next_.resize(edges_.size());
     point_order_prev_.resize(edges_.size());
-    for (int foo = 0; foo < point_order_next_.size(); foo++) {
+    for (auto foo = 0; foo < edges_.size(); foo++) {
         point_order_next_[edges_[foo][0]] = edges_[foo][1];
         point_order_prev_[edges_[foo][1]] = edges_[foo][0];
     }
     // Traverse the points and swap the incorrectly oriented edges.
     std::vector<bool> point_done(points_.size(), false);
-    for (int foo = 0; foo < points_.size(); foo++) {
+    for (auto foo = 0; foo < points_.size(); foo++) {
         if (point_done[foo])
             continue;
         else {
@@ -206,7 +206,7 @@ bool CurveCollection::orient_curves() {
     }
     // Now that the edges are oriented we populate their order and point-edge lookups.
     edges_of_points_.resize(points_.size());
-    for (int edge_foo=0; edge_foo<edges_.size(); edge_foo++){
+    for (auto edge_foo=0; edge_foo<edges_.size(); edge_foo++){
         int p0 = edges_[edge_foo][0];
         int p1 = edges_[edge_foo][1];
         edges_of_points_[p0][1] = edge_foo;
@@ -251,11 +251,11 @@ bool CurveCollection::setGridPointsAndCells(const std::vector<std::array<double,
     points_.resize(grid_points.size());
     edges_.resize(one_cells.size());
     // Copy the points
-    for (int foo = 0; foo < grid_points.size(); foo++) {
+    for (auto foo = 0; foo < grid_points.size(); foo++) {
         points_[foo] = {grid_points[foo][0], grid_points[foo][1]};
     }
     // Copy the edges
-    for (int foo = 0; foo < one_cells.size(); foo++) {
+    for (auto foo = 0; foo < one_cells.size(); foo++) {
         if (one_cells[foo].size() != 2) is_valid_= false;
         edges_[foo] = {one_cells[foo][0], one_cells[foo][1]};
     }
@@ -358,6 +358,20 @@ bool CurveCollection::setPointCycles(const  std::vector<PointList>& cycles){
 			edges_.push_back({cnt, cnt+1});
 			cnt++;
 		}
+		edges_.push_back({cnt,basepoint});
 	}
 	return orient_curves();
+};
+
+void CurveCollection::clear() {
+	points_.clear();
+	edges_.clear();
+	point_order_next_.clear();
+	point_order_prev_.clear();
+	edges_of_points_.clear();
+	edge_order_next_.clear();
+	edge_order_prev_.clear();
+	basepoints_.clear();
+	tangents_.clear();
+	normals_.clear();
 };

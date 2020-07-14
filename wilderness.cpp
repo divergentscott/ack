@@ -2,46 +2,48 @@
 
 #include "wilderness.h"
 
-VacancySide::VacancySide(const int edge_id_0, const std::array<Eigen::Vector2d,2> &i_points, const std::array<int,2> &i_point_ids){
-    //Vacancy side constructor from vertex ids and positions
-    edge_id = edge_id_0;
-    double xlen = std::abs((i_points[0][0] - i_points[1][0]));
-    double ylen = std::abs((i_points[0][1] - i_points[1][1]));
-    if ( (xlen < repsilon) & (ylen > repsilon) ){
-        //Decide that the segment is vertical
-        orientation = EdgeOrientation::kNorth;
-        length = ylen;
-        if (i_points[0][1] <= i_points[1][1]){
-            point_ids = i_point_ids;
-            points = i_points;
-        } else {
-            point_ids = {i_point_ids[1], i_point_ids[0]};
-            points = {i_points[1], i_points[0]};
-        }
-    }
-    if ( (xlen > repsilon) & (ylen < repsilon) ){
-        //Decide that the segment is horizontal
-        orientation = EdgeOrientation::kEast;
-        length = xlen;
-        if (i_points[0][0] <= i_points[1][0]){
-            point_ids = i_point_ids;
-            points = i_points;
-        } else {
-            point_ids = {i_point_ids[1], i_point_ids[0]};
-            points = {i_points[1], i_points[0]};
-        }
-
-    }
-};
+//VacancySide::VacancySide(const int edge_id_0, const std::array<Eigen::Vector2d,2> &i_points, const std::array<int,2> &i_point_ids){
+//    //Vacancy side constructor from vertex ids and positions
+//    edge_id = edge_id_0;
+//    double xlen = std::abs((i_points[0][0] - i_points[1][0]));
+//    double ylen = std::abs((i_points[0][1] - i_points[1][1]));
+//    if ( (xlen < repsilon) & (ylen > repsilon) ){
+//        //Decide that the segment is vertical
+//        orientation = EdgeOrientation::kNorth;
+//        length = ylen;
+//        if (i_points[0][1] <= i_points[1][1]){
+//            point_ids = i_point_ids;
+//            points = i_points;
+//        } else {
+//            point_ids = {i_point_ids[1], i_point_ids[0]};
+//            points = {i_points[1], i_points[0]};
+//        }
+//    }
+//    if ( (xlen > repsilon) & (ylen < repsilon) ){
+//        //Decide that the segment is horizontal
+//        orientation = EdgeOrientation::kEast;
+//        length = xlen;
+//        if (i_points[0][0] <= i_points[1][0]){
+//            point_ids = i_point_ids;
+//            points = i_points;
+//        } else {
+//            point_ids = {i_point_ids[1], i_point_ids[0]};
+//            points = {i_points[1], i_points[0]};
+//        }
+//
+//    }
+//};
 
 void ZoningCommisioner::findFrontier(){
-    int westmost = 0;
-    double westest = vsides_[0].points[0][0];
-    int eastmost = 0;
-    double eastest = vsides_[0].points[0][0];
-    for(int foo=0; foo<vsides_.size(); foo++){
-        if (vsides_[foo].orientation == EdgeOrientation::kNorth){
-            double longitude = vsides_[foo].points[0][0];
+    int westmost = -1;
+    int eastmost = -1;
+	double eastest = std::numeric_limits<double>::max();
+	double westest = std::numeric_limits<double>::min();
+	for(int foo = 0; foo < vacant_.get_number_of_edges(); foo++){
+        if (!is_edge_horizontals_[foo]){
+			bool _;
+			Cedge c0 = getCedge(0, _);
+            double longitude = c0[0][0];
             if (longitude < westest){
                 westmost = foo;
                 westest = longitude;
@@ -84,23 +86,77 @@ NeighborhoodShape ZoningCommisioner::getNeighborhoodShape(int dim_of_interest, d
 
 void ZoningCommisioner::insertCurves(const std::vector<std::array<double,3>> &grid_points, const std::vector<std::vector<int>> &lines){
     vacant_.setGridPointsAndCells(grid_points, lines);
-    vsides_.resize(lines.size());
-    for (int foo=0; foo < lines.size(); foo++){
-        int p0 = lines[foo][0];
-        int p1 = lines[foo][1];
-        Eigen::Vector2d p0coor = {grid_points[p0][0], grid_points[p0][1]};
-        Eigen::Vector2d p1coor {grid_points[p1][0], grid_points[p1][1]};
-        std::array<Eigen::Vector2d,2> foopts = {p0coor, p1coor};
-        VacancySide vs(foo, foopts, {p0,p1});
-        vsides_[foo] = vs;
-    };
 };
 
+Cedge ZoningCommisioner::getCedge(const int id, bool& is_horizontal) const {
+	auto pids = vacant_.get_points_of_edge(id);
+	Eigen::Vector2d a = vacant_.get_point(pids[0]);
+	Eigen::Vector2d b = vacant_.get_point(pids[1]);
+	if (std::abs(a[1] - b[1]) < repsilon) {
+		is_horizontal = true;
+		if (a[0] < b[0]) return { a,b };
+		return { b,a };
+	}
+	is_horizontal = false;
+	if (a[1] < b[1]) return { a,b };
+	return { b,a };
+};
+
+Cedge ZoningCommisioner::getCedge(const int id, bool& is_horizontal, std::array<int, 2> &point_ids) const {
+	auto pids = vacant_.get_points_of_edge(id);
+	Eigen::Vector2d a = vacant_.get_point(pids[0]);
+	Eigen::Vector2d b = vacant_.get_point(pids[1]);
+	if (std::abs(a[1] - b[1]) < repsilon) {
+		is_horizontal = true;
+		if (a[0] < b[0]) {
+			point_ids = pids;
+			return { a,b };
+		}
+		point_ids = {pids[1], pids[0]};
+		return { b,a };
+	}
+	is_horizontal = false;
+	if (a[1] < b[1]) {
+		point_ids = pids;
+		return { a,b };
+	}
+	point_ids = { pids[1], pids[0] };
+	return { b,a };
+};
+
+
+void ZoningCommisioner::populateSlopes() {
+	is_edge_horizontals_.resize(vacant_.get_number_of_edges());
+	outsidesides_.resize(vacant_.get_number_of_edges());
+	for (auto foo = 0; foo < vacant_.get_number_of_edges(); foo++) {
+		auto edgefoo = vacant_.get_points_of_edge(foo);
+		int pfoo_s_id = edgefoo[0];
+		int pfoo_t_id = edgefoo[1];
+		Eigen::Vector2d pfoo_s = vacant_.get_point(pfoo_s_id);
+		Eigen::Vector2d pfoo_t = vacant_.get_point(pfoo_t_id);
+		double xlen = std::abs((pfoo_s[0] - pfoo_t[0]));
+		double ylen = std::abs((pfoo_s[1] - pfoo_t[1]));
+		if ((xlen > repsilon) & (ylen < repsilon)) {
+			is_edge_horizontals_[foo] = true;
+			Eigen::Vector2d test_p = 0.5 * (pfoo_s + pfoo_t) - Eigen::Vector2d({0, 10*repsilon});
+			outsidesides_[foo] = vacant_.is_point_in(test_p) ? OutsideSide::kPositive : OutsideSide::kNegative;
+		}
+		else {
+			is_edge_horizontals_[foo] = false;
+			Eigen::Vector2d test_p = 0.5 * (pfoo_s + pfoo_t) - Eigen::Vector2d({10 * repsilon, 0});
+			outsidesides_[foo] = vacant_.is_point_in(test_p) ? OutsideSide::kPositive : OutsideSide::kNegative;
+		}
+	};
+}
+
 void ZoningCommisioner::populateNeighbors(){
-    //Populate the neighborhood shapes.
-    for (int foo=0; foo<vsides_.size(); foo++){
-        VacancySide &vs_foo = vsides_[foo];
-        int dim_of_interest = vs_foo.orientation == EdgeOrientation::kNorth ? 0 : 1;
+	// Populate the slopes.
+    populateSlopes();
+	// Populate the neighborhood shapes.
+	shapes_.resize(vacant_.get_number_of_edges());
+	//
+    for (int foo=0; foo<vacant_.get_number_of_edges(); foo++){
+        int dim_of_interest = is_edge_horizontals_[foo] ? 1 : 0;
         auto edgefoo = vacant_.get_points_of_edge(foo);
         int pfoos = edgefoo[0];
         int pfoot = edgefoo[1];
@@ -109,12 +165,7 @@ void ZoningCommisioner::populateNeighbors(){
         double pos_foo = vacant_.get_point(pfoos)[dim_of_interest];
         double pos_prev = vacant_.get_point(pprev)[dim_of_interest];
         double pos_next = vacant_.get_point(pnext)[dim_of_interest];
-        vs_foo.neighbor_shape = getNeighborhoodShape(dim_of_interest, pos_prev, pos_foo, pos_next);
-        if (vs_foo.neighbor_shape == NeighborhoodShape::kNotchEast){
-            Eigen::Vector2d left_p = 0.5 * (vs_foo.points[0] + vs_foo.points[1]) + Eigen::Vector2d(-10 * repsilon, 0.0);
-            bool is_left_in = vacant_.is_point_in(left_p);
-            vs_foo.outside = is_left_in ? OutsideSide::kRight : OutsideSide::kLeft;
-        }
+        shapes_[foo] = getNeighborhoodShape(dim_of_interest, pos_prev, pos_foo, pos_next);
     };
 };
     
@@ -137,35 +188,37 @@ void ZoningCommisioner::nextCollideNorth(const Eigen::Vector2d &origin, const bo
             edge_at = vacant_.get_prev_edge(edge_at);
             point_at = vacant_.get_prev_point(point_at);
         }
-        if (vsides_[edge_at].orientation == EdgeOrientation::kEast){
-            is_impact = rayTraceNorth(origin, vsides_[edge_at].points, impact);
+        if (is_edge_horizontals_[edge_at]){
+			bool _;
+            is_impact = rayTraceNorth(origin, getCedge(edge_at,_), impact);
         }
     }
 };
 
 Trail ZoningCommisioner::trailblaze(int start_edge_id){
     Trail patrol;
-    VacancySide patrol_start  = vsides_[start_edge_id];
     //first the lower edge of the patrol
     
     //Determine which direction to traverse.
     int p_at;
     int p_next;
     bool is_following_orient;
-    if (patrol_start.outside == OutsideSide::kLeft){
-        p_at = patrol_start.point_ids[0];
-        p_next = vacant_.get_next_point(p_at);
-        is_following_orient = (p_next != patrol_start.point_ids[1]);
+	bool _;
+	std::array<int, 2> pids;
+	getCedge(start_edge_id, _, pids);
+	if (outsidesides_[start_edge_id] == OutsideSide::kNegative){
+        p_at = pids[0];
+        p_next = pids[1];
     } else {
-        p_at = patrol_start.point_ids[1];
-        p_next = vacant_.get_next_point(p_at);
-        is_following_orient = (p_next != patrol_start.point_ids[0]);
-    }
-    //The BOTTOM
+		p_at = pids[1];
+		p_next = pids[0];
+	}
+	is_following_orient = (p_next != vacant_.get_next_point(p_at));
+	//The BOTTOM
     bool is_end_found = false;
     int e_at = start_edge_id;
     patrol.landmarks_valley_.push_back(vacant_.get_point(p_at));
-    VacancySide patrol_terminus;
+	int patrol_terminus;
     while(!is_end_found){
         if (is_following_orient){
             e_at = vacant_.get_next_edge(e_at);
@@ -174,8 +227,8 @@ Trail ZoningCommisioner::trailblaze(int start_edge_id){
             e_at = vacant_.get_prev_edge(e_at);
             p_at = vacant_.get_prev_point(p_at);
         }
-        if (vsides_[e_at].neighbor_shape == NeighborhoodShape::kNotchWest){
-            patrol_terminus = vsides_[e_at];
+        if (shapes_[e_at] == NeighborhoodShape::kNotchWest){
+            patrol_terminus = e_at;
             is_end_found = true;
             patrol.landmarks_valley_.push_back(vacant_.get_point(p_at));
         } else {
@@ -186,11 +239,11 @@ Trail ZoningCommisioner::trailblaze(int start_edge_id){
     is_following_orient = !is_following_orient;
     is_end_found = false;
     e_at = start_edge_id;
-    if (patrol_start.outside == OutsideSide::kLeft){
-        p_at = patrol_start.point_ids[1];
+    if (outsidesides_[start_edge_id] == OutsideSide::kNegative){
+        p_at = pids[1];
     } else {
         Eigen::Vector2d impact;
-        p_at = patrol_start.point_ids[0];
+        p_at = pids[0];
         Eigen::Vector2d loc = vacant_.get_point(p_at);
         nextCollideNorth(loc, is_following_orient, p_at, e_at, impact);
         patrol.landmarks_mountain_.push_back(impact);
@@ -206,13 +259,13 @@ Trail ZoningCommisioner::trailblaze(int start_edge_id){
             p_at = vacant_.get_prev_point(p_at);
         }
         //check for the end
-        if ((e_at == patrol_terminus.edge_id) | (e_at == eastmost_frontier_id_)){
-            patrol_terminus = vsides_[e_at];
+        if ((e_at == patrol_terminus) | (e_at == eastmost_frontier_id_)){
+            patrol_terminus = e_at;
             patrol.landmarks_mountain_.push_back(vacant_.get_point(p_at));
             is_end_found = true;
         } else {
             //check if the you hit a westnotch and need to project north
-            if(vsides_[e_at].neighbor_shape == NeighborhoodShape::kNotchWest){
+            if(shapes_[e_at] == NeighborhoodShape::kNotchWest){
                 Eigen::Vector2d impact;
                 int p_prev;
                 if (is_following_orient){
@@ -235,8 +288,8 @@ Trail ZoningCommisioner::trailblaze(int start_edge_id){
 };
 
 void ZoningCommisioner::trailblaze(){
-    for (int foo=0; foo<vsides_.size(); foo++){
-        if (vsides_[foo].neighbor_shape == NeighborhoodShape::kNotchEast){
+    for (auto foo=0; foo< vacant_.get_number_of_edges(); foo++){
+        if (shapes_[foo] == NeighborhoodShape::kNotchEast){
 //            std::cout << "eastnotch at " << foo;
             trails_.push_back(trailblaze(foo));
         }
@@ -275,17 +328,6 @@ void ZoningCommisioner::zoneOff(const Eigen::Vector2d& position, const double& w
 	//Removes the specified rectangle from the vacancy space.
 	//Specifically assuming bottom left placement style.
 	vacant_.removeTangentRectangle(position, width, height);
-	vsides_.resize(vacant_.get_number_of_edges());
-	for (int foo = 0; foo < vacant_.get_number_of_edges(); foo++) {
-		auto eps = vacant_.get_points_of_edge(foo);
-		int p0 = eps[0];
-		int p1 = eps[1];
-		Eigen::Vector2d p0coor = vacant_.get_point(p0);
-		Eigen::Vector2d p1coor = vacant_.get_point(p1);
-		std::array<Eigen::Vector2d, 2> foopts = { p0coor, p1coor };
-		VacancySide vs(foo, foopts, { p0,p1 });
-		vsides_[foo] = vs;
-	};
 	populateNeighbors();
 	findFrontier();
 	trails_.clear();

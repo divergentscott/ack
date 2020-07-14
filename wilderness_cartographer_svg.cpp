@@ -57,8 +57,11 @@ void WildernessCartographerSVG::setStroke(const double &x){
     default_stroke_width_ = x;
 }
 
-void WildernessCartographerSVG::addRectangle(const Eigen::Vector2d& position, const double& width, const double& height, const std::string& color, const double& stroke){
-    min_x_ = std::min(position[0], min_x_);
+void WildernessCartographerSVG::addRectangle(const Eigen::Vector2d& position, const double& width, const double& height, std::string color, const double& stroke){
+	if (color.compare("random") == 0) {
+		color = svgvis::chaosHex();
+	}
+	min_x_ = std::min(position[0], min_x_);
     min_y_ = std::min(position[1], min_y_);
     max_x_ = std::max(max_x_, position[0] + width);
     max_y_ = std::max(max_y_, position[1] + height);
@@ -73,14 +76,20 @@ void WildernessCartographerSVG::addRectangle(const Eigen::Vector2d& position, co
     rectangles_.push_back(rec);
 };
 
-void WildernessCartographerSVG::addRectangles(const std::vector<Eigen::Vector2d>& positions, const double& width, const double& height, const std::string& color, const double& stroke){
-    for (const auto& p : positions){
+void WildernessCartographerSVG::addRectangles(const std::vector<Eigen::Vector2d>& positions, const double& width, const double& height, std::string color, const double& stroke){
+	if (color.compare("random") == 0) {
+		color = svgvis::chaosHex();
+	}
+	for (const auto& p : positions){
         addRectangle(p,width,height,color,stroke);
     }
 };
 
-void WildernessCartographerSVG::addCardinalCurveCollection(const CardinalCurveCollection& ccc, const std::string& color, const double& stroke){
-    int n_components = ccc.get_number_of_components();
+void WildernessCartographerSVG::addCardinalCurveCollection(const CardinalCurveCollection& ccc, std::string color, const double& stroke){
+	if (color.compare("random") == 0) {
+		color = svgvis::chaosHex();
+	}
+	int n_components = ccc.get_number_of_components();
     for (int foo=0; foo < n_components; foo++){
         svgvis::Polyline plyl;
         plyl.stroke_color = color;
@@ -104,11 +113,17 @@ void WildernessCartographerSVG::addCardinalCurveCollection(const CardinalCurveCo
     };
 }
 
-void WildernessCartographerSVG::addCardinalPath(const CardinalPath &cp, const std::string& color, const double& stroke){
+void WildernessCartographerSVG::addCardinalPath(const CardinalPath &cp, std::string color, const double& stroke){
+	if (color.compare("random") == 0) {
+		color = svgvis::chaosHex();
+	}
 	addPointList(cp.points_, color, stroke);
 };
 
-void WildernessCartographerSVG::addPointList(const PointList& pl, const std::string& color, const double& stroke){
+void WildernessCartographerSVG::addPointList(const PointList& pl, std::string color, const double& stroke){
+	if (color.compare("random") == 0) {
+		color = svgvis::chaosHex();
+	}
 	svgvis::Polyline plyl;
 	plyl.stroke_color = color;
 	plyl.stroke_width = stroke;

@@ -49,6 +49,7 @@ protected:
     bool orient_curves();
     std::array<int, 2> neighborhood_orientation(int pointid);
     
+	void clear();
 
 public:
     CurveCollection(){};

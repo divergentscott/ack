@@ -137,25 +137,22 @@ void example2(){
     std::cout << "frontier west" << vac.westmost_frontier_id_ << std::endl;
     std::cout << "frontire east" << vac.eastmost_frontier_id_ << std::endl;
     
-    for (int foo=0; foo<vac.vsides_.size(); foo++){
+    for (auto foo=0; foo<vac.vacant_.get_number_of_edges(); foo++){
         std::cout << foo << std::endl;
-        VacancySide vs = vac.vsides_[foo];
-        std::cout << " pt " << vs.point_ids[0] << " @ " << vs.points[0].transpose() << std::endl;
-        std::cout << " pt " << vs.point_ids[1] << " @ " << vs.points[1].transpose() << std::endl;
-        std::cout << "length " << vs.length << " ";
-        if (vs.orientation == EdgeOrientation::kEast) std::cout << "horiz";
-        if (vs.orientation == EdgeOrientation::kNorth) std::cout << "verti" ;
-        if (vs.neighbor_shape == NeighborhoodShape::kZag)            std::cout << "zag" << std::endl;
-        if (vs.neighbor_shape == NeighborhoodShape::kNotchNorth)            std::cout << "north" << std::endl;
-        if (vs.neighbor_shape == NeighborhoodShape::kNotchEast)            std::cout << "east" << std::endl;
-        if (vs.neighbor_shape == NeighborhoodShape::kNotchSouth)            std::cout << "south" << std::endl;
-        if (vs.neighbor_shape == NeighborhoodShape::kNotchWest)            std::cout << "west" << std::endl;
+		auto p_ids = vac.vacant_.get_points_of_edge(foo);
+		Eigen::Vector2d p0 = vac.vacant_.get_point(p_ids[0]);
+		Eigen::Vector2d p1 = vac.vacant_.get_point(p_ids[1]);
+		std::cout << " pt " << p_ids[0] << " @ " << p0.transpose() << std::endl;
+        std::cout << " pt " << p_ids[1] << " @ " << p1.transpose() << std::endl;
+        if (vac.shapes_[foo] == NeighborhoodShape::kZag)            std::cout << "zag" << std::endl;
+        if (vac.shapes_[foo] == NeighborhoodShape::kNotchNorth)            std::cout << "north" << std::endl;
+        if (vac.shapes_[foo] == NeighborhoodShape::kNotchEast)            std::cout << "east" << std::endl;
+        if (vac.shapes_[foo] == NeighborhoodShape::kNotchSouth)            std::cout << "south" << std::endl;
+        if (vac.shapes_[foo] == NeighborhoodShape::kNotchWest)            std::cout << "west" << std::endl;
     }
-    
     std::cout << "Patrol down from 11 " << std::endl;
     Trail patty11 = vac.trailblaze(11);
     Trail patty7 = vac.trailblaze(7);
-    
 };
 
 void example4(){
@@ -423,7 +420,7 @@ void example_11(){
     //
     WildernessCartographerSVG wsvg;
     wsvg.addCardinalCurveCollection(wild.vacant_);
-    std::vector<Eigen::Vector2d> whs = {{5.4, 2.1}, {4.1, 2.4}, {3.5, 1.9}, {2.5, 2.5}, {1.9, 1.3}, {0.9, 0.8}};
+	std::vector<Eigen::Vector2d> whs = {{5.4, 2.1}, {4.1, 2.4}, {3.5, 1.9}, {2.5, 2.5}, {1.9, 1.3}, {0.9, 0.8} };
     for (auto wh : whs){
         double width = wh[0];
         double height = wh[1];
@@ -439,6 +436,43 @@ void example_11(){
     }
     wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example11.svg");
 }
+
+void example_12() {
+	std::vector<std::array<double, 3>> points = { {0,0},{10,0},{10,10},{0,10} };
+	std::vector<std::vector<int>> somelines = { {0,1},{1,2},{2,3},{3,0} };
+	//
+	ZoningCommisioner wild;
+	wild.insertCurves(points, somelines);
+	wild.populateNeighbors();
+	wild.findFrontier();
+	wild.trailblaze();
+	//
+	WildernessCartographerSVG wsvg;
+	wsvg.addCardinalCurveCollection(wild.vacant_);
+	//, {2.5, 2.5}, {1.9, 1.3}, {0.9, 0.8}
+	std::vector<Eigen::Vector2d> whs = {{6.9, 4.4} , { 6.6,3.3 } , {5.4, 2.1},  {4.1, 2.4} , {3.5, 1.9} };
+	for (auto wh : whs) {
+		double width = wh[0];
+		double height = wh[1];
+		Eigen::Vector2d placement;
+		bool is_placable = wild.findPlacement(width, height, placement);
+		for (auto &t : wild.trails_) {
+			wsvg.addCardinalPath(t.landmarks_mountain_, "blue");
+			wsvg.addCardinalPath(t.landmarks_valley_, "green");
+		}
+		//removeRectangle(wild.trails_, placement, width, height);
+		if (is_placable) {
+			wild.zoneOff(placement, width, height);
+			wsvg.addRectangle(placement, width, height, svgvis::chaosHex());
+		}
+		else {
+			wsvg.addRectangle({11,0}, width, height, svgvis::chaosHex());
+		}
+	}
+	wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example12.svg");
+}
+
+//{6.9, 4.4}, { 6.6,3.3 },
 
 void example_test_edge_intersect0(){
 	Hedge a = { Eigen::Vector2d({0,0}), Eigen::Vector2d({4,0}) };
@@ -617,6 +651,31 @@ void example_addRectTest6() {
 	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect6.svg");
 }
 
+void example_addRectTest7() {
+	double width = 5.4;
+	double height = 2.1;
+	Eigen::Vector2d position = { 0,0 };
+	std::vector<PointList> chains = {
+		{
+			{0,0},
+			{0,10},
+			{10,10},
+			{10,0},
+			{0,0}
+		}
+	};
+	WildernessCartographerSVG vv0;
+	vv0.addRectangle(position, width, height);
+	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
+	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect7_before.svg");
+
+	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
+	WildernessCartographerSVG vv;
+	vv.addRectangle(position, width, height);
+	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
+	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect7.svg");
+}
+
 void example_curve_update() {
 	std::vector<std::array<double, 3>> points = { {0,0},{10,0},{10,10},{0,10} };
 	std::vector<std::vector<int>> somelines = { {0,1},{1,2},{2,3},{3,0} };
@@ -630,8 +689,8 @@ void example_curve_update() {
 
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
-    //example_addRectTest4();
-	example_11();
+	//example_addRectTest7();
+	example_12();
 	//example_curve_update();
 	std::cout << "end" << std::endl;
 }

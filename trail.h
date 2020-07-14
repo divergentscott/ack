@@ -13,7 +13,7 @@ struct Trail{
     Vedge getWesternFront() const;
 };
 
-std::vector<Trail> scoutTrails();
+//std::vector<Trail> scoutTrails();
 
 //void removeRectangle(std::vector<Trail> &trails, const Eigen::Vector2d& position, const double& width, const double& height);
 

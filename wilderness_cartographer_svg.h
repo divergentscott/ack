@@ -45,13 +45,20 @@ struct WildernessCartographerSVG{
     std::vector<svgvis::Rectangle> rectangles_ = {};
     std::vector<svgvis::Polyline> polylines_ = {};
     //
+	/*
+	"#3EC300"
+	"#5F5AA2"
+	"#30292F"
+	"#355691"
+	"#355691"
+	*/
     WildernessCartographerSVG();
     void setStroke(const double&);
-    void addRectangle(const Eigen::Vector2d& position, const double& width, const double& height, const std::string& color = "#3EC300", const double& stroke = -1);
-    void addRectangles(const std::vector<Eigen::Vector2d>& positions, const double& width, const double& height, const std::string& color = "#5F5AA2", const double& stroke = -1);
-    void addCardinalCurveCollection(const CardinalCurveCollection&, const std::string& color = "#30292F", const double& stroke = -1);
-    void addCardinalPath(const CardinalPath&, const std::string& color = "#355691", const double& stroke = -1);
-	void addPointList(const PointList&, const std::string& color = "#355691", const double& stroke = -1);
+    void addRectangle(const Eigen::Vector2d& position, const double& width, const double& height, std::string color = "random", const double& stroke = -1);
+    void addRectangles(const std::vector<Eigen::Vector2d>& positions, const double& width, const double& height, std::string color = "random", const double& stroke = -1);
+    void addCardinalCurveCollection(const CardinalCurveCollection&, std::string color = "random", const double& stroke = -1);
+    void addCardinalPath(const CardinalPath&, std::string color = "random", const double& stroke = -1);
+	void addPointList(const PointList&, std::string color = "random", const double& stroke = -1);
     void writeScalableVectorGraphics(const std::string& outfilepath);
 };
 
