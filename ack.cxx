@@ -133,7 +133,6 @@ void example2(){
     ZoningCommisioner vac;
     vac.insertCurves(exda::grid_points, exda::lines);
     vac.populateNeighbors();
-    vac.findFrontier();
     std::cout << "frontier west" << vac.westmost_frontier_id_ << std::endl;
     std::cout << "frontire east" << vac.eastmost_frontier_id_ << std::endl;
     
@@ -159,7 +158,6 @@ void example4(){
     ZoningCommisioner vac;
     vac.insertCurves(exda::splotchpoints, exda::splotchlines);
     vac.populateNeighbors();
-    vac.findFrontier();
     Trail peopleheadeast = vac.trailblaze(15);
     std::cout << "Valley landmarks: " << std::endl;
     for (auto p : peopleheadeast.landmarks_valley_.points_){
@@ -205,7 +203,6 @@ void example5(double width = 0.5, double height = 0.5, std::string afile = "/Use
     ZoningCommisioner vac;
     vac.insertCurves(exda::splotchpoints, exda::splotchlines);
     vac.populateNeighbors();
-    vac.findFrontier();
     Trail peopleheadeast = vac.trailblaze(15);
     CaliperHiker calh(peopleheadeast,width, height);
     calh.hike();
@@ -272,7 +269,6 @@ void example7(double width = 3.4, double height = 2.1){
     }
     vac.insertCurves(notchy_points_arraysstyle, notchy_lines);
     vac.populateNeighbors();
-    vac.findFrontier();
     vac.trailblaze();
     CaliperHiker calh(vac.trails_[0], width, height);
     calh.hike();
@@ -299,7 +295,6 @@ void example_basic(std::vector<std::array<double,3>> points, double width, doubl
     vac.insertCurves(points, lines);
     vac.populateNeighbors();
     vac.findFrontier();
-    vac.trailblaze();
     std::cout << vac.trails_.size() << std::endl;
     if (vac.trails_.size() > 0){
         
@@ -323,7 +318,6 @@ void example_basic(std::vector<std::array<double,3>> points, std::vector<std::ve
     vac.insertCurves(points, lines);
     vac.populateNeighbors();
     vac.findFrontier();
-    vac.trailblaze();
 //    std::cout << "Numer of trails: " << vac.trails_.size() << std::endl;
     WildernessCartographerSVG vv;
     std::vector<std::string> funcolors = {"#F75C03", "#D90368", "#820263", "#291720", "#04A777"};
@@ -360,7 +354,6 @@ void example_9(){
     ZoningCommisioner wild;
     wild.insertCurves(points,somelines);
     wild.populateNeighbors();
-    wild.findFrontier();
     wild.trailblaze();
     Eigen::Vector2d place;
     bool is_placeable = wild.findPlacement(0.3, 0.6, place);
@@ -385,7 +378,6 @@ void example_10(){
     ZoningCommisioner wild;
     wild.insertCurves(points, somelines);
     wild.populateNeighbors();
-    wild.findFrontier();
     wild.trailblaze();
 
     Trail t = wild.trails_[0];
@@ -415,7 +407,6 @@ void example_11(){
     ZoningCommisioner wild;
     wild.insertCurves(points, somelines);
     wild.populateNeighbors();
-    wild.findFrontier();
     wild.trailblaze();
     //
     WildernessCartographerSVG wsvg;
@@ -444,14 +435,12 @@ void example_12() {
 	ZoningCommisioner wild;
 	wild.insertCurves(points, somelines);
 	wild.populateNeighbors();
-	wild.findFrontier();
 	wild.trailblaze();
 	//
 	WildernessCartographerSVG wsvg;
 	wsvg.addCardinalCurveCollection(wild.vacant_);
-	//, {2.5, 2.5}, {1.9, 1.3}, {0.9, 0.8}
-	std::vector<Eigen::Vector2d> whs = {{6.9, 4.4} , { 6.6,3.3 } , {5.4, 2.1},  {4.1, 2.4} , {3.5, 1.9} };
-	for (auto wh : whs) {
+	std::vector<Eigen::Vector2d> whs = { {6.9, 4.4} , { 6.6,3.3 } , {5.4, 2.1},  {4.1, 2.4} , {3.5, 1.9} , {2.5, 2.5}, {1.9, 1.3}, {0.9, 0.8}, {0.8,0.8}, {0.8,0.8}, {0.8,0.8} };
+	for (auto wh : whs)  {
 		double width = wh[0];
 		double height = wh[1];
 		Eigen::Vector2d placement;
@@ -463,7 +452,9 @@ void example_12() {
 		//removeRectangle(wild.trails_, placement, width, height);
 		if (is_placable) {
 			wild.zoneOff(placement, width, height);
-			wsvg.addRectangle(placement, width, height, svgvis::chaosHex());
+			wsvg.addPointList(wild.vacant_.points_);
+			wsvg.addRectangle(placement, width, height);
+			wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example12.svg");
 		}
 		else {
 			wsvg.addRectangle({11,0}, width, height, svgvis::chaosHex());
@@ -687,11 +678,54 @@ void example_curve_update() {
 	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_curve_update.svg");
 }
 
+void example_why_is_trail_fail() {
+	std::vector<std::array<double, 3>> points = { 
+		{5.4, 9.6},
+		{5.4, 9.8},
+		{0, 9.8},
+		{ 0, 10},
+		{10, 10},
+		{10,  0},
+		{6.9,   0},
+		{6.9, 4.4},
+		{6.6, 4.4},
+		{6.6, 7.7},
+		{8.9, 7.7},
+		{8.9, 9.6}
+	};
+	std::vector<std::vector<int>> somelines = { {0,1},{1,2},{2,3},{3,4},{4,5},{5,6},{6,7},{7,8},{8,9},{9,10},{10,11},{11,0}};
+	std::vector<double> wh = { 3.5, 1.9 };
+	double width = wh[0];
+	double height = wh[1];
+	Eigen::Vector2d placement;
+	ZoningCommisioner wild;
+	wild.insertCurves(points, somelines);
+	wild.populateNeighbors();
+	wild.trailblaze();
+	WildernessCartographerSVG wsvg;
+	wsvg.addCardinalCurveCollection(wild.vacant_, "yellow");
+	for (auto &t : wild.trails_) {
+		wsvg.addCardinalPath(t.landmarks_mountain_, "blue");
+		wsvg.addCardinalPath(t.landmarks_valley_, "green");
+	}
+	wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/badtrail.svg");
+	bool is_placable = wild.findPlacement(width, height, placement);
+	if (is_placable) {
+		std::cout << "PLACE AT: " << placement.transpose() << std::endl;
+		wild.zoneOff(placement, width, height);
+		wsvg.addPointList(wild.vacant_.points_);
+		//wsvg.addRectangle(placement, width, height);
+		wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/badtrail.svg");
+	}
+	else {
+		wsvg.addRectangle({ 11,0 }, width, height);
+	}
+	wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/badtrail.svg");
+}
+
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
-	//example_addRectTest7();
 	example_12();
-	//example_curve_update();
 	std::cout << "end" << std::endl;
 }
 

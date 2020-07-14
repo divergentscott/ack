@@ -360,7 +360,17 @@ bool CurveCollection::setPointCycles(const  std::vector<PointList>& cycles){
 		}
 		edges_.push_back({cnt,basepoint});
 	}
-	return orient_curves();
+	bool is_valid = orient_curves();
+	//!!!!
+	int pat = basepoints_[0];
+	std::cout << "Vacancy became: " << std::endl;
+	do {
+		std::cout << get_point(pat).transpose() << std::endl;
+		pat = get_next_point(pat);
+	} while (pat != basepoints_[0]);
+
+	//!!!!
+	return is_valid;
 };
 
 void CurveCollection::clear() {

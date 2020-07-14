@@ -35,20 +35,20 @@
 //};
 
 void ZoningCommisioner::findFrontier(){
-    int westmost = -1;
-    int eastmost = -1;
-	double eastest = std::numeric_limits<double>::max();
-	double westest = std::numeric_limits<double>::min();
-	for(int foo = 0; foo < vacant_.get_number_of_edges(); foo++){
+    int westmost;
+    int eastmost;
+	double eastest = std::numeric_limits<double>::lowest();
+	double westest = std::numeric_limits<double>::max();
+	for(auto foo = 0; foo < vacant_.get_number_of_edges(); foo++){
         if (!is_edge_horizontals_[foo]){
 			bool _;
-			Cedge c0 = getCedge(0, _);
+			Cedge c0 = getCedge(foo, _);
             double longitude = c0[0][0];
             if (longitude < westest){
                 westmost = foo;
                 westest = longitude;
             }
-            if (eastest < longitude){
+            if (longitude > eastest){
                 eastmost = foo;
                 eastest = longitude;
             }
@@ -288,6 +288,7 @@ Trail ZoningCommisioner::trailblaze(int start_edge_id){
 };
 
 void ZoningCommisioner::trailblaze(){
+	findFrontier();
     for (auto foo=0; foo< vacant_.get_number_of_edges(); foo++){
         if (shapes_[foo] == NeighborhoodShape::kNotchEast){
 //            std::cout << "eastnotch at " << foo;
@@ -329,7 +330,6 @@ void ZoningCommisioner::zoneOff(const Eigen::Vector2d& position, const double& w
 	//Specifically assuming bottom left placement style.
 	vacant_.removeTangentRectangle(position, width, height);
 	populateNeighbors();
-	findFrontier();
 	trails_.clear();
 	trailblaze();
 };

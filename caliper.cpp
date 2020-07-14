@@ -117,6 +117,9 @@ void PlankHiker::headEast(int start_east){
                 break;
             } else{
                 index_east++;
+				if (index_east == landmarks_.num_walls_) {
+					break;
+				}
                 Vedge wall = landmarks_.getWall(index_east);
                 east_reach = wall[0][0];
                 north_reach = wall[vert_index_][1];
@@ -138,9 +141,10 @@ void PlankHiker::headEast(int start_east){
 //
 std::deque<Hedge> PlankHiker::scanPlateaus(const int east_start, const int east_end){
     std::deque<Hedge> plateau_que;
-    Hedge a_plateau = landmarks_.getPlateau(east_end);
+	int east_check = east_end < landmarks_.num_plateaus_ ? east_end : landmarks_.num_plateaus_ - 1;
+    Hedge a_plateau = landmarks_.getPlateau(east_check);
     plateau_que.push_front(a_plateau);
-    for (int foo = east_end - 1; foo > east_start; foo--){
+    for (int foo = east_check - 1; foo > east_start; foo--){
         a_plateau = landmarks_.getPlateau(foo);
         if (!compareVertical(a_plateau[0][1],plateau_que[0][0][1])) plateau_que.push_front(a_plateau);
     }
@@ -168,6 +172,7 @@ void PlankHiker::nudgeFrontier(){
     double western_frontier = landmarks_.points_[0][0];
     while( camps_.points_[east_index][0] < western_frontier ){
         east_index++;
+		if (east_index == camps_.points_.size()) break;
     }
     camps_.points_[east_index-1][0] = western_frontier;
     if (east_index>1){
