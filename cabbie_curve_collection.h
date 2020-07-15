@@ -23,6 +23,7 @@ public:
 	void removeTangentRectangle(const Eigen::Vector2d &lower_left, const double &width, const double &height);
     //Returns true if there is an impact, otherwise false.
     //If true, impact_location is populated with the impact point on the line segment.
+    void mergeParallelEdges();
 };
 
 bool rayTraceNorth(const Eigen::Vector2d &origin, const std::array<Eigen::Vector2d,2> &segment,  Eigen::Vector2d &impact);

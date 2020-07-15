@@ -37,10 +37,10 @@ struct Polyline{
 }
 
 struct WildernessCartographerSVG{
-    double min_x_ = 1e8;
-    double min_y_ = 1e8;
-    double max_x_ = -1e8;
-    double max_y_ = -1e8;
+    double min_x_;
+    double min_y_;
+    double max_x_;
+    double max_y_;
     double default_stroke_width_ = 0.1;
     std::vector<svgvis::Rectangle> rectangles_ = {};
     std::vector<svgvis::Polyline> polylines_ = {};

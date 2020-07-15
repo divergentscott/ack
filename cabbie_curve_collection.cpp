@@ -367,13 +367,14 @@ struct ChainForge {
 					rect_remnant.push_back(rem_end);
 				}
 				//
-				chain_forge.addChain(rect_remnant);
+                if (rect_remnant.size()>1) chain_forge.addChain(rect_remnant);
 				//
 				Eigen::Vector2d rem_begin = hits[at][bar][at_lead_index];
 				rect_remnant = { rem_begin };
 			}
 			//See if the you need the corner
-			if ((rect_corners[at] - rect_remnant.back()).norm() > repsilon) {
+            bool is_need_corner = (rect_corners[at] - rect_remnant.back()).norm() > repsilon;
+			if (is_need_corner) {
 				rect_remnant.push_back(rect_corners[at]);
 			}
         }
@@ -432,3 +433,57 @@ void CardinalCurveCollection::removeTangentRectangle(const Eigen::Vector2d &lowe
 	clear();
 	setPointCycles(edited_cycles);
 };
+
+void CardinalCurveCollection::mergeParallelEdges(){
+    //Merge parallel line segments and return a bool of is_horizontal.
+    std::vector<std::vector<int>> keepers_cycles;
+    keepers_cycles.reserve(basepoints_.size());
+    int p_cnt = 0;
+    for (auto base_point : basepoints_){
+        std::vector<int> keepers;
+        keepers.reserve(points_.size());
+        int at = base_point;
+        int p_at = get_prev_point(base_point);
+        int n_at = get_next_point(base_point);
+        do{
+            //check for colinearity
+            Eigen::Vector2d at_co = get_point(at);
+            //displacements
+            Eigen::Vector2d p_dis = get_point(p_at) - at_co;
+            Eigen::Vector2d n_dis = get_point(n_at) - at_co;
+            bool n_hoz = (std::abs(n_dis[0]) > repsilon) & (std::abs(n_dis[1]) < repsilon);
+            bool p_hoz = (std::abs(p_dis[0]) > repsilon) & (std::abs(p_dis[1]) < repsilon);
+            if (n_hoz != p_hoz){
+                // These two edges are not parallel, keep this point.
+                keepers.push_back(at);
+            }
+            p_at = at;
+            at = n_at;
+            n_at = get_next_point(n_at);
+        } while (at != base_point);
+        keepers_cycles.push_back(keepers);
+        p_cnt += keepers.size();
+    }
+    //
+    // Rewrite the edges and points
+    PointList kept_points;
+    kept_points.resize(p_cnt);
+    std::vector<std::array<int,2>> kept_edges;
+    kept_edges.resize(p_cnt);
+    int p_ii=0;
+    for (auto cycle : keepers_cycles){
+        int bp = p_ii;
+        for (int p : cycle){
+            Eigen::Vector2d point_p = get_point(p);
+            kept_points[p_ii] = point_p;
+            kept_edges[p_ii] = {p_ii, p_ii+1};
+            p_ii++;
+        }
+        kept_edges[p_ii-1] = {p_ii-1, bp};
+    }
+    clear();
+    points_ = kept_points;
+    edges_ = kept_edges;
+    orient_curves();
+    int _debug_= 0;
+}

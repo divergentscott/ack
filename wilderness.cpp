@@ -86,6 +86,7 @@ NeighborhoodShape ZoningCommisioner::getNeighborhoodShape(int dim_of_interest, d
 
 void ZoningCommisioner::insertCurves(const std::vector<std::array<double,3>> &grid_points, const std::vector<std::vector<int>> &lines){
     vacant_.setGridPointsAndCells(grid_points, lines);
+    vacant_.mergeParallelEdges();
 };
 
 Cedge ZoningCommisioner::getCedge(const int id, bool& is_horizontal) const {
@@ -188,6 +189,7 @@ void ZoningCommisioner::nextCollideNorth(const Eigen::Vector2d &origin, const bo
             edge_at = vacant_.get_prev_edge(edge_at);
             point_at = vacant_.get_prev_point(point_at);
         }
+        if (edge_at == eastmost_frontier_id_) break; //?
         if (is_edge_horizontals_[edge_at]){
 			bool _;
             is_impact = rayTraceNorth(origin, getCedge(edge_at,_), impact);
@@ -260,7 +262,7 @@ Trail ZoningCommisioner::trailblaze(int start_edge_id){
         }
         //check for the end
         if ((e_at == patrol_terminus) | (e_at == eastmost_frontier_id_)){
-            patrol_terminus = e_at;
+//            patrol_terminus = e_at;
             patrol.landmarks_mountain_.push_back(vacant_.get_point(p_at));
             is_end_found = true;
         } else {
@@ -275,6 +277,7 @@ Trail ZoningCommisioner::trailblaze(int start_edge_id){
                 }
                 Eigen::Vector2d loc = vacant_.get_point(p_prev);
                 nextCollideNorth(loc, is_following_orient, p_at, e_at, impact);
+                if (e_at == eastmost_frontier_id_) std::cout << "Next collide hit easten frontier.";
                 patrol.landmarks_mountain_.push_back(impact);
                 Eigen::Vector2d landmark = vacant_.get_point(p_at);
                 patrol.landmarks_mountain_.push_back(landmark);
@@ -329,6 +332,7 @@ void ZoningCommisioner::zoneOff(const Eigen::Vector2d& position, const double& w
 	//Removes the specified rectangle from the vacancy space.
 	//Specifically assuming bottom left placement style.
 	vacant_.removeTangentRectangle(position, width, height);
+    vacant_.mergeParallelEdges();
 	populateNeighbors();
 	trails_.clear();
 	trailblaze();

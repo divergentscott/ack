@@ -3,6 +3,8 @@
 
 #include "wilderness_cartographer_svg.h"
 
+#include <limits>
+
 namespace svgvis {
 
 std::string chaosHex(){
@@ -51,6 +53,10 @@ const std::string topline = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone
 };//svgvis
 
 WildernessCartographerSVG::WildernessCartographerSVG(){
+    double min_x_ = std::numeric_limits<double>::max();
+    double min_y_ = std::numeric_limits<double>::max();
+    double max_x_ = std::numeric_limits<double>::lowest();
+    double max_y_ = std::numeric_limits<double>::lowest();
 };
 
 void WildernessCartographerSVG::setStroke(const double &x){
