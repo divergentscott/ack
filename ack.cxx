@@ -439,7 +439,7 @@ void example_12() {
 	//
 	WildernessCartographerSVG wsvg;
 	wsvg.addCardinalCurveCollection(wild.vacant_);
-	std::vector<Eigen::Vector2d> whs = { {6.9, 4.4} , { 6.6,3.3 } , {5.4, 2.1},  {4.1, 2.4} , {3.5, 1.9} , {2.5, 2.5}, {1.9, 1.3}, {0.9, 0.8}, {0.8,0.8}, {0.8,0.8}, {0.8,0.8}, {0.8,0.8} };
+	std::vector<Eigen::Vector2d> whs = { {6.9, 4.4} , { 6.6,3.3 } , {5.4, 2.1},  {4.1, 2.4} , {3.5, 1.9} , {2.5, 2.5}, {1.9, 1.3}, {0.9, 0.8}, {0.8,0.8}, {0.8,0.8}, {0.8,0.8}, {0.8,0.8}, {0.8,0.8}};
 	for (auto wh : whs)  {
 		double width = wh[0];
 		double height = wh[1];
@@ -452,7 +452,7 @@ void example_12() {
 		//removeRectangle(wild.trails_, placement, width, height);
 		if (is_placable) {
 			wild.zoneOff(placement, width, height);
-			wsvg.addPointList(wild.vacant_.points_);
+            wsvg.addCardinalCurveCollection(wild.vacant_);
 			wsvg.addRectangle(placement, width, height);
 			wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example12.svg");
 		}
@@ -460,12 +460,85 @@ void example_12() {
 			wsvg.addRectangle({11,0}, width, height, svgvis::chaosHex());
 		}
 	}
+    std::cout << "VACANCY POINTS" << std::endl;
+    for (auto p : wild.vacant_.points_){
+        std::cout << "{ " << p[0] << ", " << p[1] << " }," << std::endl;
+    }
+    std::cout << "VACANCY EDGES" << std::endl;
+    for (auto ee : wild.vacant_.edges_){
+        std::cout << "{ " << ee[0] << ", " << ee[1] << " }," << std::endl;
+    }
+
 	wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example12.svg");
 }
 
 void example_13() {
-    std::vector<std::array<double, 3>> points = { {0,0},{10,0},{10,10},{0,10} };
-    std::vector<std::vector<int>> somelines = { {0,1},{1,2},{2,3},{3,0} };
+//    VACANCY POINTS
+    std::vector<std::array<double, 3>> points = {
+        { 8.5, 4.1 },
+        { 8.5, 3.8 },
+        { 8.8, 3.8 },
+        { 8.8, 4.1 },
+        { 9.3, 4.9 },
+        { 9.3, 4.1 },
+        { 9.6, 4.1 },
+        { 9.6, 3.3 },
+        { 9.7, 3.3 },
+        { 9.7, 2.5 },
+        { 9.4, 2.5 },
+        { 9.4, 0 },
+        { 10, 0 },
+        { 10, 10 },
+        { 0, 10 },
+        { 0, 9.8 },
+        { 5.4, 9.8 },
+        { 5.4, 9.6 },
+        { 8.9, 9.6 },
+        { 8.9, 7.7 },
+        { 6.6, 7.7 },
+        { 6.6, 5.4 },
+        { 7.4, 5.4 },
+        { 7.4, 4.6 },
+        { 8.5, 4.6 },
+        { 8.5, 4.9 },
+        { 6.9, 4.6 },
+        { 6.9, 4.4 },
+        { 6.6, 4.4 },
+        { 6.6, 4.6 }
+    };
+//    VACANCY EDGES
+    std::vector<std::vector<int>> somelines = {
+        { 0, 1 },
+        { 1, 2 },
+        { 2, 3 },
+        { 3, 0 },
+        { 4, 5 },
+        { 5, 6 },
+        { 6, 7 },
+        { 7, 8 },
+        { 8, 9 },
+        { 9, 10 },
+        { 10, 11 },
+        { 11, 12 },
+        { 12, 13 },
+        { 13, 14 },
+        { 14, 15 },
+        { 15, 16 },
+        { 16, 17 },
+        { 17, 18 },
+        { 18, 19 },
+        { 19, 20 },
+        { 20, 21 },
+        { 21, 22 },
+        { 22, 23 },
+        { 23, 24 },
+        { 24, 25 },
+        { 25, 4 },
+        { 26, 27 },
+        { 27, 28 },
+        { 28, 29 },
+        { 29, 26 }
+    };
     //
     ZoningCommisioner wild;
     wild.insertCurves(points, somelines);
@@ -474,7 +547,7 @@ void example_13() {
     //
     WildernessCartographerSVG wsvg;
     wsvg.addCardinalCurveCollection(wild.vacant_);
-    std::vector<Eigen::Vector2d> whs = {{5,5},{5,5},{5,5}};
+    std::vector<Eigen::Vector2d> whs = {{0.8,0.8},{0.8,0.8},{0.8,0.8},{0.8,0.8},{0.8,0.8},{0.8,0.8},{0.8,0.8},{0.8,0.8},{0.8,0.8},{0.8,0.8},{0.8,0.8},{0.8,0.8}};
     for (auto wh : whs)  {
         double width = wh[0];
         double height = wh[1];
@@ -484,6 +557,7 @@ void example_13() {
             wsvg.addCardinalPath(t.landmarks_mountain_, "blue");
             wsvg.addCardinalPath(t.landmarks_valley_, "green");
         }
+        wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example13.svg");
         //removeRectangle(wild.trails_, placement, width, height);
         if (is_placable) {
             wild.zoneOff(placement, width, height);
@@ -820,7 +894,7 @@ void example_why_is_trail_fail() {
 
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
-	example_14() ;
+	example_13() ;
 	std::cout << "end" << std::endl;
 }
 

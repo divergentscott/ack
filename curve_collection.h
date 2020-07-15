@@ -24,9 +24,8 @@ protected:
     //Input must represent a collection of disjoint simple closed curves in the plane.
 public: //!!!!
 	PointList points_{};
+    std::vector<std::array<int, 2>> edges_{};
 protected: //!!!!
-	std::vector<std::array<int, 2>> edges_{};
-
     // Next point in the traversal
     std::vector<int> point_order_next_{};
     // Previous point in the traversal
