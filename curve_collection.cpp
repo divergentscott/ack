@@ -1,5 +1,7 @@
 #include "cabbie_curve_collection.h"
 
+#include <unordered_map>
+
 // Tao is 2pi
 const double kConstantTao =
     6.28318530717958647692528676655900576839433879875021164194;

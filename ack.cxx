@@ -439,8 +439,9 @@ void example_12() {
 	//
 	WildernessCartographerSVG wsvg;
 	wsvg.addCardinalCurveCollection(wild.vacant_);
-	std::vector<Eigen::Vector2d> whs = { {6.9, 4.4} , { 6.6,3.3 } , {5.4, 2.1},  {4.1, 2.4} , {3.5, 1.9} , {2.5, 2.5}, {1.9, 1.3}, {0.9, 0.8}, {0.8,0.8}, {0.8,0.8}, {0.8,0.8}, {0.8,0.8}, {0.8,0.8}, {0.8,0.8} , {0.8,0.8} , {0.8,0.8}, {0.8,0.8}, {0.8,0.8}, {0.8,0.8}, {0.8,0.8}, {0.8,0.8}, {0.8,0.8}, {0.8,0.8}, {0.8,0.8}, {0.8,0.8}, {0.8,0.8}, {0.8,0.8} };
-	for (auto foo=0; foo<30; foo++) whs.push_back({ 0.4,0.4 });
+    std::vector<Eigen::Vector2d> whs = { {6.9, 4.4} , { 6.6,3.3 } , {5.4, 2.1},  {4.1, 2.4} , {3.5, 1.9} , {2.5, 2.5}, {1.9, 1.3}, {0.9, 0.8}};
+    for (int foo=0; foo<20; foo++) whs.push_back({0.8,0.8});
+	for (auto foo=0; foo<29; foo++) whs.push_back({ 0.4,0.4 });
 	//std::vector<Eigen::Vector2d> whs = { {6.9, 4.4}};
 	for (auto wh : whs)  {
 		double width = wh[0];
@@ -477,69 +478,85 @@ void example_12() {
 void example_13() {
 //    VACANCY POINTS
     std::vector<std::array<double, 3>> points = {
-		{ 8.8, 4.1 },
-		{ 8.8, 3.8 },
-		{ 8.5, 3.8 },
 		{ 8.5, 4.1 },
-		{ 8.5, 4.9 },
-		{ 8.2, 4.9 },
-		{ 8.2, 4.6 },
-		{ 8.5, 4.6 },
-		{ 9, 5.7 },
-		{ 9, 4.9 },
-		{ 9.3, 4.9 },
-		{ 9.3, 4.1 },
-		{ 9.6, 4.1 },
-		{ 9.6, 3.3 },
-		{ 9.7, 3.3 },
-		{ 9.7, 2.5 },
-		{ 9.4, 2.5 },
-		{ 9.4, 0 },
-		{ 10, 0 },
-		{ 10, 10 },
-		{ 0, 10 },
-		{ 0, 9.8 },
-		{ 5.4, 9.8 },
-		{ 5.4, 9.6 },
-		{ 8.9, 9.6 },
-		{ 8.9, 7.7 },
-		{ 6.6, 7.7 },
-		{ 6.6, 6.2 },
-		{ 7.4, 6.2 },
-		{ 7.4, 5.4 },
-		{ 8.2, 5.4 },
-		{ 8.2, 5.7 },
-		{ 6.6, 4.6 },
-		{ 6.6, 4.4 },
-		{ 6.9, 4.4 },
-		{ 6.9, 4.6 }
+        { 8.5, 3.8 },
+        { 8.8, 3.8 },
+        { 8.8, 4.1 },
+        { 8.5, 4.6 },
+        { 8.2, 4.6 },
+        { 8.2, 4.9 },
+        { 8.5, 4.9 },
+        { 8.9, 7.7 },
+        { 6.6, 7.7 },
+        { 6.6, 7 },
+        { 8.2, 7 },
+        { 8.2, 7.3 },
+        { 8.9, 7.3 },
+        { 9.7, 7.3 },
+        { 9.8, 7.3 },
+        { 9.8, 4.9 },
+        { 9.3, 4.9 },
+        { 9.3, 4.1 },
+        { 9.6, 4.1 },
+        { 9.6, 3.3 },
+        { 9.7, 3.3 },
+        { 9.7, 2.5 },
+        { 9.4, 2.5 },
+        { 9.4, 0 },
+        { 10, 0 },
+        { 10, 10 },
+        { 0, 10 },
+        { 0, 9.8 },
+        { 5.4, 9.8 },
+        { 5.4, 9.6 },
+        { 8.9, 9.6 },
+        { 8.9, 9.7 },
+        { 9.7, 9.7 },
+        { 6.9, 4.6 },
+        { 6.9, 4.4 },
+        { 6.6, 4.4 },
+        { 6.6, 4.6 }
     };
 //    VACANCY EDGES
     std::vector<std::vector<int>> somelines = {
-		{ 8, 9 },
-		{ 9, 10 },
-		{ 10, 11 },
-		{ 11, 12 },
-		{ 12, 13 },
-		{ 13, 14 },
-		{ 14, 15 },
-		{ 15, 16 },
-		{ 16, 17 },
-		{ 17, 18 },
-		{ 18, 19 },
-		{ 19, 20 },
-		{ 20, 21 },
-		{ 21, 22 },
-		{ 22, 23 },
-		{ 23, 24 },
-		{ 24, 25 },
-		{ 25, 26 },
-		{ 26, 27 },
-		{ 27, 28 },
-		{ 28, 29 },
-		{ 29, 30 },
-		{ 30, 31 },
-		{ 31, 8 },
+		{ 0, 1 },
+        { 1, 2 },
+        { 2, 3 },
+        { 3, 0 },
+        { 4, 5 },
+        { 5, 6 },
+        { 6, 7 },
+        { 7, 4 },
+        { 8, 9 },
+        { 9, 10 },
+        { 10, 11 },
+        { 11, 12 },
+        { 12, 13 },
+        { 13, 8 },
+        { 14, 15 },
+        { 15, 16 },
+        { 16, 17 },
+        { 17, 18 },
+        { 18, 19 },
+        { 19, 20 },
+        { 20, 21 },
+        { 21, 22 },
+        { 22, 23 },
+        { 23, 24 },
+        { 24, 25 },
+        { 25, 26 },
+        { 26, 27 },
+        { 27, 28 },
+        { 28, 29 },
+        { 29, 30 },
+        { 30, 31 },
+        { 31, 32 },
+        { 32, 33 },
+        { 33, 14 },
+        { 34, 35 },
+        { 35, 36 },
+        { 36, 37 },
+        { 37, 34 }
     };
     //
     ZoningCommisioner wild;
@@ -549,7 +566,7 @@ void example_13() {
     //
     WildernessCartographerSVG wsvg;
     wsvg.addCardinalCurveCollection(wild.vacant_);
-    std::vector<Eigen::Vector2d> whs = {{0.8,0.8}};
+    std::vector<Eigen::Vector2d> whs = {{0.4,0.4}};
     for (auto wh : whs)  {
         double width = wh[0];
         double height = wh[1];
@@ -565,7 +582,7 @@ void example_13() {
 			caliper_hiker.hike();
 			svger.addCardinalPath(caliper_hiker.camps_mountain_, "orange");
 			svger.addCardinalPath(caliper_hiker.camps_valley_, "red");
-			svger.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/example13_"+std::to_string(trail_cnt)+".svg");
+			svger.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example13_"+std::to_string(trail_cnt)+".svg");
 			trail_cnt++;
 		}
 		//for (auto &t : wild.trails_) {
@@ -576,18 +593,18 @@ void example_13() {
 		//	wsvg.addCardinalPath(caliper_hiker.camps_mountain_, "black");
 		//	wsvg.addCardinalPath(caliper_hiker.camps_valley_, "red");
   //      }
-        wsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/example13.svg");
+        wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example13.svg");
         //removeRectangle(wild.trails_, placement, width, height);
         if (is_placable) {
             wild.zoneOff(placement, width, height);
             wsvg.addRectangle(placement, width, height);
-            wsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/example13.svg");
+            wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example13.svg");
         } else {
             wsvg.addRectangle({11,0}, width, height);
-            wsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/example13.svg");
+            wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example13.svg");
         }
     }
-    wsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/example13.svg");
+    wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example13.svg");
 }
 
 void example_14() {
@@ -618,13 +635,13 @@ void example_14() {
         if (is_placable) {
             wild.zoneOff(placement, width, height);
             wsvg.addRectangle(placement, width, height);
-            wsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/example14.svg");
+            wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example14.svg");
         } else {
             wsvg.addRectangle({6,0}, width, height);
-            wsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/example14.svg");
+            wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example14.svg");
         }
     }
-    wsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/example14.svg");
+    wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example14.svg");
 }
 //{6.9, 4.4}, { 6.6,3.3 },
 
@@ -639,7 +656,7 @@ void example_15() {
 	//
 	WildernessCartographerSVG wsvg;
 	wsvg.addCardinalCurveCollection(wild.vacant_, "black");
-	wsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/example15.svg");
+	wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example15.svg");
 	std::vector<Eigen::Vector2d> whs = { {2.4,1} };
 	for (auto wh : whs) {
 		double width = wh[0];
@@ -657,14 +674,14 @@ void example_15() {
 		if (is_placable) {
 			wild.zoneOff(placement, width, height);
 			wsvg.addRectangle(placement, width, height);
-			wsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/example15.svg");
+			wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example15.svg");
 		}
 		else {
 			wsvg.addRectangle({ 10,0 }, width, height);
-			wsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/example15.svg");
+			wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example15.svg");
 		}
 	}
-	wsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/example15.svg");
+	wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example15.svg");
 }
 
 void example_test_edge_intersect0(){
@@ -954,9 +971,10 @@ void example_why_is_trail_fail() {
 
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
-	//example_13() ;
+    example_12();
+//	example_13() ;
 	//example_15();
-	example_14();
+	//example_14();
 	std::cout << "end" << std::endl;
 }
 

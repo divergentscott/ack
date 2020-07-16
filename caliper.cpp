@@ -38,7 +38,8 @@ void CaliperHiker::expandCamps(){
     }
     while((ii < camps_valley_.num_plateaus_-1) | (jj < camps_mountain_.num_plateaus_-1)){
         //Measure height east to west and keep any positions that are valid.
-        while( (high_jj[1][0] <= low_ii[1][0]) & (jj < camps_mountain_.num_plateaus_-1) ){
+        bool is_progress = false;
+        while( (high_jj[1][0] <= low_ii[1][0] + repsilon) & (jj < camps_mountain_.num_plateaus_-1) ){
             jj++;
 //            std::cout << "ii " << ii << " jj " << jj << std::endl;
             high_jj = camps_mountain_.getPlateau(jj);
@@ -47,8 +48,9 @@ void CaliperHiker::expandCamps(){
                 valid_.push_back(position);
 //                std::cout << (valid_.end()-1)->transpose() << std::endl;
             }
+            is_progress = true;
         };
-        while( (low_ii[1][0] <= high_jj[1][0]) & (ii < camps_valley_.num_plateaus_-1) ){
+        while( (low_ii[1][0] <= high_jj[1][0] + repsilon) & (ii < camps_valley_.num_plateaus_-1) ){
             ii++;
 //            std::cout << "ii " << ii << " jj " << jj << std::endl;
             Eigen::Vector2d lastright = camps_valley_.getPlateau(ii-1)[1];
@@ -62,7 +64,10 @@ void CaliperHiker::expandCamps(){
 //                std::cout << (valid_.end()-1)->transpose() << std::endl;
 
             }
+            is_progress = true;
         };
+        if (!is_progress) std::cout << "no progress";
+        //if (!is_progress) break;
     }
     double lastx = std::min(low_ii[1][0], high_jj[1][0]);
     if ( high_jj[1][1] - low_ii[1][1] >= height_){
