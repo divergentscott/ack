@@ -12,12 +12,6 @@ enum class EdgeOrientation{
     kEast
 };
 
-enum class OutsideSide{
-    kUnknown,
-    kNegative,
-    kPositive
-};
-
 enum class NeighborhoodShape{
     kUnknown,
     kZag, // looks like _|-
@@ -46,8 +40,6 @@ enum class NeighborhoodShape{
 struct ZoningCommisioner{
     CardinalCurveCollection vacant_;
 	std::vector<NeighborhoodShape> shapes_;
-	std::vector<bool> is_edge_horizontals_;
-	std::vector<OutsideSide> outsidesides_;
     //std::vector<VacancySide> vsides_;
     int westmost_frontier_id_ = 0;
     int eastmost_frontier_id_ = 0;
@@ -64,7 +56,6 @@ struct ZoningCommisioner{
     
     NeighborhoodShape getNeighborhoodShape(int dim_of_interest, double pos_prev, double pos_foo, double pos_next);
     
-	void populateSlopes();
     void populateNeighbors();
     
     void nextCollideNorth(const Eigen::Vector2d &origin, const bool &is_following_orientation, int &point_at, int &edge_at, Eigen::Vector2d &impact);

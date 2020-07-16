@@ -39,17 +39,17 @@ void ZoningCommisioner::findFrontier(){
     int eastmost;
 	double eastest = std::numeric_limits<double>::lowest();
 	double westest = std::numeric_limits<double>::max();
-	for(auto foo = 0; foo < vacant_.get_number_of_edges(); foo++){
-        if (!is_edge_horizontals_[foo]){
+	for(auto e_foo = 0; e_foo < vacant_.get_number_of_edges(); e_foo++){
+        if (!vacant_.is_horizontals_[e_foo]){
 			bool _;
-			Cedge c0 = getCedge(foo, _);
+			Cedge c0 = getCedge(e_foo, _);
             double longitude = c0[0][0];
             if (longitude < westest){
-                westmost = foo;
+                westmost = e_foo;
                 westest = longitude;
             }
             if (longitude > eastest){
-                eastmost = foo;
+                eastmost = e_foo;
                 eastest = longitude;
             }
         }
@@ -125,39 +125,14 @@ Cedge ZoningCommisioner::getCedge(const int id, bool& is_horizontal, std::array<
 	return { b,a };
 };
 
-
-void ZoningCommisioner::populateSlopes() {
-	is_edge_horizontals_.resize(vacant_.get_number_of_edges());
-	outsidesides_.resize(vacant_.get_number_of_edges());
-	for (auto foo = 0; foo < vacant_.get_number_of_edges(); foo++) {
-		auto edgefoo = vacant_.get_points_of_edge(foo);
-		int pfoo_s_id = edgefoo[0];
-		int pfoo_t_id = edgefoo[1];
-		Eigen::Vector2d pfoo_s = vacant_.get_point(pfoo_s_id);
-		Eigen::Vector2d pfoo_t = vacant_.get_point(pfoo_t_id);
-		double xlen = std::abs((pfoo_s[0] - pfoo_t[0]));
-		double ylen = std::abs((pfoo_s[1] - pfoo_t[1]));
-		if ((xlen > repsilon) & (ylen < repsilon)) {
-			is_edge_horizontals_[foo] = true;
-			Eigen::Vector2d test_p = 0.5 * (pfoo_s + pfoo_t) - Eigen::Vector2d({0, 10*repsilon});
-			outsidesides_[foo] = vacant_.is_point_in(test_p) ? OutsideSide::kPositive : OutsideSide::kNegative;
-		}
-		else {
-			is_edge_horizontals_[foo] = false;
-			Eigen::Vector2d test_p = 0.5 * (pfoo_s + pfoo_t) - Eigen::Vector2d({10 * repsilon, 0});
-			outsidesides_[foo] = vacant_.is_point_in(test_p) ? OutsideSide::kPositive : OutsideSide::kNegative;
-		}
-	};
-}
-
 void ZoningCommisioner::populateNeighbors(){
 	// Populate the slopes.
-    populateSlopes();
+    vacant_.populateSlopes();
 	// Populate the neighborhood shapes.
 	shapes_.resize(vacant_.get_number_of_edges());
 	//
     for (int foo=0; foo<vacant_.get_number_of_edges(); foo++){
-        int dim_of_interest = is_edge_horizontals_[foo] ? 1 : 0;
+        int dim_of_interest = vacant_.is_horizontals_[foo] ? 1 : 0;
         auto edgefoo = vacant_.get_points_of_edge(foo);
         int pfoos = edgefoo[0];
         int pfoot = edgefoo[1];
@@ -190,9 +165,9 @@ void ZoningCommisioner::nextCollideNorth(const Eigen::Vector2d &origin, const bo
             point_at = vacant_.get_prev_point(point_at);
         }
         if (edge_at == eastmost_frontier_id_) break; //?
-        if (is_edge_horizontals_[edge_at]){
+        if (vacant_.is_horizontals_[edge_at]){
 			bool _;
-            is_impact = rayTraceNorth(origin, getCedge(edge_at,_), impact);
+            is_impact = rayNorthSegmentIntersect(origin, getCedge(edge_at,_), impact);
         }
     }
 };
@@ -208,7 +183,7 @@ Trail ZoningCommisioner::trailblaze(int start_edge_id){
 	bool _;
 	std::array<int, 2> pids;
 	getCedge(start_edge_id, _, pids);
-	if (outsidesides_[start_edge_id] == OutsideSide::kNegative){
+	if (vacant_.outsidesides_[start_edge_id] == OutsideSide::kNegative){
         p_at = pids[0];
         p_next = pids[1];
     } else {
@@ -230,9 +205,22 @@ Trail ZoningCommisioner::trailblaze(int start_edge_id){
             p_at = vacant_.get_prev_point(p_at);
         }
         if (shapes_[e_at] == NeighborhoodShape::kNotchWest){
-            patrol_terminus = e_at;
-            is_end_found = true;
-            patrol.landmarks_valley_.push_back(vacant_.get_point(p_at));
+			is_end_found = true;
+			OutsideSide outside_side = vacant_.outsidesides_[e_at];
+			if (outside_side == OutsideSide::kPositive) {
+				patrol_terminus = e_at;
+				patrol.landmarks_valley_.push_back(vacant_.get_point(p_at));
+			} else {
+				Eigen::Vector2d near_end = vacant_.get_point(p_at);
+				patrol.landmarks_valley_.push_back(near_end);
+				Eigen::Vector2d hit_west;
+				int hit_west_e_id;
+				vacant_.rayTraceEast(near_end, hit_west, hit_west_e_id);
+				patrol.landmarks_valley_.push_back(hit_west);
+				bool _;
+				patrol.landmarks_valley_.push_back(getCedge(hit_west_e_id,_)[1]);
+				patrol_terminus = hit_west_e_id;
+			}
         } else {
             patrol.landmarks_valley_.push_back(vacant_.get_point(p_at));
         }
@@ -241,7 +229,7 @@ Trail ZoningCommisioner::trailblaze(int start_edge_id){
     is_following_orient = !is_following_orient;
     is_end_found = false;
     e_at = start_edge_id;
-    if (outsidesides_[start_edge_id] == OutsideSide::kNegative){
+    if (vacant_.outsidesides_[start_edge_id] == OutsideSide::kNegative){
         p_at = pids[1];
     } else {
         Eigen::Vector2d impact;

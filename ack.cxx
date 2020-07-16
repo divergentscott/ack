@@ -555,15 +555,27 @@ void example_13() {
         double height = wh[1];
         Eigen::Vector2d placement;
         bool is_placable = wild.findPlacement(width, height, placement);
-        for (auto &t : wild.trails_) {
-            wsvg.addCardinalPath(t.landmarks_mountain_, "blue");
-            wsvg.addCardinalPath(t.landmarks_valley_, "green");
+		int trail_cnt = 0;
+		for (auto &t : wild.trails_) {
+			WildernessCartographerSVG svger;
+			svger.addCardinalCurveCollection(wild.vacant_, "black");
+			svger.addCardinalPath(t.landmarks_mountain_, "blue");
+			svger.addCardinalPath(t.landmarks_valley_, "green");
 			CaliperHiker caliper_hiker(t, width, height);
 			caliper_hiker.hike();
-			wsvg.addCardinalPath(caliper_hiker.camps_mountain_, "black");
-			wsvg.addCardinalPath(caliper_hiker.camps_valley_, "red");
-        }
-
+			svger.addCardinalPath(caliper_hiker.camps_mountain_, "orange");
+			svger.addCardinalPath(caliper_hiker.camps_valley_, "red");
+			svger.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/example13_"+std::to_string(trail_cnt)+".svg");
+			trail_cnt++;
+		}
+		//for (auto &t : wild.trails_) {
+  //          wsvg.addCardinalPath(t.landmarks_mountain_, "blue");
+  //          wsvg.addCardinalPath(t.landmarks_valley_, "green");
+		//	CaliperHiker caliper_hiker(t, width, height);
+		//	caliper_hiker.hike();
+		//	wsvg.addCardinalPath(caliper_hiker.camps_mountain_, "black");
+		//	wsvg.addCardinalPath(caliper_hiker.camps_valley_, "red");
+  //      }
         wsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/example13.svg");
         //removeRectangle(wild.trails_, placement, width, height);
         if (is_placable) {
@@ -942,9 +954,9 @@ void example_why_is_trail_fail() {
 
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
-	example_13() ;
+	//example_13() ;
 	//example_15();
-	//example_12();
+	example_14();
 	std::cout << "end" << std::endl;
 }
 

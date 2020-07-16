@@ -3,7 +3,73 @@
 #include "cabbie_curve_collection.h"
 
 
-bool rayTraceNorth(const Eigen::Vector2d &origin, const Hedge &segment, Eigen::Vector2d &impact){
+void CardinalCurveCollection::populateSlopes() {
+	is_horizontals_.resize(get_number_of_edges());
+	outsidesides_.resize(get_number_of_edges());
+	for (auto foo = 0; foo < get_number_of_edges(); foo++) {
+		auto edgefoo = get_points_of_edge(foo);
+		int pfoo_s_id = edgefoo[0];
+		int pfoo_t_id = edgefoo[1];
+		Eigen::Vector2d pfoo_s = get_point(pfoo_s_id);
+		Eigen::Vector2d pfoo_t = get_point(pfoo_t_id);
+		double xlen = std::abs((pfoo_s[0] - pfoo_t[0]));
+		double ylen = std::abs((pfoo_s[1] - pfoo_t[1]));
+		//
+		// TODO: This is inefficient.
+		// You only need to point test once for each connected component.
+		//
+		if ((xlen > repsilon) & (ylen < repsilon)) {
+			is_horizontals_[foo] = true;
+			Eigen::Vector2d test_p = 0.5 * (pfoo_s + pfoo_t) - Eigen::Vector2d({ 0, 10 * repsilon });
+			outsidesides_[foo] = is_point_in(test_p) ? OutsideSide::kPositive : OutsideSide::kNegative;
+		}
+		else {
+			is_horizontals_[foo] = false;
+			Eigen::Vector2d test_p = 0.5 * (pfoo_s + pfoo_t) - Eigen::Vector2d({ 10 * repsilon, 0 });
+			outsidesides_[foo] = is_point_in(test_p) ? OutsideSide::kPositive : OutsideSide::kNegative;
+		}
+	};
+};
+
+bool rayEastSegmentIntersect(const Eigen::Vector2d &origin, const Vedge &segment, Eigen::Vector2d &impact) {
+	//Returns true if there is an impact, otherwise false.
+	//If true, impact_location is populated with the impact point on the line segment.
+	//Assumes segment is vertical AND ordered with segment[0][1] < segment[1][1] and segment[0][0] == semgent[1][0]
+	if ((origin[0] > segment[0][0]) | (segment[0][1] > origin[1]) | (origin[1] > segment[1][1])) return false;
+	impact[1] = origin[1];
+	impact[0] = segment[0][0];
+	return true;
+};
+
+
+bool CardinalCurveCollection::rayTraceEast(const Eigen::Vector2d &origin,
+	Eigen::Vector2d &impact,
+	int& impact_edge_id) {
+	bool is_impact = false;
+	double close_x = std::numeric_limits<double>::max();
+	for (auto e_foo = 0; e_foo < edges_.size(); e_foo++) {
+		if (!is_horizontals_[e_foo]) {
+			Eigen::Vector2d p0 = points_[edges_[e_foo][0]];
+			if ((p0[0] < close_x) & (p0[0] > origin[0])) {
+				Eigen::Vector2d p1 = points_[edges_[e_foo][1]];
+				if (p1[1] < p0[1]) std::swap(p0, p1);
+				Eigen::Vector2d impact_foo;
+				Vedge segment = {p0,p1};
+				bool is_foo_hit = rayEastSegmentIntersect(origin, segment, impact_foo);
+				if (is_foo_hit) {
+					is_impact = true;
+					impact = impact_foo;
+					impact_edge_id = e_foo;
+					close_x = impact_foo[0];
+				}
+			}
+		}
+	}
+	return is_impact;
+};
+
+
+bool rayNorthSegmentIntersect(const Eigen::Vector2d &origin, const Hedge &segment, Eigen::Vector2d &impact){
     //Returns true if there is an impact, otherwise false.
     //If true, impact_location is populated with the impact point on the line segment.
     //Assumes segment is horizontal AND ordered with segment[0][0] < segment[1][0] and segment[0][1] == semgent[1][1]
@@ -14,15 +80,6 @@ bool rayTraceNorth(const Eigen::Vector2d &origin, const Hedge &segment, Eigen::V
 }
 
 
-bool rayTraceEast(const Eigen::Vector2d &origin, const Vedge &segment, Eigen::Vector2d &impact){
-    //Returns true if there is an impact, otherwise false.
-    //If true, impact_location is populated with the impact point on the line segment.
-    //Assumes segment is vertical AND ordered with segment[0][1] < segment[1][1] and segment[0][0] == semgent[1][0]
-    if ((origin[0] > segment[0][0]) | (segment[0][1] > origin[1]) | (origin[1] > segment[1][1])) return false;
-    impact[1] = origin[1];
-    impact[0] = segment[0][0];
-    return true;
-};
 
 Vedge CardinalPath::getWall(const int &east_index) const {
     auto a = points_[2*east_index+1];
