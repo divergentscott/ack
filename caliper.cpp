@@ -98,7 +98,8 @@ void PlankHiker::headEast(int start_east){
         Vedge wall = landmarks_.getWall(index_east);
         double east_reach = wall[0][0];
         double north_reach = wall[vert_index_][1];
-        while(east_reach <= obstruction_[0] + width_){
+		//Move over or rise vertically
+        while(east_reach < obstruction_[0] + width_ - repsilon){
             // Try to slide the caliper straight east along the obstruction
             // But head north if a wall gets in the way.
             if (compareVertical(position_[1], north_reach)){

@@ -164,8 +164,8 @@ bool CurveCollection::orient_curves() {
     */
     bool is_valid_curve = true;
     // First initialize the orientation by the edge list.
-    point_order_next_.resize(edges_.size());
-    point_order_prev_.resize(edges_.size());
+    point_order_next_.resize(points_.size());
+    point_order_prev_.resize(points_.size());
     for (auto foo = 0; foo < edges_.size(); foo++) {
         point_order_next_[edges_[foo][0]] = edges_[foo][1];
         point_order_prev_[edges_[foo][1]] = edges_[foo][0];
@@ -247,19 +247,32 @@ void CurveCollection::compute_normals() {
 
 
 bool CurveCollection::setGridPointsAndCells(const std::vector<std::array<double,3>> &grid_points, const std::vector<std::vector<int>> &one_cells) {
-    // Size allocation
-    points_.resize(grid_points.size());
-    edges_.resize(one_cells.size());
-    // Copy the points
-    for (auto foo = 0; foo < grid_points.size(); foo++) {
-        points_[foo] = {grid_points[foo][0], grid_points[foo][1]};
+	// Copy the edges
+	int p_cnt = 0;
+	std::unordered_map<int, int> p_alias;
+	p_alias.reserve(edges_.size());
+	edges_.resize(one_cells.size());
+	for (auto foo = 0; foo < one_cells.size(); foo++) {
+		if (one_cells[foo].size() != 2) {
+			is_valid_ = false;
+			return is_valid_;
+		}
+		for (int ii : {0, 1}) {
+			int pid = one_cells[foo][ii];
+			if (p_alias.find(pid) == p_alias.end()) {
+				p_alias[pid] = p_cnt;
+				p_cnt++;
+			}
+		}
+        edges_[foo] = {p_alias[one_cells[foo][0]], p_alias[one_cells[foo][1]]};
     }
-    // Copy the edges
-    for (auto foo = 0; foo < one_cells.size(); foo++) {
-        if (one_cells[foo].size() != 2) is_valid_= false;
-        edges_[foo] = {one_cells[foo][0], one_cells[foo][1]};
-    }
-    // Probably should not proceed if curves are invalid.
+	// Size allocation
+	points_.resize(p_alias.size());
+	// Copy the good points
+	for (const auto& foo : p_alias) {
+		points_[foo.second] = { grid_points[foo.first][0], grid_points[foo.first][1]};
+	}
+	// Probably should not proceed if curves are invalid.
     if (is_valid_) {
         is_valid_ = orient_curves();
     }

@@ -53,10 +53,10 @@ const std::string topline = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone
 };//svgvis
 
 WildernessCartographerSVG::WildernessCartographerSVG(){
-    double min_x_ = std::numeric_limits<double>::max();
-    double min_y_ = std::numeric_limits<double>::max();
-    double max_x_ = std::numeric_limits<double>::lowest();
-    double max_y_ = std::numeric_limits<double>::lowest();
+    min_x_ = std::numeric_limits<double>::max();
+    min_y_ = std::numeric_limits<double>::max();
+    max_x_ = std::numeric_limits<double>::lowest();
+    max_y_ = std::numeric_limits<double>::lowest();
 };
 
 void WildernessCartographerSVG::setStroke(const double &x){
