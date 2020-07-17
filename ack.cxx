@@ -450,6 +450,74 @@ void example_12() {
 	wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example12.svg");
 }
 
+void example_125() {
+	std::vector<Eigen::Vector2d> points = { {0,0},{10,0},{10,10},{0,10} };
+	std::vector<std::vector<int>> somelines = { {0,1},{1,2},{2,3},{3,0} };
+	//
+	ZoningCommisioner wild;
+	wild.insertCurves(points, somelines);
+	wild.populateNeighbors();
+	wild.trailblaze();
+	//
+	svgvis::ZoningCartographerSVG wsvg;
+	wsvg.addCardinalCurveCollection(wild.vacant_);
+	std::vector<Eigen::Vector2d> whs = {
+			{9, 6},
+			{ 9, 2 },
+			{ 8, 6 },
+			{ 8, 1 },
+			{ 7, 6 },
+			{ 6, 6 },
+			{ 5, 5 },
+			{ 5, 1 },
+			{ 4, 4 },
+			{ 4, 4 },
+			{ 4, 2 },
+			{ 3, 3 },
+			{ 3, 2 },
+			{ 3, 1 },
+			{ 2, 2 },
+			{ 2, 2 },
+			{ 1, 1 },
+			{ 1, 1 },
+			{ 1, 1 },
+			{ 1, 1 },
+			{ 1, 1 },
+			{ 1, 1 },
+	};
+	//std::vector<Eigen::Vector2d> whs = { {6.9, 4.4}};
+	for (auto wh : whs) {
+		double width = wh[0];
+		double height = wh[1];
+		Eigen::Vector2d placement;
+		bool is_placable = wild.findPlacement(width, height, placement);
+		//for (auto &t : wild.trails_) {
+		//	wsvg.addCardinalPath(t.landmarks_uptown_, "blue");
+		//	wsvg.addCardinalPath(t.landmarks_downtown_, "green");
+		//	std::cout << "svgbox: " << wsvg.min_x_ << " " << wsvg.min_y_ << " " << wsvg.max_x_ << " " << wsvg.max_y_ << std::endl;
+		//}
+		//removeRectangle(wild.trails_, placement, width, height);
+		if (is_placable) {
+			wild.zoneOff(placement, width, height);
+			wsvg.addRectangle(placement, width, height);
+			wsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/example125.svg");
+		}
+		else {
+			wsvg.addRectangle({ 11,0 }, width, height, svgvis::chaosHex());
+		}
+	}
+	std::cout << "VACANCY POINTS" << std::endl;
+	for (auto p : wild.vacant_.points_) {
+		std::cout << "{ " << p[0] << ", " << p[1] << " }," << std::endl;
+	}
+	std::cout << "VACANCY EDGES" << std::endl;
+	for (auto ee : wild.vacant_.edges_) {
+		std::cout << "{ " << ee[0] << ", " << ee[1] << " }," << std::endl;
+	}
+	wsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/example125.svg");
+}
+
+
 void example_13() {
 //    VACANCY POINTS
     std::vector<Eigen::Vector2d> points = {
@@ -580,6 +648,71 @@ void example_13() {
         }
     }
     wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example13.svg");
+}
+
+void example_135() {
+	//    VACANCY POINTS
+	std::vector<Eigen::Vector2d> points = {
+		{ 8, 10 },
+		{ 10, 10 },
+		{ 10, 8 },
+		{ 8, 8 }
+	};
+	//    VACANCY EDGES
+	std::vector<std::vector<int>> somelines = {
+		{ 0, 1 },
+		{ 1, 2 },
+		{ 2, 3 },
+		{3, 0}
+	};
+	//
+	ZoningCommisioner wild;
+	wild.insertCurves(points, somelines);
+	wild.populateNeighbors();
+	wild.trailblaze();
+	//
+	svgvis::ZoningCartographerSVG wsvg;
+	wsvg.addCardinalCurveCollection(wild.vacant_);
+	std::vector<Eigen::Vector2d> whs = { {2,2} };
+	for (auto wh : whs) {
+		double width = wh[0];
+		double height = wh[1];
+		Eigen::Vector2d placement;
+		bool is_placable = wild.findPlacement(width, height, placement);
+		int trail_cnt = 0;
+		for (auto &t : wild.trails_) {
+			svgvis::ZoningCartographerSVG svger;
+			svger.addCardinalCurveCollection(wild.vacant_, "black");
+			svger.addCardinalPath(t.landmarks_uptown_, "blue");
+			svger.addCardinalPath(t.landmarks_downtown_, "green");
+			Surveyor caliper_hiker(t, width, height);
+			caliper_hiker.hike();
+			svger.addCardinalPath(caliper_hiker.camps_uptown_, "orange");
+			svger.addCardinalPath(caliper_hiker.camps_downtown_, "red");
+			svger.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/example135_" + std::to_string(trail_cnt) + ".svg");
+			trail_cnt++;
+		}
+		//for (auto &t : wild.trails_) {
+  //          wsvg.addCardinalPath(t.landmarks_uptown_, "blue");
+  //          wsvg.addCardinalPath(t.landmarks_downtown_, "green");
+		//	CaliperHiker caliper_hiker(t, width, height);
+		//	caliper_hiker.hike();
+		//	wsvg.addCardinalPath(caliper_hiker.camps_uptown_, "black");
+		//	wsvg.addCardinalPath(caliper_hiker.camps_downtown_, "red");
+  //      }
+		wsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/example135.svg");
+		//removeRectangle(wild.trails_, placement, width, height);
+		if (is_placable) {
+			wild.zoneOff(placement, width, height);
+			wsvg.addRectangle(placement, width, height);
+			wsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/example135.svg");
+		}
+		else {
+			wsvg.addRectangle({ 11,0 }, width, height);
+			wsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/example135.svg");
+		}
+	}
+	wsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/example135.svg");
 }
 
 void example_14() {
@@ -944,16 +1077,33 @@ void example_why_is_trail_fail() {
 	wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/badtrail.svg");
 }
 
+#include "zoning_board.h"
+void example_zoning_board1(){
+	ZoningBoard zb;
+	PointList ps = { {0,0},{10,0},{10,10},{0,10} };
+	std::vector<std::vector<int>> es = { {0,1},{1,2},{2,3},{3,0}};
+	zb.addVacancy(ps, es);
+	std::vector<Eigen::Vector2d> rectangles = {
+		{1,0.5},{1,0.5},{1,0.5},{1,0.5},{1,0.5},{1,0.5},{6,6},{7,6},{8,6},{9,6}, {4,4},{1,1},{1,1},{1,1},{1,1},{1,1},{3,2},{3,3},{1,8},{2,2},{4,4},{5,1},{4,2},{2,2},{9,2},{5,5},{3,1}
+	};
+	zb.setRectangles(rectangles);
+	zb.zone();
+	svgvis::ZoningCartographerSVG zsvg;
+	zsvg.addZoningBoardReport(zb);
+	zsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/zb1.svg");
+};
+
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
-    example_12();
+	example_zoning_board1();
+	//example_125();
+	//example_135();
 //	example_13() ;
 	//example_15();
 	//example_14();
 	std::cout << "end" << std::endl;
 }
 
-// Restructure the wilderness class to use compute trails from fully cyclic chains and then use this thingy!!!!
 
 
 

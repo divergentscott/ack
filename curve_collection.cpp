@@ -252,7 +252,7 @@ bool CurveCollection::setGridPointsAndCells(const std::vector<std::array<double,
     for (const auto& x : grid_points){
         points.push_back({x[0],x[1]});
     }
-    setGridPointsAndCells(points,one_cells);
+    return setGridPointsAndCells(points,one_cells);
 };
 
 bool CurveCollection::setGridPointsAndCells(const std::vector<Eigen::Vector2d> &grid_points, const std::vector<std::vector<int>> &one_cells) {
@@ -383,15 +383,6 @@ bool CurveCollection::setPointCycles(const  std::vector<PointList>& cycles){
 		edges_.push_back({cnt,basepoint});
 	}
 	bool is_valid = orient_curves();
-	//!!!!
-	int pat = basepoints_[0];
-	std::cout << "Vacancy became: " << std::endl;
-	do {
-		std::cout << get_point(pat).transpose() << std::endl;
-		pat = get_next_point(pat);
-	} while (pat != basepoints_[0]);
-
-	//!!!!
 	return is_valid;
 };
 

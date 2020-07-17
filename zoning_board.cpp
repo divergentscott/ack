@@ -12,26 +12,36 @@
 Applicant::Applicant(const double& width, const double& height, const int multiplicity) : width(width), height(height), multiplicity(multiplicity)
 {};
 
+void ZoningBoard::addVacancy(const std::vector<Eigen::Vector2d>& grid_points,
+	const std::vector<std::vector<int>> &lines,
+	const int multiplicity) {
+	Vacancy vac;
+	vac.grid_points_ = grid_points;
+	vac.lines_ = lines;
+	vac.multiplicity_ = multiplicity;
+	vacancies_.push_back(vac);
+};
+
 void ZoningBoard::setRectangles(const std::vector<Eigen::Vector2d>& rectangles){
-    applicants_.resize(rectangles.size());
-    for (const auto& x : rectangles){
-        Applicant app(x[0],x[1],1);
-        applicants_.push_back(app);
-    };
-    placements_.resize(applicants_.size());
-    for (auto foo = 0; foo < placements_.size(); foo++){
-        placements_[foo].reserve(applicants_[foo].multiplicity);
-    }
+	std::vector<int> multiplicities(rectangles.size());
+	std::fill(multiplicities.begin(), multiplicities.end(), 1);
+	setRectangles(rectangles, multiplicities);
 };
 
 
 void ZoningBoard::setRectangles(const std::vector<Eigen::Vector2d>& rectangles, const std::vector<int>& multiplicites){
     applicants_.resize(rectangles.size());
     for (auto foo=0; foo < rectangles.size(); foo++){
-        Applicant app(rectangles[foo][0],rectangles[foo][1], multiplicites[foo]);
-        applicants_.push_back(app);
-    };
-    placements_.resize(applicants_.size());
+		if (rectangles[foo][0] >= rectangles[foo][1]) {
+			Applicant app(rectangles[foo][0], rectangles[foo][1], multiplicites[foo]);
+			applicants_[foo] = app;
+		}
+		else {
+			Applicant app(rectangles[foo][1], rectangles[foo][0], multiplicites[foo]);
+			applicants_[foo] = app;
+		}
+	};
+    placements_.resize(rectangles.size());
     for (auto foo = 0; foo < placements_.size(); foo++){
         placements_[foo].reserve(applicants_[foo].multiplicity);
     }
@@ -51,16 +61,23 @@ void ZoningBoard::sortApplicants(){
 
 void ZoningBoard::zone(){
     sortApplicants();
+	std::cout << "RECTANGLES:" << std::endl;
+	for (const auto& app : applicants_) {
+		std::cout << "{" << app.width << ", " << app.height << "}," << std::endl;
+	}
     std::vector<ZoningCommisioner> zcs;
+	zcs.reserve(vacancies_.size());
     for (const Vacancy& vc: vacancies_){
         ZoningCommisioner zc;
         zc.insertCurves(vc.grid_points_, vc.lines_);
         zc.populateNeighbors();
         zc.trailblaze();
+		zcs.push_back(zc);
     }
     for (auto foo=0; foo<applicants_.size(); foo++){
         Applicant& app = applicants_[foo];
         for (auto mult = 0; mult < app.multiplicity; mult++){
+			std::cout << "Rectangle: {" << app.width << ", " << app.height << "}" << std::endl;
             Placement placement;
             bool is_placed = false;
             for (auto zc_foo = 0; zc_foo < zcs.size(); zc_foo++){

@@ -9,6 +9,7 @@
 #define vacancy_visualize_h_0220
 
 #include "zoning_commisioner.h"
+#include "zoning_board.h"
 
 namespace svgvis{
 
@@ -58,6 +59,7 @@ struct ZoningCartographerSVG{
     void addCardinalCurveCollection(const CardinalCurveCollection&, std::string color = "random", const double& stroke = -1);
     void addCardinalPath(const CardinalPath&, std::string color = "random", const double& stroke = -1);
 	void addPointList(const PointList&, std::string color = "random", const double& stroke = -1);
+	void addZoningBoardReport(const ZoningBoard zb);
     void writeScalableVectorGraphics(const std::string& outfilepath);
 };
 

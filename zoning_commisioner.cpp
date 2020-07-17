@@ -2,44 +2,15 @@
 
 #include "zoning_commisioner.h"
 
-//VacancySide::VacancySide(const int edge_id_0, const std::array<Eigen::Vector2d,2> &i_points, const std::array<int,2> &i_point_ids){
-//    //Vacancy side constructor from vertex ids and positions
-//    edge_id = edge_id_0;
-//    double xlen = std::abs((i_points[0][0] - i_points[1][0]));
-//    double ylen = std::abs((i_points[0][1] - i_points[1][1]));
-//    if ( (xlen < repsilon) & (ylen > repsilon) ){
-//        //Decide that the segment is vertical
-//        orientation = EdgeOrientation::kNorth;
-//        length = ylen;
-//        if (i_points[0][1] <= i_points[1][1]){
-//            point_ids = i_point_ids;
-//            points = i_points;
-//        } else {
-//            point_ids = {i_point_ids[1], i_point_ids[0]};
-//            points = {i_points[1], i_points[0]};
-//        }
-//    }
-//    if ( (xlen > repsilon) & (ylen < repsilon) ){
-//        //Decide that the segment is horizontal
-//        orientation = EdgeOrientation::kEast;
-//        length = xlen;
-//        if (i_points[0][0] <= i_points[1][0]){
-//            point_ids = i_point_ids;
-//            points = i_points;
-//        } else {
-//            point_ids = {i_point_ids[1], i_point_ids[0]};
-//            points = {i_points[1], i_points[0]};
-//        }
-//
-//    }
-//};
 
 void ZoningCommisioner::findFrontier(){
-    int westmost;
-    int eastmost;
+	int n_edges = vacant_.get_number_of_edges();
+	if (n_edges < 4) return;
+    int westmost = -1;
+    int eastmost = -1;
 	double eastest = std::numeric_limits<double>::lowest();
 	double westest = std::numeric_limits<double>::max();
-	for(auto e_foo = 0; e_foo < vacant_.get_number_of_edges(); e_foo++){
+	for(auto e_foo = 0; e_foo < n_edges; e_foo++){
         if (!vacant_.is_horizontals_[e_foo]){
 			bool _;
 			Cedge c0 = getCedge(e_foo, _);

@@ -345,10 +345,10 @@ struct ChainForge {
 				chain_forge.addLink(edge);
             } else {
 				if ((segrel == SegmentRelation::kSupersegment) | (segrel == SegmentRelation::kDirectStagger)) {
-					chain_forge.addLink({edge[0],isect[0]});
+					if ((edge[0]-isect[0]).norm()>repsilon) chain_forge.addLink({edge[0],isect[0]});
 				}
                 if ((segrel == SegmentRelation::kSupersegment) | (segrel == SegmentRelation::kReverseStagger)) {
-					chain_forge.addLink({isect[1], edge[1]});
+					if ((edge[1] - isect[1]).norm() > repsilon) chain_forge.addLink({isect[1], edge[1]});
                 }
             }
         }

@@ -165,4 +165,24 @@ void ZoningCartographerSVG::writeScalableVectorGraphics(const std::string& outfi
     file.close();
 };
 
+void ZoningCartographerSVG::addZoningBoardReport(const ZoningBoard zb) {
+	for (const auto & vac : zb.vacancies_) {
+		//Need to do some vacancy multiplying here.
+		CardinalCurveCollection ccc;
+		ccc.setGridPointsAndCells(vac.grid_points_, vac.lines_);
+		addCardinalCurveCollection(ccc,"black");
+		for (auto foo = 0; foo < zb.applicants_.size(); foo++) {
+			const Applicant& appli = zb.applicants_[foo];
+			for (const Placement& pp : zb.placements_[foo]) {
+				if (!pp.rotated) {
+					addRectangle(pp.position, appli.width, appli.height);
+				} else {
+					addRectangle(pp.position, appli.height, appli.width);
+				}
+			}
+		}
+	}
+};
+
+
 };//svgvis
