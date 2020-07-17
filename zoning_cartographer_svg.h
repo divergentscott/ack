@@ -8,7 +8,7 @@
 #ifndef vacancy_visualize_h_0220
 #define vacancy_visualize_h_0220
 
-#include "wilderness.h"
+#include "zoning_commisioner.h"
 
 namespace svgvis{
 
@@ -25,25 +25,24 @@ struct Rectangle{
     std::string getEntry() const;
 };
 
-struct Polyline{
+struct PolyLine{
     std::vector<Eigen::Vector2d> points;
     std::string fill_color = "none";
     double stroke_width;
     std::string stroke_color;
-    Polyline(){};
+    PolyLine(){};
     std::string getEntry() const;
 };
 
-}
 
-struct WildernessCartographerSVG{
+struct ZoningCartographerSVG{
     double min_x_;
     double min_y_;
     double max_x_;
     double max_y_;
     double default_stroke_width_ = 0.1;
     std::vector<svgvis::Rectangle> rectangles_ = {};
-    std::vector<svgvis::Polyline> polylines_ = {};
+    std::vector<svgvis::PolyLine> polylines_ = {};
     //
 	/*
 	"#3EC300"
@@ -52,7 +51,7 @@ struct WildernessCartographerSVG{
 	"#355691"
 	"#355691"
 	*/
-    WildernessCartographerSVG();
+    ZoningCartographerSVG();
     void setStroke(const double&);
     void addRectangle(const Eigen::Vector2d& position, const double& width, const double& height, std::string color = "random", const double& stroke = -1);
     void addRectangles(const std::vector<Eigen::Vector2d>& positions, const double& width, const double& height, std::string color = "random", const double& stroke = -1);
@@ -61,5 +60,8 @@ struct WildernessCartographerSVG{
 	void addPointList(const PointList&, std::string color = "random", const double& stroke = -1);
     void writeScalableVectorGraphics(const std::string& outfilepath);
 };
+
+}; //namespace svg
+
 
 #endif

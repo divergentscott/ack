@@ -1,7 +1,7 @@
 #include <fstream>
 #include <random>
 
-#include "wilderness_cartographer_svg.h"
+#include "zoning_cartographer_svg.h"
 
 #include <limits>
 
@@ -33,7 +33,7 @@ std::string Rectangle::getEntry() const{
     return ss.str();
 };
 
-std::string Polyline::getEntry() const{
+std::string PolyLine::getEntry() const{
     std::stringstream ss;
     ss << "<polyline";
     ss << " points=\"";
@@ -50,20 +50,19 @@ std::string Polyline::getEntry() const{
 
 const std::string topline = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>";
 
-};//svgvis
 
-WildernessCartographerSVG::WildernessCartographerSVG(){
+ZoningCartographerSVG::ZoningCartographerSVG(){
     min_x_ = std::numeric_limits<double>::max();
     min_y_ = std::numeric_limits<double>::max();
     max_x_ = std::numeric_limits<double>::lowest();
     max_y_ = std::numeric_limits<double>::lowest();
 };
 
-void WildernessCartographerSVG::setStroke(const double &x){
+void ZoningCartographerSVG::setStroke(const double &x){
     default_stroke_width_ = x;
 }
 
-void WildernessCartographerSVG::addRectangle(const Eigen::Vector2d& position, const double& width, const double& height, std::string color, const double& stroke){
+void ZoningCartographerSVG::addRectangle(const Eigen::Vector2d& position, const double& width, const double& height, std::string color, const double& stroke){
 	if (color.compare("random") == 0) {
 		color = svgvis::chaosHex();
 	}
@@ -82,7 +81,7 @@ void WildernessCartographerSVG::addRectangle(const Eigen::Vector2d& position, co
     rectangles_.push_back(rec);
 };
 
-void WildernessCartographerSVG::addRectangles(const std::vector<Eigen::Vector2d>& positions, const double& width, const double& height, std::string color, const double& stroke){
+void ZoningCartographerSVG::addRectangles(const std::vector<Eigen::Vector2d>& positions, const double& width, const double& height, std::string color, const double& stroke){
 	if (color.compare("random") == 0) {
 		color = svgvis::chaosHex();
 	}
@@ -91,13 +90,13 @@ void WildernessCartographerSVG::addRectangles(const std::vector<Eigen::Vector2d>
     }
 };
 
-void WildernessCartographerSVG::addCardinalCurveCollection(const CardinalCurveCollection& ccc, std::string color, const double& stroke){
+void ZoningCartographerSVG::addCardinalCurveCollection(const CardinalCurveCollection& ccc, std::string color, const double& stroke){
 	if (color.compare("random") == 0) {
 		color = svgvis::chaosHex();
 	}
 	int n_components = ccc.get_number_of_components();
     for (int foo=0; foo < n_components; foo++){
-        svgvis::Polyline plyl;
+        svgvis::PolyLine plyl;
         plyl.stroke_color = color;
         plyl.stroke_width = stroke;
         if (stroke < 0) plyl.stroke_width = default_stroke_width_;
@@ -119,18 +118,18 @@ void WildernessCartographerSVG::addCardinalCurveCollection(const CardinalCurveCo
     };
 }
 
-void WildernessCartographerSVG::addCardinalPath(const CardinalPath &cp, std::string color, const double& stroke){
+void ZoningCartographerSVG::addCardinalPath(const CardinalPath &cp, std::string color, const double& stroke){
 	if (color.compare("random") == 0) {
 		color = svgvis::chaosHex();
 	}
 	addPointList(cp.points_, color, stroke);
 };
 
-void WildernessCartographerSVG::addPointList(const PointList& pl, std::string color, const double& stroke){
+void ZoningCartographerSVG::addPointList(const PointList& pl, std::string color, const double& stroke){
 	if (color.compare("random") == 0) {
 		color = svgvis::chaosHex();
 	}
-	svgvis::Polyline plyl;
+	svgvis::PolyLine plyl;
 	plyl.stroke_color = color;
 	plyl.stroke_width = stroke;
 	if (stroke < 0) plyl.stroke_width = default_stroke_width_;
@@ -144,7 +143,7 @@ void WildernessCartographerSVG::addPointList(const PointList& pl, std::string co
 	polylines_.push_back(plyl);
 };
 
-void WildernessCartographerSVG::writeScalableVectorGraphics(const std::string& outfilepath){
+void ZoningCartographerSVG::writeScalableVectorGraphics(const std::string& outfilepath){
     std::ofstream file;
     file.open(outfilepath.c_str());
     file << svgvis::topline << std::endl;
@@ -155,7 +154,7 @@ void WildernessCartographerSVG::writeScalableVectorGraphics(const std::string& o
     double view_height = max_y_ - min_y_ + margin;
     file << "<svg width=\"100%\" height=\"100%\" viewBox=\"" << 0 << " " << 0 << " " << view_width << " " << view_height  << " \" xmlns=\"http://www.w3.org/2000/svg\">" << std::endl;
     file << "<g transform=\"translate("<< -viewx << "," << view_height + viewy <<") scale(1,-1)\">" << std::endl;
-    for (const svgvis::Polyline &q : polylines_){
+    for (const svgvis::PolyLine &q : polylines_){
         file << q.getEntry() << std::endl;
     }
     for (const svgvis::Rectangle &r : rectangles_){
@@ -166,4 +165,4 @@ void WildernessCartographerSVG::writeScalableVectorGraphics(const std::string& o
     file.close();
 };
 
-
+};//svgvis

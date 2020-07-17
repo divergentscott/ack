@@ -1,6 +1,6 @@
 #include <unordered_map>
 
-#include "wilderness.h"
+#include "zoning_commisioner.h"
 
 //VacancySide::VacancySide(const int edge_id_0, const std::array<Eigen::Vector2d,2> &i_points, const std::array<int,2> &i_point_ids){
 //    //Vacancy side constructor from vertex ids and positions
@@ -84,7 +84,7 @@ NeighborhoodShape ZoningCommisioner::getNeighborhoodShape(int dim_of_interest, d
     return NeighborhoodShape::kUnknown;
 };
 
-void ZoningCommisioner::insertCurves(const std::vector<std::array<double,3>> &grid_points, const std::vector<std::vector<int>> &lines){
+void ZoningCommisioner::insertCurves(const std::vector<Eigen::Vector2d> &grid_points, const std::vector<std::vector<int>> &lines){
     vacant_.setGridPointsAndCells(grid_points, lines);
     vacant_.mergeParallelEdges();
 };
@@ -172,8 +172,8 @@ void ZoningCommisioner::nextCollideNorth(const Eigen::Vector2d &origin, const bo
     }
 };
 
-Trail ZoningCommisioner::trailblaze(int start_edge_id){
-    Trail patrol;
+Zone ZoningCommisioner::trailblaze(int start_edge_id){
+    Zone patrol;
     //first the lower edge of the patrol
     
     //Determine which direction to traverse.
@@ -194,7 +194,7 @@ Trail ZoningCommisioner::trailblaze(int start_edge_id){
 	//The BOTTOM
     bool is_end_found = false;
     int e_at = start_edge_id;
-    patrol.landmarks_valley_.push_back(vacant_.get_point(p_at));
+    patrol.landmarks_downtown_.push_back(vacant_.get_point(p_at));
 	int patrol_terminus;
     while(!is_end_found){
         if (is_following_orient){
@@ -209,20 +209,20 @@ Trail ZoningCommisioner::trailblaze(int start_edge_id){
 			OutsideSide outside_side = vacant_.outsidesides_[e_at];
 			if (outside_side == OutsideSide::kPositive) {
 				patrol_terminus = e_at;
-				patrol.landmarks_valley_.push_back(vacant_.get_point(p_at));
+				patrol.landmarks_downtown_.push_back(vacant_.get_point(p_at));
 			} else {
 				Eigen::Vector2d near_end = vacant_.get_point(p_at);
-				patrol.landmarks_valley_.push_back(near_end);
+				patrol.landmarks_downtown_.push_back(near_end);
 				Eigen::Vector2d hit_west;
 				int hit_west_e_id;
 				vacant_.rayTraceEast(near_end, hit_west, hit_west_e_id);
-				patrol.landmarks_valley_.push_back(hit_west);
+				patrol.landmarks_downtown_.push_back(hit_west);
 				bool _;
-				patrol.landmarks_valley_.push_back(getCedge(hit_west_e_id,_)[1]);
+				patrol.landmarks_downtown_.push_back(getCedge(hit_west_e_id,_)[1]);
 				patrol_terminus = hit_west_e_id;
 			}
         } else {
-            patrol.landmarks_valley_.push_back(vacant_.get_point(p_at));
+            patrol.landmarks_downtown_.push_back(vacant_.get_point(p_at));
         }
     }
     //TOP
@@ -236,9 +236,9 @@ Trail ZoningCommisioner::trailblaze(int start_edge_id){
         p_at = pids[0];
         Eigen::Vector2d loc = vacant_.get_point(p_at);
         nextCollideNorth(loc, is_following_orient, p_at, e_at, impact);
-        patrol.landmarks_mountain_.push_back(impact);
+        patrol.landmarks_uptown_.push_back(impact);
     }
-    patrol.landmarks_mountain_.push_back(vacant_.get_point(p_at));
+    patrol.landmarks_uptown_.push_back(vacant_.get_point(p_at));
     while(!is_end_found){
         //Advance to next edge
         if (is_following_orient){
@@ -251,7 +251,7 @@ Trail ZoningCommisioner::trailblaze(int start_edge_id){
         //check for the end
         if ((e_at == patrol_terminus) | (e_at == eastmost_frontier_id_)){
 //            patrol_terminus = e_at;
-            patrol.landmarks_mountain_.push_back(vacant_.get_point(p_at));
+            patrol.landmarks_uptown_.push_back(vacant_.get_point(p_at));
             is_end_found = true;
         } else {
             //check if the you hit a westnotch and need to project north
@@ -266,12 +266,12 @@ Trail ZoningCommisioner::trailblaze(int start_edge_id){
                 Eigen::Vector2d loc = vacant_.get_point(p_prev);
                 nextCollideNorth(loc, is_following_orient, p_at, e_at, impact);
                 if (e_at == eastmost_frontier_id_) std::cout << "Next collide hit easten frontier.";
-                patrol.landmarks_mountain_.push_back(impact);
+                patrol.landmarks_uptown_.push_back(impact);
                 Eigen::Vector2d landmark = vacant_.get_point(p_at);
-                patrol.landmarks_mountain_.push_back(landmark);
+                patrol.landmarks_uptown_.push_back(landmark);
             } else {
                 Eigen::Vector2d landmark = vacant_.get_point(p_at);
-                patrol.landmarks_mountain_.push_back(landmark);
+                patrol.landmarks_uptown_.push_back(landmark);
             }
         }
     }
@@ -290,10 +290,10 @@ void ZoningCommisioner::trailblaze(){
 
 bool ZoningCommisioner::findPlacement(const double& width, const double& height, Eigen::Vector2d& placement) const {
     bool is_placeable = false;
-    for(const Trail& t : trails_){
-        CaliperHiker caliper_hiker(t, width, height);
+    for(const Zone& t : trails_){
+        Surveyor caliper_hiker(t, width, height);
         caliper_hiker.hike();
-        if (caliper_hiker.valid_.size()>0){
+        if (caliper_hiker.valid_lots_.size()>0){
             Eigen::Vector2d val = caliper_hiker.getMostValid();
             if (is_placeable){
                 if (val[1] < placement[1]) placement = val;

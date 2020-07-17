@@ -1,17 +1,6 @@
 #ifndef trail_hpp_anicetrail
 #define trail_hpp_anicetrail
 
-#include "cabbie_curve_collection.h"
-
-
-struct Trail{
-    //Trails cover the Wilderness.
-    //Trails have a path of lower and upper points in R2
-    //Trails do not contain east or west notches.
-    CardinalPath landmarks_mountain_;
-    CardinalPath landmarks_valley_;
-    Vedge getWesternFront() const;
-};
 
 //std::vector<Trail> scoutTrails();
 

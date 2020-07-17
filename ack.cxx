@@ -5,52 +5,27 @@
 
 #include <Eigen/Dense>
 
-#include "wilderness_cartographer_svg.h"
-
-/*
- A vacancy is a polygon (or possible a non-simply connected region with polygon boundaries) that has only vertical and horizontal edges.
- 
- Setting up the vacancy:
-    From polygons:
-    Compute the boundary connected components and compute an orientation
-    Join any colinear segments into larger segments.
- 
- Divide the vacancy into patrols:
-    Patrol shows the top and bottom points
- 
- 
- For each rectangle:
-     Given a rectangle size width by height:
-     
-     Generate a caliper with the width:
-        Compute all caliper positions across the patrol top and bottom
-        Compute the heights available at all positions
-        Get a list of all rectangle spots available
-     
-     Pick the lowest, then leftest one.
-     
-     Go back and update the patrols.
- */
+#include "zoning_cartographer_svg.h"
 
 
 namespace exda{
-    std::vector<std::array<double,3>> grid_points = {
-        {0, 0, 0},
-        {5, 0, 0},
-        {5, 1, 0},
-        {6, 1, 0},
-        {6, 2, 0},
-        {5, 2, 0},
-        {5, 3, 0},
-        {1, 3, 0},
-        {1, 2, 0},
-        {2, 2, 0},
-        {2, 1, 0},
-        {0, 1, 0},
-        {3, 1, 0},
-        {4, 1, 0},
-        {4, 2, 0},
-        {3, 2, 0},
+    std::vector<Eigen::Vector2d> grid_points = {
+        {0, 0},
+        {5, 0},
+        {5, 1},
+        {6, 1},
+        {6, 2},
+        {5, 2},
+        {5, 3},
+        {1, 3},
+        {1, 2},
+        {2, 2},
+        {2, 1},
+        {0, 1},
+        {3, 1},
+        {4, 1},
+        {4, 2},
+        {3, 2},
     };
 
     std::vector<std::vector<int>> lines = {
@@ -72,7 +47,7 @@ namespace exda{
         {15,12}
     };
 
-    std::vector<std::array<double,3>> splotchpoints = {
+    std::vector<Eigen::Vector2d> splotchpoints = {
         {0,0},
         {2,0},
         {2,-1},
@@ -150,47 +125,47 @@ void example2(){
         if (vac.shapes_[foo] == NeighborhoodShape::kNotchWest)            std::cout << "west" << std::endl;
     }
     std::cout << "Patrol down from 11 " << std::endl;
-    Trail patty11 = vac.trailblaze(11);
-    Trail patty7 = vac.trailblaze(7);
+    Zone patty11 = vac.trailblaze(11);
+    Zone patty7 = vac.trailblaze(7);
 };
 
 void example4(){
     ZoningCommisioner vac;
     vac.insertCurves(exda::splotchpoints, exda::splotchlines);
     vac.populateNeighbors();
-    Trail peopleheadeast = vac.trailblaze(15);
-    std::cout << "Valley landmarks: " << std::endl;
-    for (auto p : peopleheadeast.landmarks_valley_.points_){
+    Zone peopleheadeast = vac.trailblaze(15);
+    std::cout << "downtown landmarks: " << std::endl;
+    for (auto p : peopleheadeast.landmarks_downtown_.points_){
         std::cout << p.transpose() << std::endl;
     }
-    std::cout << "Mountain landmarks: " << std::endl;
-    for (auto p : peopleheadeast.landmarks_mountain_.points_){
+    std::cout << "uptown landmarks: " << std::endl;
+    for (auto p : peopleheadeast.landmarks_uptown_.points_){
         std::cout << p.transpose() << std::endl;
     }
-    PlankHiker calj(peopleheadeast.landmarks_valley_, 0.5, true);//3.3, false);
+    PlankHiker calj(peopleheadeast.landmarks_downtown_, 0.5, true);//3.3, false);
     calj.hike();
-//    calj.hikeTrailValley();
-    std::cout << "Valley camps:" << std::endl;
+//    calj.hikeTraildowntown();
+    std::cout << "downtown camps:" << std::endl;
     for (auto p : calj.camps_.points_){
         std::cout << p.transpose() << std::endl;
     };
     /*
-     Valley camps:
+     downtown camps:
      0    0
      1.7   0
      1.7   3
      6 3
      6 1
      */
-    PlankHiker calk(peopleheadeast.landmarks_mountain_, 0.5, false);//3.3, false);
+    PlankHiker calk(peopleheadeast.landmarks_uptown_, 0.5, false);//3.3, false);
     calk.hike();
-//    calj.hikeTrailValley();
-    std::cout << "Mountain camps:" << std::endl;
+//    calj.hikeTraildowntown();
+    std::cout << "uptown camps:" << std::endl;
     for (auto p : calk.camps_.points_){
         std::cout << p.transpose() << std::endl;
     };
     /*
-     Mountain camps:
+     uptown camps:
      0    2
      1 2
      1 4
@@ -203,18 +178,18 @@ void example5(double width = 0.5, double height = 0.5, std::string afile = "/Use
     ZoningCommisioner vac;
     vac.insertCurves(exda::splotchpoints, exda::splotchlines);
     vac.populateNeighbors();
-    Trail peopleheadeast = vac.trailblaze(15);
-    CaliperHiker calh(peopleheadeast,width, height);
+    Zone peopleheadeast = vac.trailblaze(15);
+    Surveyor calh(peopleheadeast,width, height);
     calh.hike();
-    WildernessCartographerSVG vv;
+    svgvis::ZoningCartographerSVG vv;
     std::vector<std::string> funcolors = {"#F75C03", "#D90368", "#820263", "#291720", "#04A777"};
     vv.addCardinalCurveCollection(vac.vacant_, funcolors[3]);
-    vv.addCardinalPath(calh.camps_valley_, funcolors[0]);
-    vv.addCardinalPath(calh.camps_mountain_,  funcolors[1]);
-    vv.addRectangles(calh.valid_, width, height, funcolors[4]);
+    vv.addCardinalPath(calh.camps_downtown_, funcolors[0]);
+    vv.addCardinalPath(calh.camps_uptown_,  funcolors[1]);
+    vv.addRectangles(calh.valid_lots_, width, height, funcolors[4]);
     vv.writeScalableVectorGraphics(afile);
     std::cout << "Valids: " << std::endl;
-    for (auto p : calh.valid_){
+    for (auto p : calh.valid_lots_){
         std::cout << p.transpose() << std::endl;
     }
     /*
@@ -263,29 +238,29 @@ void example7(double width = 3.4, double height = 2.1){
         notchy_lines.push_back({foo, (foo+1)%npts});
     }
     ZoningCommisioner vac;
-    std::vector<std::array<double,3>> notchy_points_arraysstyle;
+    std::vector<Eigen::Vector2d> notchy_points_arraysstyle;
     for (auto foo : notchy_points){
-        notchy_points_arraysstyle.push_back({foo[0],foo[1],0});
+        notchy_points_arraysstyle.push_back({foo[0],foo[1]});
     }
     vac.insertCurves(notchy_points_arraysstyle, notchy_lines);
     vac.populateNeighbors();
     vac.trailblaze();
-    CaliperHiker calh(vac.trails_[0], width, height);
+    Surveyor calh(vac.trails_[0], width, height);
     calh.hike();
-    WildernessCartographerSVG vv;
+    svgvis::ZoningCartographerSVG vv;
     std::vector<std::string> funcolors = {"#F75C03", "#D90368", "#820263", "#291720", "#04A777"};
     
     vv.addCardinalCurveCollection(vac.vacant_, funcolors[3]);
-    vv.addCardinalPath(calh.camps_valley_, funcolors[0]);
-    vv.addCardinalPath(calh.camps_mountain_,  funcolors[1]);
-    vv.addRectangles(calh.valid_, width, height, funcolors[4]);
+    vv.addCardinalPath(calh.camps_downtown_, funcolors[0]);
+    vv.addCardinalPath(calh.camps_uptown_,  funcolors[1]);
+    vv.addRectangles(calh.valid_lots_, width, height, funcolors[4]);
     vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/notchy.svg");
     
 };
 
 
 
-void example_basic(std::vector<std::array<double,3>> points, double width, double height,  std::string filename){
+void example_basic(std::vector<Eigen::Vector2d> points, double width, double height,  std::string filename){
     int npts = points.size();
     std::vector<std::vector<int>> lines;
     for (int foo=0; foo < npts; foo++){
@@ -299,35 +274,35 @@ void example_basic(std::vector<std::array<double,3>> points, double width, doubl
     if (vac.trails_.size() > 0){
         
     }
-    CaliperHiker calh(vac.trails_[0], width, height);
+    Surveyor calh(vac.trails_[0], width, height);
     calh.hike();
-    WildernessCartographerSVG vv;
+    svgvis::ZoningCartographerSVG vv;
     std::vector<std::string> funcolors = {"#F75C03", "#D90368", "#820263", "#291720", "#04A777"};
 //
     vv.addCardinalCurveCollection(vac.vacant_, funcolors[3]);
-    vv.addCardinalPath(calh.camps_valley_, funcolors[0]);
-    vv.addCardinalPath(calh.camps_mountain_,  funcolors[1]);
-    if (calh.valid_.size() > 0) vv.addRectangle(calh.getMostValid(), width, height, funcolors[4]);
+    vv.addCardinalPath(calh.camps_downtown_, funcolors[0]);
+    vv.addCardinalPath(calh.camps_uptown_,  funcolors[1]);
+    if (calh.valid_lots_.size() > 0) vv.addRectangle(calh.getMostValid(), width, height, funcolors[4]);
     vv.writeScalableVectorGraphics(filename);
 //
 //
 }
 
-void example_basic(std::vector<std::array<double,3>> points, std::vector<std::vector<int>> lines, double width, double height,  std::string filename){
+void example_basic(std::vector<Eigen::Vector2d> points, std::vector<std::vector<int>> lines, double width, double height,  std::string filename){
     ZoningCommisioner vac;
     vac.insertCurves(points, lines);
     vac.populateNeighbors();
     vac.findFrontier();
 //    std::cout << "Numer of trails: " << vac.trails_.size() << std::endl;
-    WildernessCartographerSVG vv;
+    svgvis::ZoningCartographerSVG vv;
     std::vector<std::string> funcolors = {"#F75C03", "#D90368", "#820263", "#291720", "#04A777"};
 //
     vv.addCardinalCurveCollection(vac.vacant_, funcolors[3]);
     for (auto tt: vac.trails_){
-        CaliperHiker calh(tt, width, height);
+        Surveyor calh(tt, width, height);
         calh.hike();
-        vv.addCardinalPath(calh.camps_valley_, funcolors[0]);
-        vv.addCardinalPath(calh.camps_mountain_,  funcolors[1]);
+        vv.addCardinalPath(calh.camps_downtown_, funcolors[0]);
+        vv.addCardinalPath(calh.camps_uptown_,  funcolors[1]);
         vv.addRectangle(calh.getMostValid(), width, height, funcolors[4]);
     }
     vv.writeScalableVectorGraphics(filename);
@@ -335,7 +310,7 @@ void example_basic(std::vector<std::array<double,3>> points, std::vector<std::ve
 
 
 void example_sev(){
-    std::vector<std::array<double,3>> points = {{0,0},{10,0},{10,10},{0,10}};
+    std::vector<Eigen::Vector2d> points = {{0,0},{10,0},{10,10},{0,10}};
     example_basic(points, 3.3,2,"/Users/sscott/Programs/ack/basic0.svg");
     points = {{0,2},{3.3,2},{3.3,0},{10,0},{10,10},{0,10}};
     example_basic(points, 3.2,1.6,"/Users/sscott/Programs/ack/basic1.svg");
@@ -349,7 +324,7 @@ void example_sev(){
 }
 
 void example_9(){
-    std::vector<std::array<double,3>> points ={{0,3.5}, {7,3.5}, {7,2.3}, {9.6,2.3}, {9.6,0}, {10,0}, {10,10}, {0,10}, {0,2}, {3.3,2}, {3.3,1.6}, {6.5,1.6}, {6.5,2.3}, {0, 2.3}};
+    std::vector<Eigen::Vector2d> points ={{0,3.5}, {7,3.5}, {7,2.3}, {9.6,2.3}, {9.6,0}, {10,0}, {10,10}, {0,10}, {0,2}, {3.3,2}, {3.3,1.6}, {6.5,1.6}, {6.5,2.3}, {0, 2.3}};
     std::vector<std::vector<int>> somelines = {{0,1}, {1,2}, {2,3}, {3,4}, {4,5}, {5,6}, {6,7}, {7,0}, {8,9}, {9,10}, {10,11}, {11,12}, {12,13}, {13,8}};
     ZoningCommisioner wild;
     wild.insertCurves(points,somelines);
@@ -359,11 +334,11 @@ void example_9(){
     bool is_placeable = wild.findPlacement(0.3, 0.6, place);
     if (is_placeable){
         std::cout << "Can place." << std::endl;
-        WildernessCartographerSVG vv;
+        svgvis::ZoningCartographerSVG vv;
         vv.addCardinalCurveCollection(wild.vacant_, "black");
-        for (const Trail& t: wild.trails_){
-            vv.addCardinalPath(t.landmarks_valley_, "green");
-            vv.addCardinalPath(t.landmarks_mountain_, "blue");
+        for (const Zone& t: wild.trails_){
+            vv.addCardinalPath(t.landmarks_downtown_, "green");
+            vv.addCardinalPath(t.landmarks_uptown_, "blue");
         }
         vv.addRectangle(place, 0.3, 0.6, "red");
         vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/ex9.svg");
@@ -372,7 +347,7 @@ void example_9(){
 }
 
 void example_10(){
-    std::vector<std::array<double,3>> points = {{0,1},{1,1},{1,0},{10,0},{10,10},{0,10}};
+    std::vector<Eigen::Vector2d> points = {{0,1},{1,1},{1,0},{10,0},{10,10},{0,10}};
     std::vector<std::vector<int>> somelines = {{0,1},{1,2},{2,3},{3,4},{4,5},{5,0}};
     //
     ZoningCommisioner wild;
@@ -380,9 +355,9 @@ void example_10(){
     wild.populateNeighbors();
     wild.trailblaze();
 
-    Trail t = wild.trails_[0];
+    Zone t = wild.trails_[0];
     std::cout << " Before " << std::endl;
-    for (auto p :  t.landmarks_valley_.points_){
+    for (auto p :  t.landmarks_downtown_.points_){
         std::cout << p.transpose() << std::endl;
     }
 
@@ -394,14 +369,14 @@ void example_10(){
     t = wild.trails_[0];
 //    removeRectangle(wild.trails_, placement, width, height);
     std::cout << " After " << std::endl;
-    for (auto p :  t.landmarks_valley_.points_){
+    for (auto p :  t.landmarks_downtown_.points_){
         std::cout << p.transpose() << std::endl;
     }
     //
 };
 
 void example_11(){
-    std::vector<std::array<double,3>> points = {{0,0},{10,0},{10,10},{0,10}};
+    std::vector<Eigen::Vector2d> points = {{0,0},{10,0},{10,10},{0,10}};
     std::vector<std::vector<int>> somelines = {{0,1},{1,2},{2,3},{3,0}};
     //
     ZoningCommisioner wild;
@@ -409,7 +384,7 @@ void example_11(){
     wild.populateNeighbors();
     wild.trailblaze();
     //
-    WildernessCartographerSVG wsvg;
+    svgvis::ZoningCartographerSVG wsvg;
     wsvg.addCardinalCurveCollection(wild.vacant_);
 	std::vector<Eigen::Vector2d> whs = {{5.4, 2.1}, {4.1, 2.4}, {3.5, 1.9}, {2.5, 2.5}, {1.9, 1.3}, {0.9, 0.8} };
     for (auto wh : whs){
@@ -418,8 +393,8 @@ void example_11(){
         Eigen::Vector2d placement;
         wild.findPlacement(width, height, placement);
         for (auto &t: wild.trails_){
-            wsvg.addCardinalPath(t.landmarks_mountain_, "blue");
-            wsvg.addCardinalPath(t.landmarks_valley_, "green");
+            wsvg.addCardinalPath(t.landmarks_uptown_, "blue");
+            wsvg.addCardinalPath(t.landmarks_downtown_, "green");
         }
         //removeRectangle(wild.trails_, placement, width, height);
 		wild.zoneOff(placement, width, height);
@@ -429,7 +404,7 @@ void example_11(){
 }
 
 void example_12() {
-	std::vector<std::array<double, 3>> points = { {0,0},{10,0},{10,10},{0,10} };
+	std::vector<Eigen::Vector2d> points = { {0,0},{10,0},{10,10},{0,10} };
 	std::vector<std::vector<int>> somelines = { {0,1},{1,2},{2,3},{3,0} };
 	//
 	ZoningCommisioner wild;
@@ -437,7 +412,7 @@ void example_12() {
 	wild.populateNeighbors();
 	wild.trailblaze();
 	//
-	WildernessCartographerSVG wsvg;
+	svgvis::ZoningCartographerSVG wsvg;
 	wsvg.addCardinalCurveCollection(wild.vacant_);
     std::vector<Eigen::Vector2d> whs = { {6.9, 4.4} , { 6.6,3.3 } , {5.4, 2.1},  {4.1, 2.4} , {3.5, 1.9} , {2.5, 2.5}, {1.9, 1.3}, {0.9, 0.8}};
     for (int foo=0; foo<20; foo++) whs.push_back({0.8,0.8});
@@ -449,8 +424,8 @@ void example_12() {
 		Eigen::Vector2d placement;
 		bool is_placable = wild.findPlacement(width, height, placement);
 		//for (auto &t : wild.trails_) {
-		//	wsvg.addCardinalPath(t.landmarks_mountain_, "blue");
-		//	wsvg.addCardinalPath(t.landmarks_valley_, "green");
+		//	wsvg.addCardinalPath(t.landmarks_uptown_, "blue");
+		//	wsvg.addCardinalPath(t.landmarks_downtown_, "green");
 		//	std::cout << "svgbox: " << wsvg.min_x_ << " " << wsvg.min_y_ << " " << wsvg.max_x_ << " " << wsvg.max_y_ << std::endl;
 		//}
 		//removeRectangle(wild.trails_, placement, width, height);
@@ -477,7 +452,7 @@ void example_12() {
 
 void example_13() {
 //    VACANCY POINTS
-    std::vector<std::array<double, 3>> points = {
+    std::vector<Eigen::Vector2d> points = {
 		{ 8.5, 4.1 },
         { 8.5, 3.8 },
         { 8.8, 3.8 },
@@ -564,7 +539,7 @@ void example_13() {
     wild.populateNeighbors();
     wild.trailblaze();
     //
-    WildernessCartographerSVG wsvg;
+    svgvis::ZoningCartographerSVG wsvg;
     wsvg.addCardinalCurveCollection(wild.vacant_);
     std::vector<Eigen::Vector2d> whs = {{0.4,0.4}};
     for (auto wh : whs)  {
@@ -574,24 +549,24 @@ void example_13() {
         bool is_placable = wild.findPlacement(width, height, placement);
 		int trail_cnt = 0;
 		for (auto &t : wild.trails_) {
-			WildernessCartographerSVG svger;
+			svgvis::ZoningCartographerSVG svger;
 			svger.addCardinalCurveCollection(wild.vacant_, "black");
-			svger.addCardinalPath(t.landmarks_mountain_, "blue");
-			svger.addCardinalPath(t.landmarks_valley_, "green");
-			CaliperHiker caliper_hiker(t, width, height);
+			svger.addCardinalPath(t.landmarks_uptown_, "blue");
+			svger.addCardinalPath(t.landmarks_downtown_, "green");
+			Surveyor caliper_hiker(t, width, height);
 			caliper_hiker.hike();
-			svger.addCardinalPath(caliper_hiker.camps_mountain_, "orange");
-			svger.addCardinalPath(caliper_hiker.camps_valley_, "red");
+			svger.addCardinalPath(caliper_hiker.camps_uptown_, "orange");
+			svger.addCardinalPath(caliper_hiker.camps_downtown_, "red");
 			svger.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example13_"+std::to_string(trail_cnt)+".svg");
 			trail_cnt++;
 		}
 		//for (auto &t : wild.trails_) {
-  //          wsvg.addCardinalPath(t.landmarks_mountain_, "blue");
-  //          wsvg.addCardinalPath(t.landmarks_valley_, "green");
+  //          wsvg.addCardinalPath(t.landmarks_uptown_, "blue");
+  //          wsvg.addCardinalPath(t.landmarks_downtown_, "green");
 		//	CaliperHiker caliper_hiker(t, width, height);
 		//	caliper_hiker.hike();
-		//	wsvg.addCardinalPath(caliper_hiker.camps_mountain_, "black");
-		//	wsvg.addCardinalPath(caliper_hiker.camps_valley_, "red");
+		//	wsvg.addCardinalPath(caliper_hiker.camps_uptown_, "black");
+		//	wsvg.addCardinalPath(caliper_hiker.camps_downtown_, "red");
   //      }
         wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example13.svg");
         //removeRectangle(wild.trails_, placement, width, height);
@@ -608,7 +583,7 @@ void example_13() {
 }
 
 void example_14() {
-	std::vector<std::array<double, 3>> points = { {0,0}, {1,0}, {1,-1}, {3.4,-1}, {3.4,-.6}, {5,-.6}, {5,2}, {0,2} };
+	std::vector<Eigen::Vector2d> points = { {0,0}, {1,0}, {1,-1}, {3.4,-1}, {3.4,-.6}, {5,-.6}, {5,2}, {0,2} };
     std::vector<std::vector<int>> somelines = { {0,1},{1,2},{2,3},{3,4},{4,5},{5,6},{6,7},{7,0} };
     //
     ZoningCommisioner wild;
@@ -616,7 +591,7 @@ void example_14() {
     wild.populateNeighbors();
     wild.trailblaze();
     //
-    WildernessCartographerSVG wsvg;
+    svgvis::ZoningCartographerSVG wsvg;
     wsvg.addCardinalCurveCollection(wild.vacant_);
 	std::vector<Eigen::Vector2d> whs = { {2.4,1}, {2.4,1}, {2.4,1}, {2.4,1}, {2.4,1}, {2.4,1} };
     for (auto wh : whs)  {
@@ -625,11 +600,11 @@ void example_14() {
         Eigen::Vector2d placement;
         bool is_placable = wild.findPlacement(width, height, placement);
         for (auto &t : wild.trails_) {
-            //wsvg.addCardinalPath(t.landmarks_mountain_, "blue");
-            //wsvg.addCardinalPath(t.landmarks_valley_, "green");
-			CaliperHiker caliper_hiker(t, width, height);
+            //wsvg.addCardinalPath(t.landmarks_uptown_, "blue");
+            //wsvg.addCardinalPath(t.landmarks_downtown_, "green");
+			Surveyor caliper_hiker(t, width, height);
 			caliper_hiker.hike();
-			wsvg.addCardinalPath(caliper_hiker.camps_valley_, "red");
+			wsvg.addCardinalPath(caliper_hiker.camps_downtown_, "red");
         }
         //removeRectangle(wild.trails_, placement, width, height);
         if (is_placable) {
@@ -646,7 +621,7 @@ void example_14() {
 //{6.9, 4.4}, { 6.6,3.3 },
 
 void example_15() {
-	std::vector<std::array<double, 3>> points = { {0,0}, {1,0}, {1,-1}, {3.4,-1}, {3.4,-.6}, {5,-.6}, {5,-2.5}, {6,-2.5}, {6,-3}, {8.4,-3}, {8.4,5}, {0,5} };
+	std::vector<Eigen::Vector2d> points = { {0,0}, {1,0}, {1,-1}, {3.4,-1}, {3.4,-.6}, {5,-.6}, {5,-2.5}, {6,-2.5}, {6,-3}, {8.4,-3}, {8.4,5}, {0,5} };
 	std::vector<std::vector<int>> somelines = { {0,1},{1,2},{2,3},{3,4},{4,5},{5,6},{6,7}, {7,8}, {8,9}, {9,10}, {10,11}, {11,0}};
 	//
 	ZoningCommisioner wild;
@@ -654,7 +629,7 @@ void example_15() {
 	wild.populateNeighbors();
 	wild.trailblaze();
 	//
-	WildernessCartographerSVG wsvg;
+	svgvis::ZoningCartographerSVG wsvg;
 	wsvg.addCardinalCurveCollection(wild.vacant_, "black");
 	wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example15.svg");
 	std::vector<Eigen::Vector2d> whs = { {2.4,1} };
@@ -664,11 +639,11 @@ void example_15() {
 		Eigen::Vector2d placement;
 		bool is_placable = wild.findPlacement(width, height, placement);
 		for (auto &t : wild.trails_) {
-			//wsvg.addCardinalPath(t.landmarks_mountain_, "blue");
-			//wsvg.addCardinalPath(t.landmarks_valley_, "green");
-			CaliperHiker caliper_hiker(t, width, height);
+			//wsvg.addCardinalPath(t.landmarks_uptown_, "blue");
+			//wsvg.addCardinalPath(t.landmarks_downtown_, "green");
+			Surveyor caliper_hiker(t, width, height);
 			caliper_hiker.hike();
-			wsvg.addCardinalPath(caliper_hiker.camps_valley_, "red");
+			wsvg.addCardinalPath(caliper_hiker.camps_downtown_, "red");
 		}
 		//removeRectangle(wild.trails_, placement, width, height);
 		if (is_placable) {
@@ -704,13 +679,13 @@ void example_addRectTest0() {
 		{{10,13},{10,-3}},
 		{{3,-3},{3,0},{4,0},{4,-1},{5,-1},{5,0},{6,0},{6,-3}}
 	};
-	WildernessCartographerSVG vv0;
+	svgvis::ZoningCartographerSVG vv0;
 	vv0.addRectangle(position, width, height);
 	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
 	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect0_before.svg");
 
 	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
-	WildernessCartographerSVG vv;
+	svgvis::ZoningCartographerSVG vv;
 	vv.addRectangle(position, width, height);
 	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
 	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect0.svg");
@@ -723,13 +698,13 @@ void example_addRectTest1() {
 	std::vector<PointList> chains = {
 		{{0, 12}, {0, 0}, {12,0}}
 	};
-	WildernessCartographerSVG vv0;
+	svgvis::ZoningCartographerSVG vv0;
 	vv0.addRectangle(position, width, height);
 	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
 	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect1_before.svg");
 
 	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
-	WildernessCartographerSVG vv;
+	svgvis::ZoningCartographerSVG vv;
 	vv.addRectangle(position, width, height);
 	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
 	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect1.svg");
@@ -742,13 +717,13 @@ void example_addRectTest2() {
 	std::vector<PointList> chains = {
 		{{0, 12}, {0, 0}, {10,0}, {10,12}}
 	};
-	WildernessCartographerSVG vv0;
+	svgvis::ZoningCartographerSVG vv0;
 	vv0.addRectangle(position, width, height);
 	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
 	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect2_before.svg");
 
 	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
-	WildernessCartographerSVG vv;
+	svgvis::ZoningCartographerSVG vv;
 	vv.addRectangle(position, width, height);
 	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
 	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect2.svg");
@@ -761,13 +736,13 @@ void example_addRectTest3() {
 	std::vector<PointList> chains = {
 		{{0, 12}, {0, -2}, {5,-2}, {5,0}, {12,0}}
 	};
-	WildernessCartographerSVG vv0;
+	svgvis::ZoningCartographerSVG vv0;
 	vv0.addRectangle(position, width, height);
 	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
 	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect3_before.svg");
 
 	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
-	WildernessCartographerSVG vv;
+	svgvis::ZoningCartographerSVG vv;
 	vv.addRectangle(position, width, height);
 	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
 	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect3.svg");
@@ -780,13 +755,13 @@ void example_addRectTest4() {
 	std::vector<PointList> chains = {
 		{{0, 12}, {0, -2}, {7,-2}, {7,0}, {8,0}, {8, -2}, {9,-2}, {9,-4},}
 	};
-	WildernessCartographerSVG vv0;
+	svgvis::ZoningCartographerSVG vv0;
 	vv0.addRectangle(position, width, height);
 	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
 	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect4_before.svg");
 
 	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
-	WildernessCartographerSVG vv;
+	svgvis::ZoningCartographerSVG vv;
 	vv.addRectangle(position, width, height);
 	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
 	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect4.svg");
@@ -799,13 +774,13 @@ void example_addRectTest5() {
 	std::vector<PointList> chains = {
 		{{0, 12}, {0, -2}, {1,-2}, {1,0}, {2,0}, {2, -2}, {3,-2}, {3,0}, {4,0}, {4, -3}, {5,-3}, {5,0}, {6,0}, {6, -2.6}, {7,-2.6}, {7,0}, {8,0}, {8, -2}, {9,-2}, {9,-4},}
 	};
-	WildernessCartographerSVG vv0;
+	svgvis::ZoningCartographerSVG vv0;
 	vv0.addRectangle(position, width, height);
 	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
 	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect5_before.svg");
 
 	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
-	WildernessCartographerSVG vv;
+	svgvis::ZoningCartographerSVG vv;
 	vv.addRectangle(position, width, height);
 	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
 	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect5.svg");
@@ -849,13 +824,13 @@ void example_addRectTest6() {
 			{0,12}
 		}
 	};
-	WildernessCartographerSVG vv0;
+	svgvis::ZoningCartographerSVG vv0;
 	vv0.addRectangle(position, width, height);
 	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
 	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect6_before.svg");
 
 	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
-	WildernessCartographerSVG vv;
+	svgvis::ZoningCartographerSVG vv;
 	vv.addRectangle(position, width, height);
 	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
 	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect6.svg");
@@ -874,13 +849,13 @@ void example_addRectTest7() {
 			{0,0}
 		}
 	};
-	WildernessCartographerSVG vv0;
+	svgvis::ZoningCartographerSVG vv0;
 	vv0.addRectangle(position, width, height);
 	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
 	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect7_before.svg");
 
 	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
-	WildernessCartographerSVG vv;
+	svgvis::ZoningCartographerSVG vv;
 	vv.addRectangle(position, width, height);
 	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
 	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect7.svg");
@@ -901,31 +876,31 @@ void example_addRectTest8() {
             {5,0}
         }
     };
-    WildernessCartographerSVG vv0;
+    svgvis::ZoningCartographerSVG vv0;
     vv0.addRectangle(position, width, height);
     for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
     vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect8_before.svg");
 
     std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
-    WildernessCartographerSVG vv;
+    svgvis::ZoningCartographerSVG vv;
     vv.addRectangle(position, width, height);
     for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
     vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect8.svg");
 }
 
 void example_curve_update() {
-	std::vector<std::array<double, 3>> points = { {0,0},{10,0},{10,10},{0,10} };
+	std::vector<Eigen::Vector2d> points = { {0,0},{10,0},{10,10},{0,10} };
 	std::vector<std::vector<int>> somelines = { {0,1},{1,2},{2,3},{3,0} };
 	CardinalCurveCollection ccc;
 	ccc.setGridPointsAndCells(points, somelines);
-	WildernessCartographerSVG vv;
+	svgvis::ZoningCartographerSVG vv;
 	auto pls = ccc.getPointCycles();
 	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
 	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_curve_update.svg");
 }
 
 void example_why_is_trail_fail() {
-	std::vector<std::array<double, 3>> points = { 
+	std::vector<Eigen::Vector2d> points = { 
 		{5.4, 9.6},
 		{5.4, 9.8},
 		{0, 9.8},
@@ -948,11 +923,11 @@ void example_why_is_trail_fail() {
 	wild.insertCurves(points, somelines);
 	wild.populateNeighbors();
 	wild.trailblaze();
-	WildernessCartographerSVG wsvg;
+	svgvis::ZoningCartographerSVG wsvg;
 	wsvg.addCardinalCurveCollection(wild.vacant_, "yellow");
 	for (auto &t : wild.trails_) {
-		wsvg.addCardinalPath(t.landmarks_mountain_, "blue");
-		wsvg.addCardinalPath(t.landmarks_valley_, "green");
+		wsvg.addCardinalPath(t.landmarks_uptown_, "blue");
+		wsvg.addCardinalPath(t.landmarks_downtown_, "green");
 	}
 	wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/badtrail.svg");
 	bool is_placable = wild.findPlacement(width, height, placement);

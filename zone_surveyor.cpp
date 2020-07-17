@@ -5,62 +5,62 @@
 //  Created by Shane Scott on 6/10/20.
 //
 
-#include "caliper.h"
+#include "zone_surveyor.h"
 
-CaliperHiker::CaliperHiker(const Trail& trail, const double& width, const double& height) :
+Surveyor::Surveyor(const Zone& trail, const double& width, const double& height) :
     width_(width),
     height_(height),
-    landmarks_valley_(trail.landmarks_valley_),
-    landmarks_mountain_(trail.landmarks_mountain_)
+    landmarks_downtown_(trail.landmarks_downtown_),
+    landmarks_uptown_(trail.landmarks_uptown_)
 {};
 
-void CaliperHiker::hike(){
-    PlankHiker valley_trail(landmarks_valley_, width_, true);
-    valley_trail.hike();
-    camps_valley_ = valley_trail.camps_;
-    PlankHiker mountain_trail(landmarks_mountain_, width_, false);
-    mountain_trail.hike();
-    camps_mountain_ = mountain_trail.camps_;
+void Surveyor::hike(){
+    PlankHiker downtown_trail(landmarks_downtown_, width_, true);
+    downtown_trail.hike();
+    camps_downtown_ = downtown_trail.camps_;
+    PlankHiker uptown_trail(landmarks_uptown_, width_, false);
+    uptown_trail.hike();
+    camps_uptown_ = uptown_trail.camps_;
     expandCamps();
 };
 
-void CaliperHiker::expandCamps(){
+void Surveyor::expandCamps(){
     //Move through the camps and measure the vertical space, saving the ones which are sufficiently high
-    if ((camps_valley_.num_plateaus_==0) | (camps_mountain_.num_plateaus_==0)) return;
+    if ((camps_downtown_.num_plateaus_==0) | (camps_uptown_.num_plateaus_==0)) return;
     int ii = 0;
     int jj = 0;
 //    std::cout << "ii " << ii << " jj " << jj << std::endl;
-    Hedge low_ii = camps_valley_.getPlateau(ii);
-    Hedge high_jj = camps_mountain_.getPlateau(jj);
+    Hedge low_ii = camps_downtown_.getPlateau(ii);
+    Hedge high_jj = camps_uptown_.getPlateau(jj);
     if (high_jj[0][1] - low_ii[0][1] >= height_){
-        valid_.push_back(low_ii[0]);
+        valid_lots_.push_back(low_ii[0]);
 //        std::cout << (valid_.end()-1)->transpose() << std::endl;
     }
-    while((ii < camps_valley_.num_plateaus_-1) | (jj < camps_mountain_.num_plateaus_-1)){
+    while((ii < camps_downtown_.num_plateaus_-1) | (jj < camps_uptown_.num_plateaus_-1)){
         //Measure height east to west and keep any positions that are valid.
         bool is_progress = false;
-        while( (high_jj[1][0] <= low_ii[1][0] + repsilon) & (jj < camps_mountain_.num_plateaus_-1) ){
+        while( (high_jj[1][0] <= low_ii[1][0] + repsilon) & (jj < camps_uptown_.num_plateaus_-1) ){
             jj++;
 //            std::cout << "ii " << ii << " jj " << jj << std::endl;
-            high_jj = camps_mountain_.getPlateau(jj);
+            high_jj = camps_uptown_.getPlateau(jj);
             if ( high_jj[0][1] - low_ii[0][1] >= height_){
                 Eigen::Vector2d position = {high_jj[0][0], low_ii[0][1]};
-                valid_.push_back(position);
+                valid_lots_.push_back(position);
 //                std::cout << (valid_.end()-1)->transpose() << std::endl;
             }
             is_progress = true;
         };
-        while( (low_ii[1][0] <= high_jj[1][0] + repsilon) & (ii < camps_valley_.num_plateaus_-1) ){
+        while( (low_ii[1][0] <= high_jj[1][0] + repsilon) & (ii < camps_downtown_.num_plateaus_-1) ){
             ii++;
 //            std::cout << "ii " << ii << " jj " << jj << std::endl;
-            Eigen::Vector2d lastright = camps_valley_.getPlateau(ii-1)[1];
+            Eigen::Vector2d lastright = camps_downtown_.getPlateau(ii-1)[1];
             if (high_jj[0][1] - lastright[1] >= height_){
-                valid_.push_back(lastright);
+                valid_lots_.push_back(lastright);
 //                std::cout << (valid_.end()-1)->transpose() << std::endl;
             }
-            low_ii = camps_valley_.getPlateau(ii);
+            low_ii = camps_downtown_.getPlateau(ii);
             if ( high_jj[0][1] - low_ii[0][1] >= height_){
-                valid_.push_back(low_ii[0]);
+                valid_lots_.push_back(low_ii[0]);
 //                std::cout << (valid_.end()-1)->transpose() << std::endl;
 
             }
@@ -72,7 +72,7 @@ void CaliperHiker::expandCamps(){
     double lastx = std::min(low_ii[1][0], high_jj[1][0]);
     if ( high_jj[1][1] - low_ii[1][1] >= height_){
         Eigen::Vector2d position = {lastx, low_ii[1][1]};
-        valid_.push_back(position);
+        valid_lots_.push_back(position);
 //        std::cout << (valid_.end()-1)->transpose() << std::endl;
     }
 };
@@ -108,7 +108,7 @@ void PlankHiker::headEast(int start_east){
             // Try to slide the caliper straight east along the obstruction
             // But head north if a wall gets in the way.
             if (compareVertical(position_[1], north_reach)){
-                //There is a valley wall in the way of east
+                //There is a downtown wall in the way of east
                 position_ = {east_reach - width_, obstruction_[1]};
                 camps_.push_back(position_);
                 position_ = {east_reach - width_, north_reach};
@@ -190,12 +190,12 @@ void PlankHiker::nudgeFrontier(){
     landmarks_.getPlateau(landmarks_.num_plateaus_-1);
 }
 
-Eigen::Vector2d CaliperHiker::getMostValid() const{
-    Eigen::Vector2d best= valid_[0];
-    for (int foo=1; foo < valid_.size(); foo++){
-        if (valid_[foo][1] < best[1]) best = valid_[foo];
-        if (std::abs(valid_[foo][1]-best[1]) < repsilon ){
-            if (valid_[foo][0] < best[0]) best = valid_[foo];
+Eigen::Vector2d Surveyor::getMostValid() const{
+    Eigen::Vector2d best= valid_lots_[0];
+    for (int foo=1; foo < valid_lots_.size(); foo++){
+        if (valid_lots_[foo][1] < best[1]) best = valid_lots_[foo];
+        if (std::abs(valid_lots_[foo][1]-best[1]) < repsilon ){
+            if (valid_lots_[foo][0] < best[0]) best = valid_lots_[foo];
         }
     }
     return best;

@@ -57,7 +57,8 @@ public:
     // Poly data must have lines forming closed curves.
 //    CabbyCurveCollection(const std::vector<std::array<double,2>> &grid_points, const std::vector<std::vector<int>> &one_cells);
 //    CabbyCurveCollection(const std::vector<std::array<double,3>> &grid_points, const std::vector<std::vector<int>> &one_cells);
-    
+    bool setGridPointsAndCells(const std::vector<Eigen::Vector2d> &grid_points, const std::vector<std::vector<int>> &one_cells);
+
     bool setGridPointsAndCells(const std::vector<std::array<double,3>> &grid_points, const std::vector<std::vector<int>> &one_cells);
 
 	bool setPointCycles(const  std::vector<PointList>& cycles);

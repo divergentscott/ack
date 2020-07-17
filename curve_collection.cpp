@@ -247,8 +247,15 @@ void CurveCollection::compute_normals() {
     is_normals_computed_ = true;
 }
 
+bool CurveCollection::setGridPointsAndCells(const std::vector<std::array<double,3>> &grid_points, const std::vector<std::vector<int>> &one_cells){
+    std::vector<Eigen::Vector2d> points(grid_points.size());
+    for (const auto& x : grid_points){
+        points.push_back({x[0],x[1]});
+    }
+    setGridPointsAndCells(points,one_cells);
+};
 
-bool CurveCollection::setGridPointsAndCells(const std::vector<std::array<double,3>> &grid_points, const std::vector<std::vector<int>> &one_cells) {
+bool CurveCollection::setGridPointsAndCells(const std::vector<Eigen::Vector2d> &grid_points, const std::vector<std::vector<int>> &one_cells) {
 	// Copy the edges
 	int p_cnt = 0;
 	std::unordered_map<int, int> p_alias;

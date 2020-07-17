@@ -14,19 +14,28 @@
 
 #include <Eigen/Dense>
 
-#include "trail.h"
+#include "cabbie_curve_collection.h"
 
-struct CaliperHiker{
-    //Class to hike a single trail searching for positions.
+struct Zone{
+    // Zones cover the vacant lot.
+    // Zones always start from a westnotch.
+    // Zones have only one westnotch.
+    CardinalPath landmarks_uptown_;
+    CardinalPath landmarks_downtown_;
+    Vedge getWesternFront() const;
+};
+
+struct Surveyor{
+    // Survey the zone to find valid rectangle positions.
     const double width_;
     const double height_;
-    const CardinalPath& landmarks_valley_;
-    const CardinalPath& landmarks_mountain_;
-    CardinalPath camps_valley_;
-    CardinalPath camps_mountain_;
-    std::vector<Eigen::Vector2d> valid_;
+    const CardinalPath& landmarks_downtown_;
+    const CardinalPath& landmarks_uptown_;
+    CardinalPath camps_downtown_;
+    CardinalPath camps_uptown_;
+    std::vector<Eigen::Vector2d> valid_lots_;
     //
-    CaliperHiker(const Trail& trail, const double& width, const double &height);
+    Surveyor(const Zone& trail, const double& width, const double &height);
     //
     void hike();
     void unifyCamps();
@@ -37,8 +46,7 @@ struct CaliperHiker{
 
 struct PlankHiker{
     /*
-     The PlankHiker moves a fixed width interval along a cabby path and notes the positions the interval can fit.
-     
+     The PlankHiker moves a fixed width interval along a cabby path and notes the positions the interval can fit, establishing camps for the Surveyor.
      */
     const CardinalPath landmarks_;
     const double width_;
