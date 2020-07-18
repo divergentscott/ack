@@ -13,12 +13,27 @@ Applicant::Applicant(const double& width, const double& height, const int multip
 {};
 
 void ZoningBoard::addVacancy(const std::vector<Eigen::Vector2d>& grid_points,
+	const int multiplicity) {
+	auto n_pts = grid_points.size();
+	std::vector<std::vector<int>> lines(n_pts);
+	auto foo = 0;
+	while (foo + 1 < n_pts) {
+		lines[foo] = {foo, foo+1};
+		foo++;
+	}
+	lines[foo] = {foo, 0};
+	addVacancy(grid_points, lines, multiplicity);
+};
+
+void ZoningBoard::addVacancy(const std::vector<Eigen::Vector2d>& grid_points,
 	const std::vector<std::vector<int>> &lines,
 	const int multiplicity) {
 	Vacancy vac;
 	vac.grid_points_ = grid_points;
 	vac.lines_ = lines;
 	vac.multiplicity_ = multiplicity;
+	//!!!! check that this is a valid cardinal curve before continuing any further.
+	// too easy to give garbage input here.
 	vacancies_.push_back(vac);
 };
 
@@ -92,10 +107,11 @@ void ZoningBoard::zone(){
                     placement.vacancy_id = zc_foo;
                     placements_[foo].push_back(placement);
                     zc.zoneOff(placement.position, app.width, app.height);
-                    break; // placed in a
+                    break; //Already placed. No more commisioners need to try.
                 }
             }
             if (!is_placed){
+				denials_.push_back({app.width, app.height});
                 break; //No need to place more, break the loop on mult
             }
         }

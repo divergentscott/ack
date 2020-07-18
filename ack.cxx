@@ -1078,10 +1078,11 @@ void example_why_is_trail_fail() {
 }
 
 #include "zoning_board.h"
-void example_zoning_board1(){
+
+void example_zoning_board1() {
 	ZoningBoard zb;
 	PointList ps = { {0,0},{10,0},{10,10},{0,10} };
-	std::vector<std::vector<int>> es = { {0,1},{1,2},{2,3},{3,0}};
+	std::vector<std::vector<int>> es = { {0,1},{1,2},{2,3},{3,0} };
 	zb.addVacancy(ps, es);
 	std::vector<Eigen::Vector2d> rectangles = {
 		{1,0.5},{1,0.5},{1,0.5},{1,0.5},{1,0.5},{1,0.5},{6,6},{7,6},{8,6},{9,6}, {4,4},{1,1},{1,1},{1,1},{1,1},{1,1},{3,2},{3,3},{1,8},{2,2},{4,4},{5,1},{4,2},{2,2},{9,2},{5,5},{3,1}
@@ -1093,9 +1094,92 @@ void example_zoning_board1(){
 	zsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/zb1.svg");
 };
 
+void example_zoning_board2() {
+	ZoningBoard zb;
+	
+	PointList ps = { {0,0},{10,0},{10,10},{0,10} };
+	std::vector<std::vector<int>> es = { {0,1},{1,2},{2,3},{3,0} };
+	zb.addVacancy(ps, es);
+	
+	PointList ps2 = {{0,0}, {0,-2}, {6,-2}, {6,0}, {8,0}, {8,6}, {6,6}, {6,8}, {0,8}, {0,6}, {-2,6}, {-2,0}};
+	zb.addVacancy(ps2);
+
+	PointList ps3 = { {0,0},{10,0},{10,5},{5,5},{5,10},{0,10} };
+	zb.addVacancy(ps3);
+	
+	PointList ps4 = { {0,0},{10,0},{10,10},{6,10},{6,4},{4,4},{4,10},{0,10} };
+	zb.addVacancy(ps4);
+
+	std::vector<Eigen::Vector2d> rectangles = {
+		{10,1.4},{10,1.4}, {0.3,0.8},{0.3,0.8},{0.3,4.8}, {1,0.5},{1,0.5},{1,0.5},{1,0.5},{0.3,0.8},{0.3,0.8},{0.3,4.8}, {1,0.5},{1,0.5},{1,0.5},{1,0.5},{1,0.5},{1,0.5},{6,6},{7,6},{8,6},{9,6}, {4,4},{1,1},{1,1},{1,1},{1,1},{1,1},{3,2},{3,3},{1,8},{2,2},{4,4},{5,1},{4,2},{2,2},{9,2},{5,5},{3,1}
+	};
+
+	zb.setRectangles(rectangles);
+	zb.zone();
+
+	svgvis::ZoningCartographerSVG zsvg;
+	zsvg.addZoningBoardReport(zb);
+	zsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/zb2.svg");
+};
+
+void example_zoning_board3() {
+	ZoningBoard zb;
+
+	PointList ps = { {0,0},{10,0},{10,10},{0,10} };
+	std::vector<std::vector<int>> es = { {0,1},{1,2},{2,3},{3,0} };
+	zb.addVacancy(ps, es);
+
+	PointList ps2 = { {0,0}, {0,-2}, {6,-2}, {6,0}, {8,0}, {8,6}, {6,6}, {6,8}, {0,8}, {0,6}, {-2,6}, {-2,0} };
+	zb.addVacancy(ps2);
+
+	PointList ps3 = { {0,0},{10,0},{10,5},{5,5},{5,10},{0,10} };
+	zb.addVacancy(ps3);
+
+	PointList ps4 = { {0,0},{10,0},{10,10},{6,10},{6,4},{4,4},{4,10},{0,10} };
+	zb.addVacancy(ps4);
+
+	std::vector<Eigen::Vector2d> rectangles = {
+		{2,2},{3,3},{4,4},{1,5},{3.8,4.2},{1.3,1.4}
+	};
+
+	std::vector<int> multiplicities = {
+		5,10,15,7,9,6
+	};
+
+	zb.setRectangles(rectangles, multiplicities);
+	zb.zone();
+
+	svgvis::ZoningCartographerSVG zsvg;
+	zsvg.addZoningBoardReport(zb);
+	zsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/zb3.svg");
+};
+
+void example_zoning_board4() {
+	ZoningBoard zb;
+
+	PointList ps = { {0,0},{10,0},{10,10},{0,10} , {4,4},{6,4},{6,6},{4,4}};
+	std::vector<std::vector<int>> es = { {0,1},{1,2},{2,3},{3,0},{4,5},{5,6},{6,7},{7,4} };
+	zb.addVacancy(ps, es);
+
+	std::vector<Eigen::Vector2d> rectangles = {
+		{2,2},{3,3},{4,4},{1,5},{3.8,4.2},{1.3,1.4}
+	};
+
+	std::vector<int> multiplicities = {
+		5,10,15,7,9,6
+	};
+
+	zb.setRectangles(rectangles, multiplicities);
+	zb.zone();
+
+	svgvis::ZoningCartographerSVG zsvg;
+	zsvg.addZoningBoardReport(zb);
+	zsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/zb4.svg");
+};
+
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
-	example_zoning_board1();
+	example_zoning_board4();
 	//example_125();
 	//example_135();
 //	example_13() ;

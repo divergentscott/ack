@@ -192,7 +192,7 @@ Cedge edgify(const Eigen::Vector2d& a, const Eigen::Vector2d& b, bool& is_hedge,
         if (is_forward) return {a,b};
         return {b,a};
     }
-    std::cout << "WARNING: noncardinal edge!" << std::endl;
+	throw std::logic_error("This edge is not aligned with cardinal directions!");
     return {a,b};
 }
 
@@ -473,7 +473,13 @@ struct ChainForge {
 		}
 	}
 
-	return chain_forge.getPointList();
+	std::vector<PointList> new_chains = chain_forge.getPointList();
+	//!!!!
+	if (new_chains.size() > 1) {
+		int _debug_ = 0;
+	}
+	//!!!!
+	return new_chains;
 };
 
 std::string _debug_edge_print(std::array<Eigen::Vector2d,2> x){
@@ -528,6 +534,11 @@ void CardinalCurveCollection::mergeParallelEdges(){
     std::vector<std::array<int,2>> kept_edges;
     kept_edges.resize(p_cnt);
     int p_ii=0;
+	//!!!!
+	if (keepers_cycles.size() > 1) {
+		int _debug_ = 0;
+	}
+	//!!!!
     for (auto cycle : keepers_cycles){
         int bp = p_ii;
         for (int p : cycle){
@@ -542,5 +553,4 @@ void CardinalCurveCollection::mergeParallelEdges(){
     points_ = kept_points;
     edges_ = kept_edges;
     orient_curves();
-    int _debug_= 0;
 }

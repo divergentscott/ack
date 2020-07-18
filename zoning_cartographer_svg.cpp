@@ -3,6 +3,7 @@
 
 #include "zoning_cartographer_svg.h"
 
+#include <algorithm>
 #include <limits>
 
 namespace svgvis {
@@ -166,21 +167,64 @@ void ZoningCartographerSVG::writeScalableVectorGraphics(const std::string& outfi
 };
 
 void ZoningCartographerSVG::addZoningBoardReport(const ZoningBoard zb) {
-	for (const auto & vac : zb.vacancies_) {
-		//Need to do some vacancy multiplying here.
+	//!!!! This is broken for vacancy multiplicity.
+	std::vector<Eigen::Vector2d> vis_offsets(zb.vacancies_.size() + 1);
+	std::vector<double> west(zb.vacancies_.size() + 1);
+	std::vector<double> east(zb.vacancies_.size() + 1);
+	vis_offsets[0] = { 0,0 };
+	//find offsets for each vacancy to visualize together
+	for (auto foo = 0; foo < zb.vacancies_.size(); foo++) {
+		const Vacancy& vac = zb.vacancies_[foo];
+		auto max_foo = std::max_element(
+			vac.grid_points_.begin(),
+			vac.grid_points_.end(),
+			[](const Eigen::Vector2d& a, const Eigen::Vector2d& b) {return a[0] < b[0];}
+		);
+		auto min_foo = std::min_element(
+			vac.grid_points_.begin(),
+			vac.grid_points_.end(),
+			[](const Eigen::Vector2d& a, const Eigen::Vector2d& b) {return a[0] < b[0];}
+		);
+		west[foo] = (*min_foo)[0];
+		east[foo] = (*max_foo)[0];
+	};
+	//
+	for (auto foo = 0; foo < zb.vacancies_.size() + 1; foo++) {
+		vis_offsets[foo] = {-west[foo], 0};
+		if (foo > 0) {
+			vis_offsets[foo][0] += vis_offsets[foo - 1][0] + (east[foo - 1] - west[foo - 1]) * 1.1;
+		}
+	}
+	//
+	for (auto foo = 0; foo < zb.vacancies_.size(); foo++) {
+		const Vacancy& vac = zb.vacancies_[foo];
+		PointList offsetpoints;
+		offsetpoints.reserve(vac.grid_points_.size());
+		for (const auto &pp : vac.grid_points_) offsetpoints.push_back(pp + vis_offsets[foo]);
 		CardinalCurveCollection ccc;
-		ccc.setGridPointsAndCells(vac.grid_points_, vac.lines_);
-		addCardinalCurveCollection(ccc,"black");
-		for (auto foo = 0; foo < zb.applicants_.size(); foo++) {
-			const Applicant& appli = zb.applicants_[foo];
-			for (const Placement& pp : zb.placements_[foo]) {
-				if (!pp.rotated) {
-					addRectangle(pp.position, appli.width, appli.height);
-				} else {
-					addRectangle(pp.position, appli.height, appli.width);
+		ccc.setGridPointsAndCells(offsetpoints, vac.lines_);
+		addCardinalCurveCollection(ccc, "black");
+	}
+	//
+	for (auto vac_foo = 0; vac_foo < zb.vacancies_.size(); vac_foo++) {
+		const Vacancy& vac = zb.vacancies_[vac_foo];
+		//Need to do some vacancy multiplying here.
+		for (auto bar = 0; bar < zb.applicants_.size(); bar++) {
+			const Applicant& appli = zb.applicants_[bar];
+			for (const Placement& pp : zb.placements_[bar]) {
+				if (pp.vacancy_id == vac_foo) {
+					if (!pp.rotated) {
+						addRectangle(pp.position + vis_offsets[vac_foo], appli.width, appli.height);
+					}
+					else {
+						addRectangle(pp.position + vis_offsets[vac_foo], appli.height, appli.width);
+					}
 				}
 			}
 		}
+	}
+	for (const auto &denied : zb.denials_) {
+		addRectangle(vis_offsets.back(), denied[0], denied[1]);
 	}
 };
 
