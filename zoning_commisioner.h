@@ -32,8 +32,11 @@ A vacancy is a polygon (or possible a non-simply connected region with polygon b
 
 enum class NeighborhoodShape{
     kUnknown,
+	// Zags are left-right or right-left turns.
     kZag, // looks like _|-
-    //Nothches are differentiated by their opening direction
+	// Notches are local U turns
+	// A left-left or right-right turn.
+    // Nothches are differentiated by their opening direction
     kNotchNorth, // looks like |_|
     kNotchEast,
     kNotchSouth,
@@ -45,7 +48,7 @@ struct ZoningCommisioner{
 	std::vector<NeighborhoodShape> shapes_;
     int westmost_frontier_id_ = 0;
     int eastmost_frontier_id_ = 0;
-    std::vector<Zone> trails_;
+    std::vector<Zone> zones_;
     
     ZoningCommisioner(){};
     
@@ -60,9 +63,9 @@ struct ZoningCommisioner{
     
     void populateNeighbors();
         
-    Zone trailblaze(int start_edge_id);
+    Zone zoneFromEastNotch(int start_edge_id);
     
-    void trailblaze();
+    void constructZoneCovering();
     
     bool findPlacement(const double& width, const double& height, Eigen::Vector2d& placement) const;
 

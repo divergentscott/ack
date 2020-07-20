@@ -12,7 +12,7 @@
 Applicant::Applicant(const double& width, const double& height, const int multiplicity) : width(width), height(height), multiplicity(multiplicity)
 {};
 
-void ZoningBoard::addVacancy(const std::vector<Eigen::Vector2d>& grid_points,
+void ZoningBoard::annexVacancy(const std::vector<Eigen::Vector2d>& grid_points,
 	const int multiplicity) {
 	auto n_pts = grid_points.size();
 	std::vector<std::vector<int>> lines(n_pts);
@@ -22,10 +22,10 @@ void ZoningBoard::addVacancy(const std::vector<Eigen::Vector2d>& grid_points,
 		foo++;
 	}
 	lines[foo] = {foo, 0};
-	addVacancy(grid_points, lines, multiplicity);
+	annexVacancy(grid_points, lines, multiplicity);
 };
 
-void ZoningBoard::addVacancy(const std::vector<Eigen::Vector2d>& grid_points,
+void ZoningBoard::annexVacancy(const std::vector<Eigen::Vector2d>& grid_points,
 	const std::vector<std::vector<int>> &lines,
 	const int multiplicity) {
 	Vacancy vac;
@@ -33,18 +33,19 @@ void ZoningBoard::addVacancy(const std::vector<Eigen::Vector2d>& grid_points,
 	vac.lines_ = lines;
 	vac.multiplicity_ = multiplicity;
 	//!!!! check that this is a valid cardinal curve before continuing any further.
+	// Shouls also check for nested boundary components
 	// too easy to give garbage input here.
 	vacancies_.push_back(vac);
 };
 
-void ZoningBoard::setRectangles(const std::vector<Eigen::Vector2d>& rectangles){
+void ZoningBoard::setApplicantRectangles(const std::vector<Eigen::Vector2d>& rectangles){
 	std::vector<int> multiplicities(rectangles.size());
 	std::fill(multiplicities.begin(), multiplicities.end(), 1);
-	setRectangles(rectangles, multiplicities);
+	setApplicantRectangles(rectangles, multiplicities);
 };
 
 
-void ZoningBoard::setRectangles(const std::vector<Eigen::Vector2d>& rectangles, const std::vector<int>& multiplicites){
+void ZoningBoard::setApplicantRectangles(const std::vector<Eigen::Vector2d>& rectangles, const std::vector<int>& multiplicites){
     applicants_.resize(rectangles.size());
     for (auto foo=0; foo < rectangles.size(); foo++){
 		if (rectangles[foo][0] >= rectangles[foo][1]) {
@@ -91,13 +92,12 @@ void ZoningBoard::zone(){
         ZoningCommisioner zc;
         zc.insertCurves(vc.grid_points_, vc.lines_);
         zc.populateNeighbors();
-        zc.trailblaze();
+        zc.constructZoneCovering();
 		zcs.push_back(zc);
     }
     for (auto foo=0; foo<applicants_.size(); foo++){
         Applicant& app = applicants_[foo];
         for (auto mult = 0; mult < app.multiplicity; mult++){
-			std::cout << "Rectangle: {" << app.width << ", " << app.height << "}" << std::endl;
             Placement placement;
             bool is_placed = false;
             for (auto zc_foo = 0; zc_foo < zcs.size(); zc_foo++){

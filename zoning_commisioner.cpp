@@ -116,34 +116,7 @@ void ZoningCommisioner::populateNeighbors(){
     };
 };
     
-//void ZoningCommisioner::nextCollideNorth(const Eigen::Vector2d &origin, const bool &is_following_orientation, int &point_at, int &edge_at, Eigen::Vector2d &impact){
-//    //Continue along, testing horizontal edges for an impact
-//    //Advances the point and edge location.
-//    bool is_impact = false;
-//    if (is_following_orientation){
-//        edge_at = vacant_.get_next_edge(edge_at);
-//        point_at = vacant_.get_next_point(point_at);
-//    } else {
-//        edge_at = vacant_.get_prev_edge(edge_at);
-//        point_at = vacant_.get_prev_point(point_at);
-//    }
-//    while (!is_impact){
-//        if (is_following_orientation){
-//            edge_at = vacant_.get_next_edge(edge_at);
-//            point_at = vacant_.get_next_point(point_at);
-//        } else {
-//            edge_at = vacant_.get_prev_edge(edge_at);
-//            point_at = vacant_.get_prev_point(point_at);
-//        }
-//        if (edge_at == eastmost_frontier_id_) break; //?
-//        if (vacant_.is_horizontals_[edge_at]){
-//			bool _;
-//            is_impact = rayNorthSegmentIntersect(origin, getCedge(edge_at,_), impact);
-//        }
-//    }
-//};
-
-Zone ZoningCommisioner::trailblaze(int start_edge_id){
+Zone ZoningCommisioner::zoneFromEastNotch(int start_edge_id){
     Zone patrol;
     //first the lower edge of the patrol
     
@@ -266,19 +239,19 @@ Zone ZoningCommisioner::trailblaze(int start_edge_id){
     return patrol;
 };
 
-void ZoningCommisioner::trailblaze(){
+void ZoningCommisioner::constructZoneCovering(){
 	findFrontier();
     for (auto foo=0; foo< vacant_.get_number_of_edges(); foo++){
         if (shapes_[foo] == NeighborhoodShape::kNotchEast){
 //            std::cout << "eastnotch at " << foo;
-            trails_.push_back(trailblaze(foo));
+            zones_.push_back(zoneFromEastNotch(foo));
         }
     }
 };
 
 bool ZoningCommisioner::findPlacement(const double& width, const double& height, Eigen::Vector2d& placement) const {
     bool is_placeable = false;
-    for(const Zone& t : trails_){
+    for(const Zone& t : zones_){
         Surveyor caliper_hiker(t, width, height);
         caliper_hiker.hike();
         if (caliper_hiker.valid_lots_.size()>0){
@@ -310,8 +283,8 @@ void ZoningCommisioner::zoneOff(const Eigen::Vector2d& position, const double& w
 	vacant_.removeTangentRectangle(position, width, height);
     vacant_.mergeParallelEdges();
 	populateNeighbors();
-	trails_.clear();
-	trailblaze();
+	zones_.clear();
+	constructZoneCovering();
 };
 
 

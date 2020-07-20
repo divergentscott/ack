@@ -39,7 +39,7 @@ struct Placement{
 
 class ZoningBoard{
 //private:
-public: //!!!!
+public:
     ZoningStratgey strategy_ = ZoningStratgey::kBottomLeft;
     bool allow_rotations = false;
     std::vector<Applicant> applicants_; // rectangles to pack width x height
@@ -50,14 +50,14 @@ public: //!!!!
     
 public:
     ZoningBoard(){};
-	void addVacancy(const std::vector<Eigen::Vector2d>& grid_points,
+	void annexVacancy(const std::vector<Eigen::Vector2d>& grid_points,
 		const int multiplicity = 1);
-    void addVacancy(const std::vector<Eigen::Vector2d>& grid_points,
+    void annexVacancy(const std::vector<Eigen::Vector2d>& grid_points,
 		const std::vector<std::vector<int>> &lines,
 		const int multiplicity = 1);
 
-	void setRectangles(const std::vector<Eigen::Vector2d>& rectangles);
-    void setRectangles(const std::vector<Eigen::Vector2d>& rectangles, const std::vector<int>& multiplicites);
+	void setApplicantRectangles(const std::vector<Eigen::Vector2d>& rectangles);
+    void setApplicantRectangles(const std::vector<Eigen::Vector2d>& rectangles, const std::vector<int>& multiplicites);
     void zone();
 };
 

@@ -125,15 +125,15 @@ void example2(){
         if (vac.shapes_[foo] == NeighborhoodShape::kNotchWest)            std::cout << "west" << std::endl;
     }
     std::cout << "Patrol down from 11 " << std::endl;
-    Zone patty11 = vac.trailblaze(11);
-    Zone patty7 = vac.trailblaze(7);
+    Zone patty11 = vac.zoneFromEastNotch(11);
+    Zone patty7 = vac.zoneFromEastNotch(7);
 };
 
 void example4(){
     ZoningCommisioner vac;
     vac.insertCurves(exda::splotchpoints, exda::splotchlines);
     vac.populateNeighbors();
-    Zone peopleheadeast = vac.trailblaze(15);
+    Zone peopleheadeast = vac.zoneFromEastNotch(15);
     std::cout << "downtown landmarks: " << std::endl;
     for (auto p : peopleheadeast.landmarks_downtown_.points_){
         std::cout << p.transpose() << std::endl;
@@ -178,7 +178,7 @@ void example5(double width = 0.5, double height = 0.5, std::string afile = "/Use
     ZoningCommisioner vac;
     vac.insertCurves(exda::splotchpoints, exda::splotchlines);
     vac.populateNeighbors();
-    Zone peopleheadeast = vac.trailblaze(15);
+    Zone peopleheadeast = vac.zoneFromEastNotch(15);
     Surveyor calh(peopleheadeast,width, height);
     calh.hike();
     svgvis::ZoningCartographerSVG vv;
@@ -244,8 +244,8 @@ void example7(double width = 3.4, double height = 2.1){
     }
     vac.insertCurves(notchy_points_arraysstyle, notchy_lines);
     vac.populateNeighbors();
-    vac.trailblaze();
-    Surveyor calh(vac.trails_[0], width, height);
+    vac.constructZoneCovering();
+    Surveyor calh(vac.zones_[0], width, height);
     calh.hike();
     svgvis::ZoningCartographerSVG vv;
     std::vector<std::string> funcolors = {"#F75C03", "#D90368", "#820263", "#291720", "#04A777"};
@@ -270,11 +270,11 @@ void example_basic(std::vector<Eigen::Vector2d> points, double width, double hei
     vac.insertCurves(points, lines);
     vac.populateNeighbors();
     vac.findFrontier();
-    std::cout << vac.trails_.size() << std::endl;
-    if (vac.trails_.size() > 0){
+    std::cout << vac.zones_.size() << std::endl;
+    if (vac.zones_.size() > 0){
         
     }
-    Surveyor calh(vac.trails_[0], width, height);
+    Surveyor calh(vac.zones_[0], width, height);
     calh.hike();
     svgvis::ZoningCartographerSVG vv;
     std::vector<std::string> funcolors = {"#F75C03", "#D90368", "#820263", "#291720", "#04A777"};
@@ -298,7 +298,7 @@ void example_basic(std::vector<Eigen::Vector2d> points, std::vector<std::vector<
     std::vector<std::string> funcolors = {"#F75C03", "#D90368", "#820263", "#291720", "#04A777"};
 //
     vv.addCardinalCurveCollection(vac.vacant_, funcolors[3]);
-    for (auto tt: vac.trails_){
+    for (auto tt: vac.zones_){
         Surveyor calh(tt, width, height);
         calh.hike();
         vv.addCardinalPath(calh.camps_downtown_, funcolors[0]);
@@ -329,14 +329,14 @@ void example_9(){
     ZoningCommisioner wild;
     wild.insertCurves(points,somelines);
     wild.populateNeighbors();
-    wild.trailblaze();
+    wild.constructZoneCovering();
     Eigen::Vector2d place;
     bool is_placeable = wild.findPlacement(0.3, 0.6, place);
     if (is_placeable){
         std::cout << "Can place." << std::endl;
         svgvis::ZoningCartographerSVG vv;
         vv.addCardinalCurveCollection(wild.vacant_, "black");
-        for (const Zone& t: wild.trails_){
+        for (const Zone& t: wild.zones_){
             vv.addCardinalPath(t.landmarks_downtown_, "green");
             vv.addCardinalPath(t.landmarks_uptown_, "blue");
         }
@@ -353,9 +353,9 @@ void example_10(){
     ZoningCommisioner wild;
     wild.insertCurves(points, somelines);
     wild.populateNeighbors();
-    wild.trailblaze();
+    wild.constructZoneCovering();
 
-    Zone t = wild.trails_[0];
+    Zone t = wild.zones_[0];
     std::cout << " Before " << std::endl;
     for (auto p :  t.landmarks_downtown_.points_){
         std::cout << p.transpose() << std::endl;
@@ -366,7 +366,7 @@ void example_10(){
     double height = 1.7;
     wild.findPlacement(width, height, placement);
 //    wild.removeRectangle(placement, width, height);
-    t = wild.trails_[0];
+    t = wild.zones_[0];
 //    removeRectangle(wild.trails_, placement, width, height);
     std::cout << " After " << std::endl;
     for (auto p :  t.landmarks_downtown_.points_){
@@ -382,7 +382,7 @@ void example_11(){
     ZoningCommisioner wild;
     wild.insertCurves(points, somelines);
     wild.populateNeighbors();
-    wild.trailblaze();
+    wild.constructZoneCovering();
     //
     svgvis::ZoningCartographerSVG wsvg;
     wsvg.addCardinalCurveCollection(wild.vacant_);
@@ -392,7 +392,7 @@ void example_11(){
         double height = wh[1];
         Eigen::Vector2d placement;
         wild.findPlacement(width, height, placement);
-        for (auto &t: wild.trails_){
+        for (auto &t: wild.zones_){
             wsvg.addCardinalPath(t.landmarks_uptown_, "blue");
             wsvg.addCardinalPath(t.landmarks_downtown_, "green");
         }
@@ -410,7 +410,7 @@ void example_12() {
 	ZoningCommisioner wild;
 	wild.insertCurves(points, somelines);
 	wild.populateNeighbors();
-	wild.trailblaze();
+	wild.constructZoneCovering();
 	//
 	svgvis::ZoningCartographerSVG wsvg;
 	wsvg.addCardinalCurveCollection(wild.vacant_);
@@ -457,7 +457,7 @@ void example_125() {
 	ZoningCommisioner wild;
 	wild.insertCurves(points, somelines);
 	wild.populateNeighbors();
-	wild.trailblaze();
+	wild.constructZoneCovering();
 	//
 	svgvis::ZoningCartographerSVG wsvg;
 	wsvg.addCardinalCurveCollection(wild.vacant_);
@@ -605,7 +605,7 @@ void example_13() {
     ZoningCommisioner wild;
     wild.insertCurves(points, somelines);
     wild.populateNeighbors();
-    wild.trailblaze();
+    wild.constructZoneCovering();
     //
     svgvis::ZoningCartographerSVG wsvg;
     wsvg.addCardinalCurveCollection(wild.vacant_);
@@ -616,7 +616,7 @@ void example_13() {
         Eigen::Vector2d placement;
         bool is_placable = wild.findPlacement(width, height, placement);
 		int trail_cnt = 0;
-		for (auto &t : wild.trails_) {
+		for (auto &t : wild.zones_) {
 			svgvis::ZoningCartographerSVG svger;
 			svger.addCardinalCurveCollection(wild.vacant_, "black");
 			svger.addCardinalPath(t.landmarks_uptown_, "blue");
@@ -669,7 +669,7 @@ void example_135() {
 	ZoningCommisioner wild;
 	wild.insertCurves(points, somelines);
 	wild.populateNeighbors();
-	wild.trailblaze();
+	wild.constructZoneCovering();
 	//
 	svgvis::ZoningCartographerSVG wsvg;
 	wsvg.addCardinalCurveCollection(wild.vacant_);
@@ -680,7 +680,7 @@ void example_135() {
 		Eigen::Vector2d placement;
 		bool is_placable = wild.findPlacement(width, height, placement);
 		int trail_cnt = 0;
-		for (auto &t : wild.trails_) {
+		for (auto &t : wild.zones_) {
 			svgvis::ZoningCartographerSVG svger;
 			svger.addCardinalCurveCollection(wild.vacant_, "black");
 			svger.addCardinalPath(t.landmarks_uptown_, "blue");
@@ -722,7 +722,7 @@ void example_14() {
     ZoningCommisioner wild;
     wild.insertCurves(points, somelines);
     wild.populateNeighbors();
-    wild.trailblaze();
+    wild.constructZoneCovering();
     //
     svgvis::ZoningCartographerSVG wsvg;
     wsvg.addCardinalCurveCollection(wild.vacant_);
@@ -732,7 +732,7 @@ void example_14() {
         double height = wh[1];
         Eigen::Vector2d placement;
         bool is_placable = wild.findPlacement(width, height, placement);
-        for (auto &t : wild.trails_) {
+        for (auto &t : wild.zones_) {
             //wsvg.addCardinalPath(t.landmarks_uptown_, "blue");
             //wsvg.addCardinalPath(t.landmarks_downtown_, "green");
 			Surveyor caliper_hiker(t, width, height);
@@ -778,7 +778,7 @@ void example_15() {
 	ZoningCommisioner wild;
 	wild.insertCurves(points, somelines);
 	wild.populateNeighbors();
-	wild.trailblaze();
+	wild.constructZoneCovering();
 	//
 	svgvis::ZoningCartographerSVG wsvg;
 	wsvg.addCardinalCurveCollection(wild.vacant_, "black");
@@ -789,7 +789,7 @@ void example_15() {
 		double height = wh[1];
 		Eigen::Vector2d placement;
 		bool is_placable = wild.findPlacement(width, height, placement);
-		for (auto &t : wild.trails_) {
+		for (auto &t : wild.zones_) {
 			wsvg.addCardinalPath(t.landmarks_uptown_, "blue");
 			wsvg.addCardinalPath(t.landmarks_downtown_, "green");
 			Surveyor caliper_hiker(t, width, height);
@@ -1073,10 +1073,10 @@ void example_why_is_trail_fail() {
 	ZoningCommisioner wild;
 	wild.insertCurves(points, somelines);
 	wild.populateNeighbors();
-	wild.trailblaze();
+	wild.constructZoneCovering();
 	svgvis::ZoningCartographerSVG wsvg;
 	wsvg.addCardinalCurveCollection(wild.vacant_, "yellow");
-	for (auto &t : wild.trails_) {
+	for (auto &t : wild.zones_) {
 		wsvg.addCardinalPath(t.landmarks_uptown_, "blue");
 		wsvg.addCardinalPath(t.landmarks_downtown_, "green");
 	}
@@ -1101,11 +1101,11 @@ void example_zoning_board1() {
 	ZoningBoard zb;
 	PointList ps = { {0,0},{10,0},{10,10},{0,10} };
 	std::vector<std::vector<int>> es = { {0,1},{1,2},{2,3},{3,0} };
-	zb.addVacancy(ps, es);
+	zb.annexVacancy(ps, es);
 	std::vector<Eigen::Vector2d> rectangles = {
 		{1,0.5},{1,0.5},{1,0.5},{1,0.5},{1,0.5},{1,0.5},{6,6},{7,6},{8,6},{9,6}, {4,4},{1,1},{1,1},{1,1},{1,1},{1,1},{3,2},{3,3},{1,8},{2,2},{4,4},{5,1},{4,2},{2,2},{9,2},{5,5},{3,1}
 	};
-	zb.setRectangles(rectangles);
+	zb.setApplicantRectangles(rectangles);
 	zb.zone();
 	svgvis::ZoningCartographerSVG zsvg;
 	zsvg.addZoningBoardReport(zb);
@@ -1117,22 +1117,22 @@ void example_zoning_board2() {
 	
 	PointList ps = { {0,0},{10,0},{10,10},{0,10} };
 	std::vector<std::vector<int>> es = { {0,1},{1,2},{2,3},{3,0} };
-	zb.addVacancy(ps, es);
+	zb.annexVacancy(ps, es);
 	
 	PointList ps2 = {{0,0}, {0,-2}, {6,-2}, {6,0}, {8,0}, {8,6}, {6,6}, {6,8}, {0,8}, {0,6}, {-2,6}, {-2,0}};
-	zb.addVacancy(ps2);
+	zb.annexVacancy(ps2);
 
 	PointList ps3 = { {0,0},{10,0},{10,5},{5,5},{5,10},{0,10} };
-	zb.addVacancy(ps3);
+	zb.annexVacancy(ps3);
 	
 	PointList ps4 = { {0,0},{10,0},{10,10},{6,10},{6,4},{4,4},{4,10},{0,10} };
-	zb.addVacancy(ps4);
+	zb.annexVacancy(ps4);
 
 	std::vector<Eigen::Vector2d> rectangles = {
 		{10,1.4},{10,1.4}, {0.3,0.8},{0.3,0.8},{0.3,4.8}, {1,0.5},{1,0.5},{1,0.5},{1,0.5},{0.3,0.8},{0.3,0.8},{0.3,4.8}, {1,0.5},{1,0.5},{1,0.5},{1,0.5},{1,0.5},{1,0.5},{6,6},{7,6},{8,6},{9,6}, {4,4},{1,1},{1,1},{1,1},{1,1},{1,1},{3,2},{3,3},{1,8},{2,2},{4,4},{5,1},{4,2},{2,2},{9,2},{5,5},{3,1}
 	};
 
-	zb.setRectangles(rectangles);
+	zb.setApplicantRectangles(rectangles);
 	zb.zone();
 
 	svgvis::ZoningCartographerSVG zsvg;
@@ -1145,16 +1145,16 @@ void example_zoning_board3() {
 
 	PointList ps = { {0,0},{10,0},{10,10},{0,10} };
 	std::vector<std::vector<int>> es = { {0,1},{1,2},{2,3},{3,0} };
-	zb.addVacancy(ps, es);
+	zb.annexVacancy(ps, es);
 
 	PointList ps2 = { {0,0}, {0,-2}, {6,-2}, {6,0}, {8,0}, {8,6}, {6,6}, {6,8}, {0,8}, {0,6}, {-2,6}, {-2,0} };
-	zb.addVacancy(ps2);
+	zb.annexVacancy(ps2);
 
 	PointList ps3 = { {0,0},{10,0},{10,5},{5,5},{5,10},{0,10} };
-	zb.addVacancy(ps3);
+	zb.annexVacancy(ps3);
 
 	PointList ps4 = { {0,0},{10,0},{10,10},{6,10},{6,4},{4,4},{4,10},{0,10} };
-	zb.addVacancy(ps4);
+	zb.annexVacancy(ps4);
 
 	std::vector<Eigen::Vector2d> rectangles = {
 		{2,2},{3,3},{4,4},{1,5},{3.8,4.2},{1.3,1.4}
@@ -1164,7 +1164,7 @@ void example_zoning_board3() {
 		5,10,15,7,9,6
 	};
 
-	zb.setRectangles(rectangles, multiplicities);
+	zb.setApplicantRectangles(rectangles, multiplicities);
 	zb.zone();
 
 	svgvis::ZoningCartographerSVG zsvg;
@@ -1181,7 +1181,7 @@ void example_zoning_board4() {
 
 	PointList ps = { {0,0},{10,0},{10,10},{0,10}, {4,4},{6,4},{6,6},{4,6}};
 	std::vector<std::vector<int>> es = { {0,1},{1,2},{2,3},{3,0},{4,5},{5,6},{6,7},{7,4} };
-	zb.addVacancy(ps, es);
+	zb.annexVacancy(ps, es);
 
 	std::vector<Eigen::Vector2d> rectangles = {
 		{5,5}
@@ -1191,7 +1191,7 @@ void example_zoning_board4() {
 		5
 	};
 
-	zb.setRectangles(rectangles, multiplicities);
+	zb.setApplicantRectangles(rectangles, multiplicities);
 	zb.zone();
 
 	svgvis::ZoningCartographerSVG zsvg;
