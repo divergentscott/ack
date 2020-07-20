@@ -33,8 +33,9 @@ void ZoningBoard::annexVacancy(const std::vector<Eigen::Vector2d>& grid_points,
 	vac.lines_ = lines;
 	vac.multiplicity_ = multiplicity;
 	//!!!! check that this is a valid cardinal curve before continuing any further.
-	// Shouls also check for nested boundary components
+	// Should also check for nested boundary components
 	// too easy to give garbage input here.
+	// Better warn about non-simply connected vacancies as well.
 	vacancies_.push_back(vac);
 };
 
@@ -86,18 +87,24 @@ void ZoningBoard::zone(){
 		}
 	}
 
+	vacancy_clone_parent_ids_.reserve(vacancies_.size());
+
 	std::vector<ZoningCommisioner> zcs;
 	zcs.reserve(vacancies_.size());
-    for (const Vacancy& vc: vacancies_){
-        ZoningCommisioner zc;
-        zc.insertCurves(vc.grid_points_, vc.lines_);
-        zc.populateNeighbors();
-        zc.constructZoneCovering();
-		zcs.push_back(zc);
-    }
-    for (auto foo=0; foo<applicants_.size(); foo++){
-        Applicant& app = applicants_[foo];
+	//for (auto vac_foo = 0; vac_foo < vacancies_.size(); vac_foo++) {
+	//	Vacancy& vc = vacancies_[vac_foo];
+ //       ZoningCommisioner zc;
+ //       zc.insertCurves(vc.grid_points_, vc.lines_);
+ //       zc.populateNeighbors();
+ //       zc.constructZoneCovering();
+	//	zcs.push_back(zc);
+	//	vacancy_clone_parent_ids_.push_back(vac_foo);
+	//	vc.num_copies_++;
+ //   }
+    for (auto app_foo=0; app_foo<applicants_.size(); app_foo++){
+        Applicant& app = applicants_[app_foo];
         for (auto mult = 0; mult < app.multiplicity; mult++){
+			// First try to place with an existing commisioner. 
             Placement placement;
             bool is_placed = false;
             for (auto zc_foo = 0; zc_foo < zcs.size(); zc_foo++){
@@ -109,15 +116,45 @@ void ZoningBoard::zone(){
                 }
                 if (is_placable){
                     is_placed = true;
-                    placement.vacancy_id = zc_foo;
-                    placements_[foo].push_back(placement);
+                    placement.vacancy_clone_id = zc_foo;
+                    placements_[app_foo].push_back(placement);
                     zc.zoneOff(placement.position, app.width, app.height);
                     break; //Already placed. No more commisioners need to try.
                 }
             }
+			// If not placed yet, see if cloning a vacancy to a new commisioner will work
             if (!is_placed){
-				denials_.push_back({app.width, app.height});
-                break; //No need to place more, break the loop on mult
+				// See if you can spawn another zone that will accomodate the applicant
+				for (auto vac_foo = 0; vac_foo < vacancies_.size(); vac_foo++) {
+					Vacancy& vc = vacancies_[vac_foo];
+					if ((vc.num_copies_ < vc.multiplicity_) | (vc.multiplicity_ < 0)) {
+						ZoningCommisioner zc;
+						zc.insertCurves(vc.grid_points_, vc.lines_);
+						zc.populateNeighbors();
+						zc.constructZoneCovering();
+						bool is_placable = zc.findPlacement(app.width, app.height, placement.position);
+						if (!is_placable & allow_rotations) {
+							is_placable = zc.findPlacement(app.height, app.width, placement.position);
+							if (is_placable) placement.rotated = true;
+						}
+						if (is_placable) {
+							is_placed = true;
+							zc.zoneOff(placement.position, app.width, app.height);
+							zcs.push_back(zc);
+							vacancy_clone_parent_ids_.push_back(vac_foo);
+							vc.num_copies_++;
+							int zc_foo = zcs.size()-1;
+							placement.vacancy_clone_id = zc_foo;
+							placements_[app_foo].push_back(placement);
+							break; //Already placed. No need to try more vacancies.
+						}
+					}
+				}
+				// Give up and decide the applicant cannot be placed.
+				if (!is_placed) {
+					denials_.push_back({ app.width, app.height });
+					break; //No need to place more, break the loop on mult
+				}
             }
         }
     }

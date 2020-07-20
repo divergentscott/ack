@@ -167,11 +167,9 @@ void ZoningCartographerSVG::writeScalableVectorGraphics(const std::string& outfi
 };
 
 void ZoningCartographerSVG::addZoningBoardReport(const ZoningBoard zb) {
-	//!!!! This is broken for vacancy multiplicity.
-	std::vector<Eigen::Vector2d> vis_offsets(zb.vacancies_.size() + 1);
+	// Visualize the zoning board conclusions
 	std::vector<double> west(zb.vacancies_.size() + 1);
 	std::vector<double> east(zb.vacancies_.size() + 1);
-	vis_offsets[0] = { 0,0 };
 	//find offsets for each vacancy to visualize together
 	for (auto foo = 0; foo < zb.vacancies_.size(); foo++) {
 		const Vacancy& vac = zb.vacancies_[foo];
@@ -189,15 +187,31 @@ void ZoningCartographerSVG::addZoningBoardReport(const ZoningBoard zb) {
 		east[foo] = (*max_foo)[0];
 	};
 	//
-	for (auto foo = 0; foo < zb.vacancies_.size() + 1; foo++) {
-		vis_offsets[foo] = {-west[foo], 0};
-		if (foo > 0) {
-			vis_offsets[foo][0] += vis_offsets[foo - 1][0] + (east[foo - 1] - west[foo - 1]) * 1.1;
-		}
+	//Compute placement offsets for all the vacancy clones and the denial pile
+	auto num_clones = zb.vacancy_clone_parent_ids_.size();
+	std::vector<Eigen::Vector2d> vis_offsets(num_clones + 1, {0,0});
+	if (num_clones > 0) {
+		vis_offsets[0] = { -west[zb.vacancy_clone_parent_ids_[0]], 0 };
 	}
+	else {
+		vis_offsets[0] = { 0,0 };
+	}
+	for (auto foo = 1; foo < zb.vacancy_clone_parent_ids_.size(); foo++) {
+		auto last_vac_id = zb.vacancy_clone_parent_ids_[foo-1];
+		auto this_vac_id = zb.vacancy_clone_parent_ids_[foo];
+		vis_offsets[foo][0] += vis_offsets[foo - 1][0] + (east[last_vac_id] - west[last_vac_id]) * 1.1 - west[this_vac_id];
+	}
+	//Last placement is for the denial pile
+	if (num_clones > 0) {
+		auto last_vac_id = zb.vacancy_clone_parent_ids_[num_clones-1];
+		vis_offsets[num_clones][0] += vis_offsets[num_clones - 1][0] + (east[last_vac_id] - west[last_vac_id]) * 1.1;
+	}
+
 	//
-	for (auto foo = 0; foo < zb.vacancies_.size(); foo++) {
-		const Vacancy& vac = zb.vacancies_[foo];
+	// Now draw all the vacancy clones
+	for (auto foo = 0; foo < num_clones; foo++) {
+		auto vac_id = zb.vacancy_clone_parent_ids_[foo];
+		const Vacancy& vac = zb.vacancies_[vac_id];
 		PointList offsetpoints;
 		offsetpoints.reserve(vac.grid_points_.size());
 		for (const auto &pp : vac.grid_points_) offsetpoints.push_back(pp + vis_offsets[foo]);
@@ -206,18 +220,20 @@ void ZoningCartographerSVG::addZoningBoardReport(const ZoningBoard zb) {
 		addCardinalCurveCollection(ccc, "black");
 	}
 	//
-	for (auto vac_foo = 0; vac_foo < zb.vacancies_.size(); vac_foo++) {
-		const Vacancy& vac = zb.vacancies_[vac_foo];
+	// Now draw all the rectangles.
+	for (auto clone_foo = 0; clone_foo < num_clones; clone_foo++) {
+		auto vac_id = zb.vacancy_clone_parent_ids_[clone_foo];
+		const Vacancy& vac = zb.vacancies_[vac_id];
 		//Need to do some vacancy multiplying here.
 		for (auto bar = 0; bar < zb.applicants_.size(); bar++) {
 			const Applicant& appli = zb.applicants_[bar];
 			for (const Placement& pp : zb.placements_[bar]) {
-				if (pp.vacancy_id == vac_foo) {
+				if (pp.vacancy_clone_id == clone_foo) {
 					if (!pp.rotated) {
-						addRectangle(pp.position + vis_offsets[vac_foo], appli.width, appli.height);
+						addRectangle(pp.position + vis_offsets[clone_foo], appli.width, appli.height);
 					}
 					else {
-						addRectangle(pp.position + vis_offsets[vac_foo], appli.height, appli.width);
+						addRectangle(pp.position + vis_offsets[clone_foo], appli.height, appli.width);
 					}
 				}
 			}

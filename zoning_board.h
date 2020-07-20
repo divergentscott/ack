@@ -29,11 +29,12 @@ struct Vacancy{
     std::vector<Eigen::Vector2d> grid_points_;
     std::vector<std::vector<int>> lines_;
 	int multiplicity_;
+	int num_copies_ = 0;
 };
 
 struct Placement{
     Eigen::Vector2d position;
-    int vacancy_id;
+    int vacancy_clone_id;
     bool rotated = false;
 };
 
@@ -43,13 +44,15 @@ public:
     ZoningStratgey strategy_ = ZoningStratgey::kBottomLeft;
     bool allow_rotations = false;
     std::vector<Applicant> applicants_; // rectangles to pack width x height
-    std::vector<std::vector<Placement>> placements_;
+	std::vector<int> vacancy_clone_parent_ids_; // Points to the vacancy that a clone came from.
+	std::vector<std::vector<Placement>> placements_;
     std::vector<Vacancy> vacancies_;
 	std::vector<Eigen::Vector2d> denials_;
     void sortApplicants();
     
 public:
     ZoningBoard(){};
+	// Negative multiplicities are used to indicate no limit.
 	void annexVacancy(const std::vector<Eigen::Vector2d>& grid_points,
 		const int multiplicity = 1);
     void annexVacancy(const std::vector<Eigen::Vector2d>& grid_points,

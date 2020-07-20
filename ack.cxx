@@ -1199,18 +1199,63 @@ void example_zoning_board4() {
 	zsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/zb4.svg");
 };
 
+void example_zoning_board5() {
+	// Example with a set number of rectangles to pack and an arbitrary number of vacancy copies
+	ZoningBoard zb;
+
+	PointList ps = { {0,0},{10,0},{10,10},{0,10}};
+	std::vector<std::vector<int>> es = { {0,1},{1,2},{2,3},{3,0}};
+	
+	zb.annexVacancy(ps, es, -1);
+
+	std::vector<Eigen::Vector2d> rectangles = {
+		{5,5}
+	};
+
+	std::vector<int> multiplicities = {
+		21
+	};
+
+	zb.setApplicantRectangles(rectangles, multiplicities);
+	zb.zone();
+
+	svgvis::ZoningCartographerSVG zsvg;
+	zsvg.addZoningBoardReport(zb);
+	zsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/zb5.svg");
+};
+
+void example_zoning_board6() {
+	// Example with a set number of rectangles to pack and an arbitrary number of vacancy copies
+	ZoningBoard zb;
+
+	PointList ps = { {0,0},{10,0},{10,10},{0,10} };
+	std::vector<std::vector<int>> es = { {0,1},{1,2},{2,3},{3,0} };
+	zb.annexVacancy(ps, es, 3);
+
+	std::vector<Eigen::Vector2d> rectangles = {
+		{5,5}
+	};
+
+	std::vector<int> multiplicities = {
+		21
+	};
+
+	zb.setApplicantRectangles(rectangles, multiplicities);
+	zb.zone();
+
+	svgvis::ZoningCartographerSVG zsvg;
+	zsvg.addZoningBoardReport(zb);
+	zsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/zb6.svg");
+};
+
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
-	example_zoning_board1();
+	//example_zoning_board1();
 	example_zoning_board2();
-	example_zoning_board3();
-	example_zoning_board4();
-	example_125();
-	example_135();
-	example_15();
-	example_14();
-	example_13();
-	example_12();
+	//example_zoning_board3();
+	//example_zoning_board4();
+	//example_zoning_board5();
+	//example_zoning_board6();
 	std::cout << "end" << std::endl;
 }
 
