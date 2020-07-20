@@ -754,8 +754,26 @@ void example_14() {
 //{6.9, 4.4}, { 6.6,3.3 },
 
 void example_15() {
-	std::vector<Eigen::Vector2d> points = { {0,0}, {1,0}, {1,-1}, {3.4,-1}, {3.4,-.6}, {5,-.6}, {5,-2.5}, {6,-2.5}, {6,-3}, {8.4,-3}, {8.4,5}, {0,5} };
-	std::vector<std::vector<int>> somelines = { {0,1},{1,2},{2,3},{3,4},{4,5},{5,6},{6,7}, {7,8}, {8,9}, {9,10}, {10,11}, {11,0}};
+	std::vector<Eigen::Vector2d> points = {
+		{0,0},
+		{10,0},
+		{10,10},
+		{0,10},
+		{0,6},
+		{6,6},
+		{6,4},
+		{0,4},
+	};
+	std::vector<std::vector<int>> somelines = {
+		{0,1},
+		{1,2},
+		{2,3},
+		{3,4},
+		{4,5},
+		{5,6},
+		{6,7},
+		{7,0},
+	};
 	//
 	ZoningCommisioner wild;
 	wild.insertCurves(points, somelines);
@@ -772,8 +790,8 @@ void example_15() {
 		Eigen::Vector2d placement;
 		bool is_placable = wild.findPlacement(width, height, placement);
 		for (auto &t : wild.trails_) {
-			//wsvg.addCardinalPath(t.landmarks_uptown_, "blue");
-			//wsvg.addCardinalPath(t.landmarks_downtown_, "green");
+			wsvg.addCardinalPath(t.landmarks_uptown_, "blue");
+			wsvg.addCardinalPath(t.landmarks_downtown_, "green");
 			Surveyor caliper_hiker(t, width, height);
 			caliper_hiker.hike();
 			wsvg.addCardinalPath(caliper_hiker.camps_downtown_, "red");
@@ -1155,7 +1173,10 @@ void example_zoning_board3() {
 };
 
 void example_zoning_board4() {
-	//!!!! Can we deal with an 0?
+	//!!!! Can we deal with a non-simply connected example?
+	// This non-simply connected vacancy will really screw the packer up.
+	// Probably requires a good chunk of work to test for.
+	// Need to prevent infinite loops though.
 	ZoningBoard zb;
 
 	PointList ps = { {0,0},{10,0},{10,10},{0,10}, {4,4},{6,4},{6,6},{4,6}};
@@ -1163,11 +1184,11 @@ void example_zoning_board4() {
 	zb.addVacancy(ps, es);
 
 	std::vector<Eigen::Vector2d> rectangles = {
-		{2,2},{3,3},{4,4},{1,5},{3.8,4.2},{1.3,1.4}
+		{5,5}
 	};
 
 	std::vector<int> multiplicities = {
-		5,10,15,7,9,6
+		5
 	};
 
 	zb.setRectangles(rectangles, multiplicities);
@@ -1180,12 +1201,16 @@ void example_zoning_board4() {
 
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
+	example_zoning_board1();
+	example_zoning_board2();
 	example_zoning_board3();
-	//example_125();
-	//example_135();
-//	example_13() ;
-	//example_15();
-	//example_14();
+	example_zoning_board4();
+	example_125();
+	example_135();
+	example_15();
+	example_14();
+	example_13();
+	example_12();
 	std::cout << "end" << std::endl;
 }
 

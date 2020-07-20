@@ -59,9 +59,7 @@ struct ZoningCommisioner{
     NeighborhoodShape getNeighborhoodShape(int dim_of_interest, double pos_prev, double pos_foo, double pos_next);
     
     void populateNeighbors();
-    
-    void nextCollideNorth(const Eigen::Vector2d &origin, const bool &is_following_orientation, int &point_at, int &edge_at, Eigen::Vector2d &impact);
-    
+        
     Zone trailblaze(int start_edge_id);
     
     void trailblaze();

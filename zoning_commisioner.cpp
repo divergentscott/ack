@@ -116,32 +116,32 @@ void ZoningCommisioner::populateNeighbors(){
     };
 };
     
-void ZoningCommisioner::nextCollideNorth(const Eigen::Vector2d &origin, const bool &is_following_orientation, int &point_at, int &edge_at, Eigen::Vector2d &impact){
-    //Continue along, testing horizontal edges for an impact
-    //Advances the point and edge location.
-    bool is_impact = false;
-    if (is_following_orientation){
-        edge_at = vacant_.get_next_edge(edge_at);
-        point_at = vacant_.get_next_point(point_at);
-    } else {
-        edge_at = vacant_.get_prev_edge(edge_at);
-        point_at = vacant_.get_prev_point(point_at);
-    }
-    while (!is_impact){
-        if (is_following_orientation){
-            edge_at = vacant_.get_next_edge(edge_at);
-            point_at = vacant_.get_next_point(point_at);
-        } else {
-            edge_at = vacant_.get_prev_edge(edge_at);
-            point_at = vacant_.get_prev_point(point_at);
-        }
-        if (edge_at == eastmost_frontier_id_) break; //?
-        if (vacant_.is_horizontals_[edge_at]){
-			bool _;
-            is_impact = rayNorthSegmentIntersect(origin, getCedge(edge_at,_), impact);
-        }
-    }
-};
+//void ZoningCommisioner::nextCollideNorth(const Eigen::Vector2d &origin, const bool &is_following_orientation, int &point_at, int &edge_at, Eigen::Vector2d &impact){
+//    //Continue along, testing horizontal edges for an impact
+//    //Advances the point and edge location.
+//    bool is_impact = false;
+//    if (is_following_orientation){
+//        edge_at = vacant_.get_next_edge(edge_at);
+//        point_at = vacant_.get_next_point(point_at);
+//    } else {
+//        edge_at = vacant_.get_prev_edge(edge_at);
+//        point_at = vacant_.get_prev_point(point_at);
+//    }
+//    while (!is_impact){
+//        if (is_following_orientation){
+//            edge_at = vacant_.get_next_edge(edge_at);
+//            point_at = vacant_.get_next_point(point_at);
+//        } else {
+//            edge_at = vacant_.get_prev_edge(edge_at);
+//            point_at = vacant_.get_prev_point(point_at);
+//        }
+//        if (edge_at == eastmost_frontier_id_) break; //?
+//        if (vacant_.is_horizontals_[edge_at]){
+//			bool _;
+//            is_impact = rayNorthSegmentIntersect(origin, getCedge(edge_at,_), impact);
+//        }
+//    }
+//};
 
 Zone ZoningCommisioner::trailblaze(int start_edge_id){
     Zone patrol;
@@ -206,7 +206,14 @@ Zone ZoningCommisioner::trailblaze(int start_edge_id){
         Eigen::Vector2d impact;
         p_at = pids[0];
         Eigen::Vector2d loc = vacant_.get_point(p_at);
-        nextCollideNorth(loc, is_following_orient, p_at, e_at, impact);
+		bool is_a_ceil = vacant_.rayTraceNorth(loc, impact, e_at);
+		if (!is_a_ceil) throw std::logic_error("Error in zone covering.");
+		if (is_following_orient) {
+			p_at = vacant_.get_points_of_edge(e_at)[1];
+		} else {
+			p_at = vacant_.get_points_of_edge(e_at)[0];
+		}
+        //nextCollideNorth(loc, is_following_orient, p_at, e_at, impact);
         patrol.landmarks_uptown_.push_back(impact);
     }
     patrol.landmarks_uptown_.push_back(vacant_.get_point(p_at));
@@ -225,21 +232,31 @@ Zone ZoningCommisioner::trailblaze(int start_edge_id){
             patrol.landmarks_uptown_.push_back(vacant_.get_point(p_at));
             is_end_found = true;
         } else {
-            //check if the you hit a westnotch and need to project north
-            if(shapes_[e_at] == NeighborhoodShape::kNotchWest){
-                Eigen::Vector2d impact;
-                int p_prev;
-                if (is_following_orient){
-                    p_prev = vacant_.get_prev_point(p_at);
-                } else {
-                    p_prev = vacant_.get_next_point(p_at);
-                }
-                Eigen::Vector2d loc = vacant_.get_point(p_prev);
-                nextCollideNorth(loc, is_following_orient, p_at, e_at, impact);
-                if (e_at == eastmost_frontier_id_) std::cout << "Next collide hit easten frontier.";
-                patrol.landmarks_uptown_.push_back(impact);
-                Eigen::Vector2d landmark = vacant_.get_point(p_at);
-                patrol.landmarks_uptown_.push_back(landmark);
+			//check if the you hit a westnotch and need to project north
+			if (shapes_[e_at] == NeighborhoodShape::kNotchWest) {
+				// The outsideside matter here, why isn't it considered?
+				int p_prev;
+				if (is_following_orient) {
+					p_prev = vacant_.get_prev_point(p_at);
+				}
+				else {
+					p_prev = vacant_.get_next_point(p_at);
+				}
+				Eigen::Vector2d loc = vacant_.get_point(p_prev);
+				Eigen::Vector2d impact;
+				bool is_a_ceil = vacant_.rayTraceNorth(loc + Eigen::Vector2d({repsilon,0}), impact, e_at);
+				if (!is_a_ceil) throw std::logic_error("Error in zone covering: Nothing is north of current position!");
+
+				if (is_following_orient) {
+					p_at = vacant_.get_points_of_edge(e_at)[1];
+				}
+				else {
+					p_at = vacant_.get_points_of_edge(e_at)[0];
+				}
+				patrol.landmarks_uptown_.push_back(impact);
+				Eigen::Vector2d landmark = vacant_.get_point(p_at);
+				patrol.landmarks_uptown_.push_back(landmark);
+
             } else {
                 Eigen::Vector2d landmark = vacant_.get_point(p_at);
                 patrol.landmarks_uptown_.push_back(landmark);
