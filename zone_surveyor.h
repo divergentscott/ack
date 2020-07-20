@@ -14,7 +14,7 @@
 
 #include <Eigen/Dense>
 
-#include "cabbie_curve_collection.h"
+#include "cardinal_curve_collection.h"
 
 struct Zone{
     // Zones cover the vacant lot.

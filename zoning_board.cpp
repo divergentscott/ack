@@ -75,12 +75,17 @@ void ZoningBoard::sortApplicants(){
 };
 
 void ZoningBoard::zone(){
-    sortApplicants();
-	std::cout << "RECTANGLES:" << std::endl;
-	for (const auto& app : applicants_) {
-		std::cout << "{" << app.width << ", " << app.height << "}," << std::endl;
+
+	sortApplicants();
+
+	if (false) {
+		std::cout << "RECTANGLES:" << std::endl;
+		for (const auto& app : applicants_) {
+			std::cout << "{" << app.width << ", " << app.height << "}," << std::endl;
+		}
 	}
-    std::vector<ZoningCommisioner> zcs;
+
+	std::vector<ZoningCommisioner> zcs;
 	zcs.reserve(vacancies_.size());
     for (const Vacancy& vc: vacancies_){
         ZoningCommisioner zc;
