@@ -1248,14 +1248,82 @@ void example_zoning_board6() {
 	zsvg.writeScalableVectorGraphics("C:/Users/sscott/Programs/ack/zb6.svg");
 };
 
+#include "vtkConvexHull2D.h"
+#include "vtkOBBTree.h"
+#include "vtkOutlineFilter.h"
+#include "vtkPoints.h"
+#include "vtkPolyData.h"
+#include "vtkSTLReader.h"
+#include "vtkUnstructuredGrid.h"
+#include "vtkXMLPolyDataWriter.h"
+#include "vtkXMLUnstructuredGridWriter.h"
+
+#include "boost/filesystem/path.hpp"
+
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
-	//example_zoning_board1();
-	example_zoning_board2();
-	//example_zoning_board3();
-	//example_zoning_board4();
-	//example_zoning_board5();
-	//example_zoning_board6();
+	//boost::filesystem::path in_path = "C:/Users/sscott/Pictures/trex_connected.stl";
+	boost::filesystem::path in_path = "C:/Users/sscott/Pictures/trex_connected_rot.stl";
+	auto reader = vtkSmartPointer<vtkSTLReader>::New();
+	reader->SetFileName(in_path.string().c_str());
+	reader->Update();
+	auto in_poly = reader->GetOutput();
+	auto planar_pts = vtkSmartPointer<vtkPoints>::New();
+	for (auto foo = 0; foo < in_poly->GetNumberOfPoints(); foo++) {
+		double planar_pt[3];
+		in_poly->GetPoints()->GetPoint(foo, planar_pt);
+		planar_pt[2] = 0;
+		planar_pts->InsertNextPoint(planar_pt);
+	}
+
+	auto planar_polydata = vtkSmartPointer<vtkPolyData>::New();
+	planar_polydata->SetPoints(planar_pts);
+
+	auto huller = vtkSmartPointer<vtkConvexHull2D>::New();
+	huller->SetInputData(planar_polydata);
+	huller->Update();
+	auto hull = huller->GetOutput();
+
+	auto writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+	//boost::filesystem::path outline_path = "C:/Users/sscott/Programs/ack/ack_outline.vtu";
+	boost::filesystem::path hull_path = "C:/Users/sscott/Programs/ack/ack_hull.vtp";
+	writer->SetInputData(hull);
+	writer->SetFileName(hull_path.string().c_str());
+	writer->Write();
+
+	
+	auto obbtree = vtkSmartPointer<vtkOBBTree>::New();
+	Eigen::Vector3d corner;
+	Eigen::Vector3d max;
+	Eigen::Vector3d mid;
+	Eigen::Vector3d min;
+	Eigen::Vector3d size;
+	obbtree->ComputeOBB(hull, corner.data(), max.data(), mid.data(), min.data(), size.data());
+	auto box_pts = vtkSmartPointer<vtkPoints>::New();
+	box_pts ->InsertNextPoint(corner.data());
+	Eigen::Vector3d c1 = (corner + max);
+	box_pts->InsertNextPoint(c1.data());
+	Eigen::Vector3d c2 = (corner + max + mid);
+	box_pts->InsertNextPoint(c2.data());
+	Eigen::Vector3d c3 = (corner + mid);
+	box_pts->InsertNextPoint(c3.data());
+	auto ugrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
+	ugrid->SetPoints(box_pts);
+	auto ptIdList = vtkSmartPointer<vtkIdList>::New();
+	ptIdList->InsertNextId(0);
+	ptIdList->InsertNextId(1);
+	ptIdList->InsertNextId(2);
+	ptIdList->InsertNextId(3);
+	ugrid->InsertNextCell(VTKCellType::VTK_QUAD, ptIdList);
+
+
+	auto writer2 = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
+	//boost::filesystem::path outline_path = "C:/Users/sscott/Programs/ack/ack_outline.vtu";
+	boost::filesystem::path outline_path = "C:/Users/sscott/Programs/ack/ack_outline_rot.vtu";
+	writer2->SetInputData(ugrid);
+	writer2->SetFileName(outline_path.string().c_str());
+	writer2->Write();
+
 	std::cout << "end" << std::endl;
 }
 
