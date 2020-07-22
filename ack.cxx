@@ -1276,7 +1276,7 @@ void example_bound_box(){
     
     PlanarBoxBounder pbb;
     pbb.surface_ = in_poly;
-    pbb.projection_normal_ = {1, 1, 0};
+    pbb.projection_normal_ = {-1, 4, 1};
     pbb.projection_normal_.normalize();
     pbb.projectToHull();
     

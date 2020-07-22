@@ -52,9 +52,6 @@ Eigen::Matrix4d PlanarBoxBounder::computeMeshFrameTransform(){
     if ((projection_normal_ - zz).norm() > repsilon){
         Eigen::Vector3d xx = (projection_normal_.cross(zz)).normalized();
         Eigen::Vector3d yy = (projection_normal_.cross(xx)).normalized();
-        std::cout << "x is " << xx.transpose() << std::endl;
-        std::cout << "y is " << yy.transpose() << std::endl;
-        std::cout << "z is " << zz.transpose() << std::endl;
         rotT.block(0,0,3,1) = xx;
         rotT.block(0,1,3,1) = yy;
         rotT.block(0,2,3,1) = projection_normal_;
@@ -88,7 +85,6 @@ void PlanarBoxBounder::projectToHull(){
     proj_mat(2,2) = 0.0;
     proj_mat = proj_mat * transform_;
     
-    std::cout << proj_mat << std::endl;
     auto planar_pts = vtkSmartPointer<vtkPoints>::New();
     for (auto foo = 0; foo < surface_->GetNumberOfPoints(); foo++) {
         Eigen::Vector4d non_planar_pt = {0.0,0.0,0.0,1.0};
@@ -110,11 +106,6 @@ void PlanarBoxBounder::projectToHull(){
     corner_ = corner;
     box_x_dir_ = longest_side;
     box_y_dir_ = middlest_side;
-    //!!!!
-    std::cout << "corner " << corner.transpose() << std::endl;
-    std::cout << "longest " << longest_side.transpose() << std::endl;
-    std::cout << "middlest " << middlest_side.transpose() << std::endl;
-    std::cout << "lil " << _lilside.transpose() << std::endl;
     // w by h //
     width = longest_side.norm();
     height = middlest_side.norm();
@@ -122,7 +113,6 @@ void PlanarBoxBounder::projectToHull(){
     Eigen::Vector3d rect_center = corner + 0.5 * longest_side + 0.5 * middlest_side;
     Eigen::Matrix4d shift_rc = Eigen::Matrix4d::Identity();
     shift_rc.block(0,3,3,1) = -rect_center;
-    std::cout << " rect middle " << rect_center.transpose() << std::endl;
     transform_ = shift_rc * transform_;
     //rotation to align longest direction to x
     Eigen::Matrix4d rot_rc = Eigen::Matrix4d::Identity();
@@ -132,28 +122,31 @@ void PlanarBoxBounder::projectToHull(){
     rot_rc(1,0) = -lhat[1];
     rot_rc(1,1) = lhat[0];
     transform_ = rot_rc * transform_;
+    //Fix the z translation
+    Eigen::Matrix4d shift_z = Eigen::Matrix4d::Identity();
+    Eigen::Vector3d tpn = transform_.block(0,0,3,3) * projection_normal_;
+    if (tpn[2] > 0){
+        //The projection normal is sent to positive z.
+        shift_z(2,3) = -z_span_[0];
+    } else {
+        //The projection normal is sent to negative z.
+        shift_z(1,1) = -1;
+        shift_z(2,2) = -1;
+        shift_z(2,3) = -z_span_[1];
+    }
+    transform_ = shift_z * transform_;
     // shift bottom left corner to origin
-    // shift up to the positive z
     // result should be in strictly positive octant
     Eigen::Vector3d bottom_left = { - 0.5 * width,  - 0.5 * height, 0};
-    std::cout << " bottom left " << bottom_left.transpose() << std::endl;
     Eigen::Matrix4d shift_bl = Eigen::Matrix4d::Identity();
     shift_bl.block(0,3,3,1) = -bottom_left;
-    shift_bl(2,3) = -z_span_[0];
     transform_ = shift_bl * transform_;
-    std::cout << "full transform: " << std::endl;
-    std::cout << transform_ << std::endl;
 };
 
 vtkSmartPointer<vtkPolyData> PlanarBoxBounder::getTransformedSurface(){
     auto vtk_transform = vtkSmartPointer<vtkTransform>::New();
     Eigen::Matrix4d transposed = transform_.transpose();
-    
-    auto iter = transform_.data();
-    std::cout << "Transform as array is " << std::endl;
-    for (auto foo=0; foo<16; foo++) std::cout << *(transform_.data()+foo) << " ";
-    std::cout << std::endl;
-    
+        
     vtk_transform->SetMatrix(transposed.data());
     
     auto transformer = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
