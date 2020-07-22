@@ -35,6 +35,7 @@ public:
 	void populateSlopes();
 	bool rayTraceEast(const Eigen::Vector2d &origin, Eigen::Vector2d &impact, int& impact_edge_id);
 	bool rayTraceNorth(const Eigen::Vector2d &origin, Eigen::Vector2d &impact, int& impact_edge_id);
+	void generateFromDifferenceSequence(std::vector<double> ss, double scale = 1);
 };
 
 bool rayNorthSegmentIntersect(const Eigen::Vector2d &origin, const Hedge &segment,  Eigen::Vector2d &impact);

@@ -91,16 +91,6 @@ void ZoningBoard::zone(){
 
 	std::vector<ZoningCommisioner> zcs;
 	zcs.reserve(vacancies_.size());
-	//for (auto vac_foo = 0; vac_foo < vacancies_.size(); vac_foo++) {
-	//	Vacancy& vc = vacancies_[vac_foo];
- //       ZoningCommisioner zc;
- //       zc.insertCurves(vc.grid_points_, vc.lines_);
- //       zc.populateNeighbors();
- //       zc.constructZoneCovering();
-	//	zcs.push_back(zc);
-	//	vacancy_clone_parent_ids_.push_back(vac_foo);
-	//	vc.num_copies_++;
- //   }
     for (auto app_foo=0; app_foo<applicants_.size(); app_foo++){
         Applicant& app = applicants_[app_foo];
         for (auto mult = 0; mult < app.multiplicity; mult++){

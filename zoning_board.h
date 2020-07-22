@@ -45,7 +45,7 @@ public:
     bool allow_rotations = false;
     std::vector<Applicant> applicants_; // rectangles to pack width x height
 	std::vector<int> vacancy_clone_parent_ids_; // Points to the vacancy that a clone came from.
-	std::vector<std::vector<Placement>> placements_;
+	std::vector<std::vector<Placement>> placements_; //indexed by applicant number
     std::vector<Vacancy> vacancies_;
 	std::vector<Eigen::Vector2d> denials_;
     void sortApplicants();

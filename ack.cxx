@@ -7,6 +7,7 @@
 
 #include "zoning_cartographer_svg.h"
 
+std::string path_prefix = "C:";
 
 namespace exda{
     std::vector<Eigen::Vector2d> grid_points = {
@@ -254,7 +255,7 @@ void example7(double width = 3.4, double height = 2.1){
     vv.addCardinalPath(calh.camps_downtown_, funcolors[0]);
     vv.addCardinalPath(calh.camps_uptown_,  funcolors[1]);
     vv.addRectangles(calh.valid_lots_, width, height, funcolors[4]);
-    vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/notchy.svg");
+    vv.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/notchy.svg");
     
 };
 
@@ -311,16 +312,16 @@ void example_basic(std::vector<Eigen::Vector2d> points, std::vector<std::vector<
 
 void example_sev(){
     std::vector<Eigen::Vector2d> points = {{0,0},{10,0},{10,10},{0,10}};
-    example_basic(points, 3.3,2,"/Users/sscott/Programs/ack/basic0.svg");
+    example_basic(points, 3.3,2,path_prefix + "/Users/sscott/Programs/ack/basic0.svg");
     points = {{0,2},{3.3,2},{3.3,0},{10,0},{10,10},{0,10}};
-    example_basic(points, 3.2,1.6,"/Users/sscott/Programs/ack/basic1.svg");
+    example_basic(points, 3.2,1.6,path_prefix + "/Users/sscott/Programs/ack/basic1.svg");
     points = {{0,2},{3.3,2},{3.3,1.6},{6.5,1.6},{6.5,0},{10,0},{10,10},{0,10}};
-    example_basic(points, 3.1,2.3,"/Users/sscott/Programs/ack/basic2.svg");
+    example_basic(points, 3.1,2.3,path_prefix + "/Users/sscott/Programs/ack/basic2.svg");
     points = {{0,2},{3.3,2},{3.3,1.6},{6.5,1.6},{6.5,2.3},{9.6,2.3},{9.6,0},{10,0},{10,10},{0,10}};
-    example_basic(points, 7,1.2,"/Users/sscott/Programs/ack/basic3.svg");
+    example_basic(points, 7,1.2,path_prefix + "/Users/sscott/Programs/ack/basic3.svg");
     points ={{0,3.5}, {7,3.5}, {7,2.3}, {9.6,2.3}, {9.6,0}, {10,0}, {10,10}, {0,10}, {0,2}, {3.3,2}, {3.3,1.6}, {6.5,1.6}, {6.5,2.3}, {0, 2.3}};
     std::vector<std::vector<int>> somelines = {{0,1}, {1,2}, {2,3}, {3,4}, {4,5}, {5,6}, {6,7}, {7,0}, {8,9}, {9,10}, {10,11}, {11,12}, {12,13}, {13,8}};
-    example_basic(points, somelines, 0.3, 0.6,"/Users/sscott/Programs/ack/basic4.svg");
+    example_basic(points, somelines, 0.3, 0.6,path_prefix + "/Users/sscott/Programs/ack/basic4.svg");
 }
 
 void example_9(){
@@ -341,7 +342,7 @@ void example_9(){
             vv.addCardinalPath(t.landmarks_uptown_, "blue");
         }
         vv.addRectangle(place, 0.3, 0.6, "red");
-        vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/ex9.svg");
+        vv.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/ex9.svg");
         std::cout << "Placed at " << place.transpose() << std::endl;
     }
 }
@@ -400,7 +401,7 @@ void example_11(){
 		wild.zoneOff(placement, width, height);
         wsvg.addRectangle(placement, width, height, svgvis::chaosHex());
     }
-    wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example11.svg");
+    wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example11.svg");
 }
 
 void example_12() {
@@ -432,7 +433,7 @@ void example_12() {
 		if (is_placable) {
 			wild.zoneOff(placement, width, height);
 			wsvg.addRectangle(placement, width, height);
-			wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example12.svg");
+			wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example12.svg");
 		}
 		else {
 			wsvg.addRectangle({11,0}, width, height, svgvis::chaosHex());
@@ -447,7 +448,7 @@ void example_12() {
         std::cout << "{ " << ee[0] << ", " << ee[1] << " }," << std::endl;
     }
 
-	wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example12.svg");
+	wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example12.svg");
 }
 
 void example_125() {
@@ -500,7 +501,7 @@ void example_125() {
 		if (is_placable) {
 			wild.zoneOff(placement, width, height);
 			wsvg.addRectangle(placement, width, height);
-			wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example125.svg");
+			wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example125.svg");
 		}
 		else {
 			wsvg.addRectangle({ 11,0 }, width, height, svgvis::chaosHex());
@@ -514,7 +515,7 @@ void example_125() {
 	for (auto ee : wild.vacant_.edges_) {
 		std::cout << "{ " << ee[0] << ", " << ee[1] << " }," << std::endl;
 	}
-	wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example125.svg");
+	wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example125.svg");
 }
 
 
@@ -625,7 +626,7 @@ void example_13() {
 			caliper_hiker.hike();
 			svger.addCardinalPath(caliper_hiker.camps_uptown_, "orange");
 			svger.addCardinalPath(caliper_hiker.camps_downtown_, "red");
-			svger.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example13_"+std::to_string(trail_cnt)+".svg");
+			svger.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example13_"+std::to_string(trail_cnt)+".svg");
 			trail_cnt++;
 		}
 		//for (auto &t : wild.trails_) {
@@ -636,18 +637,18 @@ void example_13() {
 		//	wsvg.addCardinalPath(caliper_hiker.camps_uptown_, "black");
 		//	wsvg.addCardinalPath(caliper_hiker.camps_downtown_, "red");
   //      }
-        wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example13.svg");
+        wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example13.svg");
         //removeRectangle(wild.trails_, placement, width, height);
         if (is_placable) {
             wild.zoneOff(placement, width, height);
             wsvg.addRectangle(placement, width, height);
-            wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example13.svg");
+            wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example13.svg");
         } else {
             wsvg.addRectangle({11,0}, width, height);
-            wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example13.svg");
+            wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example13.svg");
         }
     }
-    wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example13.svg");
+    wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example13.svg");
 }
 
 void example_135() {
@@ -689,7 +690,7 @@ void example_135() {
 			caliper_hiker.hike();
 			svger.addCardinalPath(caliper_hiker.camps_uptown_, "orange");
 			svger.addCardinalPath(caliper_hiker.camps_downtown_, "red");
-			svger.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example135_" + std::to_string(trail_cnt) + ".svg");
+			svger.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example135_" + std::to_string(trail_cnt) + ".svg");
 			trail_cnt++;
 		}
 		//for (auto &t : wild.trails_) {
@@ -700,19 +701,19 @@ void example_135() {
 		//	wsvg.addCardinalPath(caliper_hiker.camps_uptown_, "black");
 		//	wsvg.addCardinalPath(caliper_hiker.camps_downtown_, "red");
   //      }
-		wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example135.svg");
+		wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example135.svg");
 		//removeRectangle(wild.trails_, placement, width, height);
 		if (is_placable) {
 			wild.zoneOff(placement, width, height);
 			wsvg.addRectangle(placement, width, height);
-			wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example135.svg");
+			wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example135.svg");
 		}
 		else {
 			wsvg.addRectangle({ 11,0 }, width, height);
-			wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example135.svg");
+			wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example135.svg");
 		}
 	}
-	wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example135.svg");
+	wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example135.svg");
 }
 
 void example_14() {
@@ -743,13 +744,13 @@ void example_14() {
         if (is_placable) {
             wild.zoneOff(placement, width, height);
             wsvg.addRectangle(placement, width, height);
-            wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example14.svg");
+            wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example14.svg");
         } else {
             wsvg.addRectangle({6,0}, width, height);
-            wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example14.svg");
+            wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example14.svg");
         }
     }
-    wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example14.svg");
+    wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example14.svg");
 }
 //{6.9, 4.4}, { 6.6,3.3 },
 
@@ -782,7 +783,7 @@ void example_15() {
 	//
 	svgvis::ZoningCartographerSVG wsvg;
 	wsvg.addCardinalCurveCollection(wild.vacant_, "black");
-	wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example15.svg");
+	wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example15.svg");
 	std::vector<Eigen::Vector2d> whs = { {2.4,1} };
 	for (auto wh : whs) {
 		double width = wh[0];
@@ -800,14 +801,14 @@ void example_15() {
 		if (is_placable) {
 			wild.zoneOff(placement, width, height);
 			wsvg.addRectangle(placement, width, height);
-			wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example15.svg");
+			wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example15.svg");
 		}
 		else {
 			wsvg.addRectangle({ 10,0 }, width, height);
-			wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example15.svg");
+			wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example15.svg");
 		}
 	}
-	wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example15.svg");
+	wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example15.svg");
 }
 
 void example_test_edge_intersect0(){
@@ -833,13 +834,13 @@ void example_addRectTest0() {
 	svgvis::ZoningCartographerSVG vv0;
 	vv0.addRectangle(position, width, height);
 	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
-	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect0_before.svg");
+	vv0.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_rect0_before.svg");
 
 	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
 	svgvis::ZoningCartographerSVG vv;
 	vv.addRectangle(position, width, height);
 	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
-	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect0.svg");
+	vv.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_rect0.svg");
 }
 
 void example_addRectTest1() {
@@ -852,13 +853,13 @@ void example_addRectTest1() {
 	svgvis::ZoningCartographerSVG vv0;
 	vv0.addRectangle(position, width, height);
 	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
-	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect1_before.svg");
+	vv0.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_rect1_before.svg");
 
 	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
 	svgvis::ZoningCartographerSVG vv;
 	vv.addRectangle(position, width, height);
 	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
-	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect1.svg");
+	vv.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_rect1.svg");
 }
 
 void example_addRectTest2() {
@@ -871,13 +872,13 @@ void example_addRectTest2() {
 	svgvis::ZoningCartographerSVG vv0;
 	vv0.addRectangle(position, width, height);
 	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
-	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect2_before.svg");
+	vv0.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_rect2_before.svg");
 
 	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
 	svgvis::ZoningCartographerSVG vv;
 	vv.addRectangle(position, width, height);
 	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
-	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect2.svg");
+	vv.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_rect2.svg");
 }
 
 void example_addRectTest3() {
@@ -890,13 +891,13 @@ void example_addRectTest3() {
 	svgvis::ZoningCartographerSVG vv0;
 	vv0.addRectangle(position, width, height);
 	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
-	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect3_before.svg");
+	vv0.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_rect3_before.svg");
 
 	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
 	svgvis::ZoningCartographerSVG vv;
 	vv.addRectangle(position, width, height);
 	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
-	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect3.svg");
+	vv.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_rect3.svg");
 }
 
 void example_addRectTest4() {
@@ -909,13 +910,13 @@ void example_addRectTest4() {
 	svgvis::ZoningCartographerSVG vv0;
 	vv0.addRectangle(position, width, height);
 	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
-	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect4_before.svg");
+	vv0.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_rect4_before.svg");
 
 	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
 	svgvis::ZoningCartographerSVG vv;
 	vv.addRectangle(position, width, height);
 	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
-	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect4.svg");
+	vv.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_rect4.svg");
 }
 
 void example_addRectTest5() {
@@ -928,13 +929,13 @@ void example_addRectTest5() {
 	svgvis::ZoningCartographerSVG vv0;
 	vv0.addRectangle(position, width, height);
 	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
-	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect5_before.svg");
+	vv0.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_rect5_before.svg");
 
 	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
 	svgvis::ZoningCartographerSVG vv;
 	vv.addRectangle(position, width, height);
 	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
-	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect5.svg");
+	vv.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_rect5.svg");
 }
 
 void example_addRectTest6() {
@@ -978,13 +979,13 @@ void example_addRectTest6() {
 	svgvis::ZoningCartographerSVG vv0;
 	vv0.addRectangle(position, width, height);
 	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
-	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect6_before.svg");
+	vv0.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_rect6_before.svg");
 
 	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
 	svgvis::ZoningCartographerSVG vv;
 	vv.addRectangle(position, width, height);
 	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
-	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect6.svg");
+	vv.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_rect6.svg");
 }
 
 void example_addRectTest7() {
@@ -1003,13 +1004,13 @@ void example_addRectTest7() {
 	svgvis::ZoningCartographerSVG vv0;
 	vv0.addRectangle(position, width, height);
 	for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
-	vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect7_before.svg");
+	vv0.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_rect7_before.svg");
 
 	std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
 	svgvis::ZoningCartographerSVG vv;
 	vv.addRectangle(position, width, height);
 	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
-	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect7.svg");
+	vv.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_rect7.svg");
 }
 
 void example_addRectTest8() {
@@ -1030,13 +1031,13 @@ void example_addRectTest8() {
     svgvis::ZoningCartographerSVG vv0;
     vv0.addRectangle(position, width, height);
     for (PointList &pl : chains) vv0.addPointList(pl, svgvis::chaosHex());
-    vv0.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect8_before.svg");
+    vv0.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_rect8_before.svg");
 
     std::vector<PointList> pls = addRectangleModZ2(chains, position, width, height);
     svgvis::ZoningCartographerSVG vv;
     vv.addRectangle(position, width, height);
     for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
-    vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_rect8.svg");
+    vv.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_rect8.svg");
 }
 
 void example_curve_update() {
@@ -1047,7 +1048,7 @@ void example_curve_update() {
 	svgvis::ZoningCartographerSVG vv;
 	auto pls = ccc.getPointCycles();
 	for (PointList &pl : pls) vv.addPointList(pl, svgvis::chaosHex());
-	vv.writeScalableVectorGraphics("/Users/sscott/Programs/ack/example_curve_update.svg");
+	vv.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_curve_update.svg");
 }
 
 void example_why_is_trail_fail() {
@@ -1080,19 +1081,19 @@ void example_why_is_trail_fail() {
 		wsvg.addCardinalPath(t.landmarks_uptown_, "blue");
 		wsvg.addCardinalPath(t.landmarks_downtown_, "green");
 	}
-	wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/badtrail.svg");
+	wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/badtrail.svg");
 	bool is_placable = wild.findPlacement(width, height, placement);
 	if (is_placable) {
 		std::cout << "PLACE AT: " << placement.transpose() << std::endl;
 		wild.zoneOff(placement, width, height);
 		wsvg.addPointList(wild.vacant_.points_);
 		//wsvg.addRectangle(placement, width, height);
-		wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/badtrail.svg");
+		wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/badtrail.svg");
 	}
 	else {
 		wsvg.addRectangle({ 11,0 }, width, height);
 	}
-	wsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/badtrail.svg");
+	wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/badtrail.svg");
 }
 
 #include "zoning_board.h"
@@ -1109,7 +1110,7 @@ void example_zoning_board1() {
 	zb.zone();
 	svgvis::ZoningCartographerSVG zsvg;
 	zsvg.addZoningBoardReport(zb);
-	zsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/zb1.svg");
+	zsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/zb1.svg");
 };
 
 void example_zoning_board2() {
@@ -1137,7 +1138,7 @@ void example_zoning_board2() {
 
 	svgvis::ZoningCartographerSVG zsvg;
 	zsvg.addZoningBoardReport(zb);
-	zsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/zb2.svg");
+	zsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/zb2.svg");
 };
 
 void example_zoning_board3() {
@@ -1169,7 +1170,7 @@ void example_zoning_board3() {
 
 	svgvis::ZoningCartographerSVG zsvg;
 	zsvg.addZoningBoardReport(zb);
-	zsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/zb3.svg");
+	zsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/zb3.svg");
 };
 
 void example_zoning_board4() {
@@ -1196,7 +1197,7 @@ void example_zoning_board4() {
 
 	svgvis::ZoningCartographerSVG zsvg;
 	zsvg.addZoningBoardReport(zb);
-	zsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/zb4.svg");
+	zsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/zb4.svg");
 };
 
 void example_zoning_board5() {
@@ -1221,7 +1222,7 @@ void example_zoning_board5() {
 
 	svgvis::ZoningCartographerSVG zsvg;
 	zsvg.addZoningBoardReport(zb);
-	zsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/zb5.svg");
+	zsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/zb5.svg");
 };
 
 void example_zoning_board6() {
@@ -1245,7 +1246,7 @@ void example_zoning_board6() {
 
 	svgvis::ZoningCartographerSVG zsvg;
 	zsvg.addZoningBoardReport(zb);
-	zsvg.writeScalableVectorGraphics("/Users/sscott/Programs/ack/zb6.svg");
+	zsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/zb6.svg");
 };
 
 #include "vtkSTLReader.h"
@@ -1266,7 +1267,7 @@ void _debug_write_polydata( vtkSmartPointer<vtkPolyData> mesh, boost::filesystem
 void example_bound_box(){
 
     //#READ#
-    boost::filesystem::path in_path = "/Users/sscott/Programs/ack/trex_connected.stl";
+    boost::filesystem::path in_path = path_prefix + "/Users/sscott/Programs/ack/trex_connected.stl";
     auto reader = vtkSmartPointer<vtkSTLReader>::New();
     reader->SetFileName(in_path.string().c_str());
     reader->Update();
@@ -1276,28 +1277,239 @@ void example_bound_box(){
     
     PlanarBoxBounder pbb;
     pbb.surface_ = in_poly;
-    pbb.projection_normal_ = {-1, 4, 1};
+    pbb.projection_normal_ = {1, 1, 1};
     pbb.projection_normal_.normalize();
     pbb.projectToHull();
     
-    _debug_write_polydata(pbb.hull_, "/Users/sscott/Programs/ack/trex_hull.vtp");
+    _debug_write_polydata(pbb.hull_, path_prefix + "/Users/sscott/Programs/ack/trex_hull.vtp");
 
     auto recthull = pbb.makePolydataRectangle(pbb.corner_, pbb.box_x_dir_, pbb.box_y_dir_);
-    _debug_write_polydata(recthull, "/Users/sscott/Programs/ack/trex_hull_rect.vtp");
+    _debug_write_polydata(recthull, path_prefix + "/Users/sscott/Programs/ack/trex_hull_rect.vtp");
 
     
     auto surf2 = pbb.getTransformedSurface();
-    _debug_write_polydata(surf2, "/Users/sscott/Programs/ack/trex_transformed.vtp");
+    _debug_write_polydata(surf2, path_prefix + "/Users/sscott/Programs/ack/trex_transformed.vtp");
     
     auto rect = pbb.makePolydataRectangle({0,0,0}, {pbb.width,0,0}, {0,pbb.height,0});
-    _debug_write_polydata(rect, "/Users/sscott/Programs/ack/trex_target_rect.vtp");
+    _debug_write_polydata(rect, path_prefix + "/Users/sscott/Programs/ack/trex_target_rect.vtp");
+}
+
+void example_tpix() {
+	CardinalCurveCollection ccc;
+	std::vector<double> diff_seq = {
+		1,-2,1,-1,1,-1,2,1,1,1,2,1,2,1,1,6,1,1,8,-1,1,-4,-5,-1,3,-1,-4,-2,2,-2,-1,1,-1,-3,-1,-1,-1,-1,-1,-1,2,-1,-3,1,-2,-1,-1,-1,-1,-1,1,-1,-2,4,-1,1,-1,1,-1,1,-1,1,-1,1,-1
+	};
+	ccc.generateFromDifferenceSequence(diff_seq);
+	//for (auto & pt : ccc.points_) {
+	//	pt = { -pt[0],pt[1] };
+	//}
+	//scale
+	svgvis::ZoningCartographerSVG zsvg;
+	zsvg.addCardinalCurveCollection(ccc);
+	zsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/t_pix.svg");
+}
+
+void example_tpix_zoner() {
+	CardinalCurveCollection ccc;
+	std::vector<double> diff_seq = {
+		1,-2,1,-1,1,-1,2,1,1,1,2,1,2,1,1,6,1,1,8,-1,1,-4,-5,-1,3,-1,-4,-2,2,-2,-1,1,-1,-3,-1,-1,-1,-1,-1,-1,2,-1,-3,1,-2,-1,-1,-1,-1,-1,1,-1,-2,4,-1,1,-1,1,-1,1,-1,1,-1,1,-1
+	};
+	double scale = 25.0;
+	ccc.generateFromDifferenceSequence(diff_seq, scale);
+	for (auto & pt : ccc.points_) {
+		pt = { -pt[0],pt[1] };
+	}
+	//
+	svgvis::ZoningCartographerSVG zsvg2;
+	zsvg2.addCardinalCurveCollection(ccc);
+	zsvg2.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/t_pix.svg");
+	//
+	std::vector<std::vector<int>> lines;
+	for (const auto edge : ccc.edges_) {
+		std::vector<int> line(edge.begin(), edge.end());
+		lines.push_back(line);
+	}
+	//
+	ZoningCommisioner wild;
+	wild.insertCurves(ccc.points_, lines);
+	wild.populateNeighbors();
+	wild.constructZoneCovering();
+	int trail_cnt = 0;
+	//
+	svgvis::ZoningCartographerSVG wsvg;
+	wsvg.default_stroke_width_ = 3;
+	wsvg.addCardinalCurveCollection(wild.vacant_);
+	double width = 40.5;
+	double height = 23.6;
+	std::vector<Eigen::Vector2d> whs;
+	int copies = 50;
+	for (auto cop = 0; cop < copies; cop++) whs.push_back({width, height});
+	int cop_cnt = 0;
+	for (auto wh : whs) {
+		std::cout << "working copy " << cop_cnt << std::endl;
+		cop_cnt++;
+		double width = wh[0];
+		double height = wh[1];
+		Eigen::Vector2d placement;
+		bool is_placable = wild.findPlacement(width, height, placement);
+		int trail_cnt = 0;
+		for (auto &t : wild.zones_) {
+			svgvis::ZoningCartographerSVG svger;
+			svger.default_stroke_width_ = 3;
+			svger.addCardinalCurveCollection(wild.vacant_, "black");
+			svger.addCardinalPath(t.landmarks_uptown_, "blue");
+			svger.addCardinalPath(t.landmarks_downtown_, "green");
+			Surveyor caliper_hiker(t, width, height);
+			caliper_hiker.hike();
+			svger.addCardinalPath(caliper_hiker.camps_uptown_, "orange");
+			svger.addCardinalPath(caliper_hiker.camps_downtown_, "red");
+			svger.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_tpix_zone" + std::to_string(trail_cnt) + ".svg");
+			trail_cnt++;
+		}
+		//for (auto &t : wild.trails_) {
+  //          wsvg.addCardinalPath(t.landmarks_uptown_, "blue");
+  //          wsvg.addCardinalPath(t.landmarks_downtown_, "green");
+		//	CaliperHiker caliper_hiker(t, width, height);
+		//	caliper_hiker.hike();
+		//	wsvg.addCardinalPath(caliper_hiker.camps_uptown_, "black");
+		//	wsvg.addCardinalPath(caliper_hiker.camps_downtown_, "red");
+  //      }
+		wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_tpix_zone.svg");
+		//removeRectangle(wild.trails_, placement, width, height);
+		if (is_placable) {
+			wild.zoneOff(placement, width, height);
+			wsvg.addRectangle(placement, width, height);
+			wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_tpix_zone.svg");
+		}
+		else {
+			wsvg.addRectangle({ 11,0 }, width, height);
+			wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_tpix_zone.svg");
+		}
+	}
+	wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example_tpix_zone.svg");
+}
+
+void example_pack_tpix() {
+	//Setup the vacancy
+	CardinalCurveCollection ccc;
+	std::vector<double> diff_seq = {
+		1,-2,1,-1,1,-1,2,1,1,1,2,1,2,1,1,6,1,1,8,-1,1,-4,-5,-1,3,-1,-4,-2,2,-2,-1,1,-1,-3,-1,-1,-1,-1,-1,-1,2,-1,-3,1,-2,-1,-1,-1,-1,-1,1,-1,-2,4,-1,1,-1,1,-1,1,-1,1,-1,1,-1
+	};
+	double scale = 25.0;
+	ccc.generateFromDifferenceSequence(diff_seq, scale);
+	for (auto & pt : ccc.points_) {
+		pt = { -pt[0],pt[1] };
+	}
+	//
+
+	ZoningBoard zb;
+	zb.annexVacancy(ccc.points_);
+
+	zb.setApplicantRectangles({ {40.5, 23.6} }, { 50 });
+	zb.zone();
+
+	svgvis::ZoningCartographerSVG zsvg;
+	zsvg.addZoningBoardReport(zb);
+	zsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/pack_tpix.svg");
+
+};
+
+void example_box_of_rex() {
+	//Setup the vacancy
+
+	CardinalCurveCollection ccc;
+	std::vector<double> diff_seq = {
+		1,-2,1,-1,1,-1,2,1,1,1,2,1,2,1,1,6,1,1,8,-1,1,-4,-5,-1,3,-1,-4,-2,2,-2,-1,1,-1,-3,-1,-1,-1,-1,-1,-1,2,-1,-3,1,-2,-1,-1,-1,-1,-1,1,-1,-2,4,-1,1,-1,1,-1,1,-1,1,-1,1,-1
+	};
+	double scale = 25.0;
+	ccc.generateFromDifferenceSequence(diff_seq, scale);
+	for (auto & pt : ccc.points_) {
+		pt = { -pt[0],pt[1] };
+	}
+	//
+
+	ZoningBoard zb;
+	zb.allow_rotations = true;
+
+	PointList ps = { {0,0},{110,0},{110,110},{0,110} };
+	std::vector<std::vector<int>> es = { {0,1},{1,2},{2,3},{3,0} };
+	zb.annexVacancy(ps, es);
+
+	//#READ#
+	boost::filesystem::path in_path = path_prefix + "/Users/sscott/Programs/ack/trex_connected.stl";
+	auto reader = vtkSmartPointer<vtkSTLReader>::New();
+	reader->SetFileName(in_path.string().c_str());
+	reader->Update();
+	auto in_poly = reader->GetOutput();
+	//#READ#
+
+	PlanarBoxBounder pbb;
+	pbb.surface_ = in_poly;
+	pbb.projection_normal_ = { 1, 1, 1 };
+	pbb.projection_normal_.normalize();
+	pbb.projectToHull();
+	pbb.width, pbb.height;
+
+	zb.setApplicantRectangles({ {pbb.width, pbb.height} }, { 50 });
+	zb.zone();
+
+
+	svgvis::ZoningCartographerSVG zsvg;
+	zsvg.addZoningBoardReport(zb);
+	zsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/box_of_rex.svg");
+}
+
+void example_rex_of_rex() {
+	//Setup the vacancy
+	CardinalCurveCollection ccc;
+	std::vector<double> diff_seq = {
+		1,-2,1,-1,1,-1,2,1,1,1,2,1,2,1,1,6,1,1,8,-1,1,-4,-5,-1,3,-1,-4,-2,2,-2,-1,1,-1,-3,-1,-1,-1,-1,-1,-1,2,-1,-3,1,-2,-1,-1,-1,-1,-1,1,-1,-2,4,-1,1,-1,1,-1,1,-1,1,-1,1,-1
+	};
+	double scale = 25.0;
+	ccc.generateFromDifferenceSequence(diff_seq, scale);
+	for (auto & pt : ccc.points_) {
+		pt = { -pt[0],pt[1] };
+	}
+	//
+
+	ZoningBoard zb;
+	zb.annexVacancy(ccc.points_);
+
+	//#READ#
+	boost::filesystem::path in_path = path_prefix + "/Users/sscott/Programs/ack/trex_connected.stl";
+	auto reader = vtkSmartPointer<vtkSTLReader>::New();
+	reader->SetFileName(in_path.string().c_str());
+	reader->Update();
+	auto in_poly = reader->GetOutput();
+	//#READ#
+
+	PlanarBoxBounder pbb;
+	pbb.surface_ = in_poly;
+	pbb.projection_normal_ = { 1, 1, 1 };
+	pbb.projection_normal_.normalize();
+	pbb.projectToHull();
+	pbb.width, pbb.height;
+
+	zb.setApplicantRectangles({ {pbb.width, pbb.height} }, { 50 });
+	zb.zone();
+
+
+	svgvis::ZoningCartographerSVG zsvg;
+	zsvg.addZoningBoardReport(zb);
+	zsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/rex_of_rex.svg");
 }
 
 
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
-	//boost::filesystem::path in_path = "/Users/sscott/Pictures/trex_connected.stl";
-    example_bound_box();
+	//boost::filesystem::path in_path = path_prefix + "/Users/sscott/Pictures/trex_connected.stl";
+	//example_zoning_board1();
+	//example_zoning_board2();
+	//example_zoning_board3();
+	//example_zoning_board4();
+	//example_zoning_board5();
+	//example_zoning_board6();
+	example_box_of_rex();
 	std::cout << "end" << std::endl;
 }
 

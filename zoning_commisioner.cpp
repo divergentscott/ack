@@ -157,13 +157,25 @@ Zone ZoningCommisioner::zoneFromEastNotch(int start_edge_id){
 			} else {
 				Eigen::Vector2d near_end = vacant_.get_point(p_at);
 				patrol.landmarks_downtown_.push_back(near_end);
-				Eigen::Vector2d hit_west;
-				int hit_west_e_id;
-				vacant_.rayTraceEast(near_end, hit_west, hit_west_e_id);
-				patrol.landmarks_downtown_.push_back(hit_west);
-				bool _;
-				patrol.landmarks_downtown_.push_back(getCedge(hit_west_e_id,_)[1]);
-				patrol_terminus = hit_west_e_id;
+				Eigen::Vector2d impact_position;
+				int struck_edge;
+				vacant_.rayTraceEast(near_end, impact_position, struck_edge);
+				patrol.landmarks_downtown_.push_back(impact_position);
+				bool is_struck_horizontal; //should always be false in the getCedge
+				Eigen::Vector2d struck_edge_top = getCedge(struck_edge, is_struck_horizontal)[1];
+				if ((struck_edge_top - impact_position).norm() > repsilon) {
+					//
+					patrol.landmarks_downtown_.push_back(struck_edge_top);
+					patrol_terminus = struck_edge;
+				}
+				else {
+					//The ray trace east hit a corner. Follow up with a ray trace north.
+					Eigen::Vector2d impact_northern;
+					bool is_a_ceil = vacant_.rayTraceNorth(struck_edge_top + Eigen::Vector2d({ 0, repsilon }), impact_northern, e_at);
+					if (!is_a_ceil) throw std::logic_error("Error in zone covering.");
+					patrol_terminus = e_at;
+					patrol.landmarks_downtown_.push_back(impact_northern);
+				}
 			}
         } else {
             patrol.landmarks_downtown_.push_back(vacant_.get_point(p_at));

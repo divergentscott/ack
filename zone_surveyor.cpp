@@ -29,51 +29,44 @@ void Surveyor::expandCamps(){
     if ((camps_downtown_.num_plateaus_==0) | (camps_uptown_.num_plateaus_==0)) return;
     int ii = 0;
     int jj = 0;
-//    std::cout << "ii " << ii << " jj " << jj << std::endl;
     Hedge low_ii = camps_downtown_.getPlateau(ii);
     Hedge high_jj = camps_uptown_.getPlateau(jj);
     if (high_jj[0][1] - low_ii[0][1] >= height_){
         valid_lots_.push_back(low_ii[0]);
-//        std::cout << (valid_.end()-1)->transpose() << std::endl;
     }
     while((ii < camps_downtown_.num_plateaus_-1) | (jj < camps_uptown_.num_plateaus_-1)){
         //Measure height east to west and keep any positions that are valid.
         bool is_progress = false;
+		//See if you should advance the uptown camp
         while( (high_jj[1][0] <= low_ii[1][0] + repsilon) & (jj < camps_uptown_.num_plateaus_-1) ){
             jj++;
-//            std::cout << "ii " << ii << " jj " << jj << std::endl;
             high_jj = camps_uptown_.getPlateau(jj);
             if ( high_jj[0][1] - low_ii[0][1] >= height_){
                 Eigen::Vector2d position = {high_jj[0][0], low_ii[0][1]};
                 valid_lots_.push_back(position);
-//                std::cout << (valid_.end()-1)->transpose() << std::endl;
             }
             is_progress = true;
         };
+		//See if you should advance the downtown camp
         while( (low_ii[1][0] <= high_jj[1][0] + repsilon) & (ii < camps_downtown_.num_plateaus_-1) ){
             ii++;
-//            std::cout << "ii " << ii << " jj " << jj << std::endl;
             Eigen::Vector2d lastright = camps_downtown_.getPlateau(ii-1)[1];
             if (high_jj[0][1] - lastright[1] >= height_){
                 valid_lots_.push_back(lastright);
-//                std::cout << (valid_.end()-1)->transpose() << std::endl;
             }
             low_ii = camps_downtown_.getPlateau(ii);
             if ( high_jj[0][1] - low_ii[0][1] >= height_){
                 valid_lots_.push_back(low_ii[0]);
-//                std::cout << (valid_.end()-1)->transpose() << std::endl;
 
             }
             is_progress = true;
         };
-        if (!is_progress) std::cout << "no progress";
-        //if (!is_progress) break;
+        if (!is_progress) break;
     }
     double lastx = std::min(low_ii[1][0], high_jj[1][0]);
     if ( high_jj[1][1] - low_ii[1][1] >= height_){
         Eigen::Vector2d position = {lastx, low_ii[1][1]};
         valid_lots_.push_back(position);
-//        std::cout << (valid_.end()-1)->transpose() << std::endl;
     }
 };
 

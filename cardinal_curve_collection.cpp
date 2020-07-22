@@ -92,6 +92,34 @@ bool CardinalCurveCollection::rayTraceNorth(const Eigen::Vector2d &origin,
 		}
 	}
 	return is_impact;
+}
+void CardinalCurveCollection::generateFromDifferenceSequence(std::vector<double> ss, double scale)
+{
+	//Example generation convenience function.
+	//Assume the difference sequence is the change in coordinates and alternates as east_diff, north_diff, east_diff...
+	bool is_east = true;
+	Eigen::Vector2d  position = {0,0};
+	PointList pts;
+	pts.reserve(ss.size());
+	pts.push_back(position);
+	for (auto x : ss) {
+		if (is_east) {
+			position += Eigen::Vector2d({scale * x,0});
+		}
+		else {
+			position += Eigen::Vector2d({ 0, scale * x });
+		}
+		pts.push_back(position);
+		is_east = !is_east;
+	}
+	std::vector<std::vector<int>> edges;
+	edges.resize(pts.size());
+	int last_edge = edges.size() - 1;
+	for (auto foo = 0; foo < last_edge; foo++) {
+		edges[foo] = {foo,foo+1};
+	}
+	edges[last_edge] = { last_edge ,0 };
+	setGridPointsAndCells(pts, edges);
 };
 
 bool rayNorthSegmentIntersect(const Eigen::Vector2d &origin, const Hedge &segment, Eigen::Vector2d &impact){
