@@ -11,16 +11,10 @@
 #include <vtkTransformPolyDataFilter.h>
 #include <vtkUnstructuredGrid.h>
 
-#include <boost/filesystem/path.hpp>
-
-//!!!!
-#include <vtkXMLPolyDataWriter.h>
-//!!!!
-
 static const double repsilon = std::sqrt(std::numeric_limits<double>::epsilon());
 
 
-vtkSmartPointer<vtkPolyData> PlanarBoxBounder::makePolydataRectangle(Eigen::Vector3d origin, Eigen::Vector3d basis0, Eigen::Vector3d basis1){
+vtkSmartPointer<vtkPolyData> makePolydataRectangle(const Eigen::Vector3d& origin, const Eigen::Vector3d& basis0, const Eigen::Vector3d& basis1){
     auto box_pts = vtkSmartPointer<vtkPoints>::New();
     box_pts ->InsertNextPoint(origin.data());
     Eigen::Vector3d c1 = (origin + basis0);
@@ -143,61 +137,23 @@ void PlanarBoxBounder::projectToHull(){
     transform_ = shift_bl * transform_;
 };
 
-vtkSmartPointer<vtkPolyData> PlanarBoxBounder::getTransformedSurface(){
-    auto vtk_transform = vtkSmartPointer<vtkTransform>::New();
-    Eigen::Matrix4d transposed = transform_.transpose();
-        
-    vtk_transform->SetMatrix(transposed.data());
-    
-    auto transformer = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-    transformer->SetTransform(vtk_transform);
-    transformer->SetInputData(surface_);
-    transformer->Update();
-    return transformer->GetOutput();
+vtkSmartPointer<vtkPolyData> applyAffineTransform(vtkSmartPointer<vtkPolyData> mesh, const Eigen::Matrix4d & transform) {
+	auto vtk_transform = vtkSmartPointer<vtkTransform>::New();
+	Eigen::Matrix4d transposed = transform.transpose();
+
+	vtk_transform->SetMatrix(transposed.data());
+
+	auto transformer = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+	transformer->SetTransform(vtk_transform);
+	transformer->SetInputData(mesh);
+	transformer->Update();
+	return transformer->GetOutput();
 };
 
-//void example_bound_box(){
-//
-//
-//
-//    auto writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
-//    //boost::filesystem::path outline_path = "/Users/sscott/Programs/ack/ack_outline.vtu";
-//    boost::filesystem::path hull_path = "/Users/sscott/Programs/ack/ack_hull.vtp";
-//    writer->SetInputData(hull);
-//    writer->SetFileName(hull_path.string().c_str());
-//    writer->Write();
-//
-//
-//    auto obbtree = vtkSmartPointer<vtkOBBTree>::New();
-//    Eigen::Vector3d corner;
-//    Eigen::Vector3d max;
-//    Eigen::Vector3d mid;
-//    Eigen::Vector3d min;
-//    Eigen::Vector3d size;
-//    obbtree->ComputeOBB(hull, corner.data(), max.data(), mid.data(), min.data(), size.data());
-//    auto box_pts = vtkSmartPointer<vtkPoints>::New();
-//    box_pts ->InsertNextPoint(corner.data());
-//    Eigen::Vector3d c1 = (corner + max);
-//    box_pts->InsertNextPoint(c1.data());
-//    Eigen::Vector3d c2 = (corner + max + mid);
-//    box_pts->InsertNextPoint(c2.data());
-//    Eigen::Vector3d c3 = (corner + mid);
-//    box_pts->InsertNextPoint(c3.data());
-//    auto ugrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
-//    ugrid->SetPoints(box_pts);
-//    auto ptIdList = vtkSmartPointer<vtkIdList>::New();
-//    ptIdList->InsertNextId(0);
-//    ptIdList->InsertNextId(1);
-//    ptIdList->InsertNextId(2);
-//    ptIdList->InsertNextId(3);
-//    ugrid->InsertNextCell(VTKCellType::VTK_QUAD, ptIdList);
-//
-//
-//    auto writer2 = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
-//    //boost::filesystem::path outline_path = "/Users/sscott/Programs/ack/ack_outline.vtu";
-//    boost::filesystem::path outline_path = "/Users/sscott/Programs/ack/ack_outline_rot.vtu";
-//    writer2->SetInputData(ugrid);
-//    writer2->SetFileName(outline_path.string().c_str());
-//    writer2->Write();
-//
-//}
+vtkSmartPointer<vtkPolyData> PlanarBoxBounder::getTransformedSurface(){
+	return applyAffineTransform(surface_, transform_);
+};
+
+void PlanarBoxBounder::setMesh(vtkSmartPointer<vtkPolyData> mesh) {
+	surface_ = mesh;
+};

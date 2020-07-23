@@ -20,6 +20,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 
 
-add_executable(ack ack.cxx cardinal_curve_collection.cpp cardinal_curve_collection.h zone_surveyor.cpp zone_surveyor.h curve_collection.cpp curve_collection.h planar_bounding_box.cpp planar_bounding_box.h zoning_commisioner.cpp zoning_commisioner.h zoning_cartographer_svg.cpp zoning_cartographer_svg.h zoning_board.cpp zoning_board.h)
+add_executable(ack ack.cxx cardinal_curve_collection.cpp cardinal_curve_collection.h zone_surveyor.cpp zone_surveyor.h curve_collection.cpp curve_collection.h packmesh_manager.cpp packmesh_manager.h planar_bounding_box.cpp planar_bounding_box.h zoning_commisioner.cpp zoning_commisioner.h zoning_cartographer_svg.cpp zoning_cartographer_svg.h zoning_board.cpp zoning_board.h)
 target_link_libraries(ack ${CMAKE_DL_LIBS} PUBLIC CONAN_PKG::boost CONAN_PKG::eigen CONAN_PKG::VTK-mini)
 target_include_directories(ack PRIVATE "${CMAKE_SOURCE_DIR}/lib")

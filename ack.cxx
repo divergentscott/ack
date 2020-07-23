@@ -1283,14 +1283,14 @@ void example_bound_box(){
     
     _debug_write_polydata(pbb.hull_, path_prefix + "/Users/sscott/Programs/ack/trex_hull.vtp");
 
-    auto recthull = pbb.makePolydataRectangle(pbb.corner_, pbb.box_x_dir_, pbb.box_y_dir_);
+    auto recthull = makePolydataRectangle(pbb.corner_, pbb.box_x_dir_, pbb.box_y_dir_);
     _debug_write_polydata(recthull, path_prefix + "/Users/sscott/Programs/ack/trex_hull_rect.vtp");
 
     
     auto surf2 = pbb.getTransformedSurface();
     _debug_write_polydata(surf2, path_prefix + "/Users/sscott/Programs/ack/trex_transformed.vtp");
     
-    auto rect = pbb.makePolydataRectangle({0,0,0}, {pbb.width,0,0}, {0,pbb.height,0});
+    auto rect = makePolydataRectangle({0,0,0}, {pbb.width,0,0}, {0,pbb.height,0});
     _debug_write_polydata(rect, path_prefix + "/Users/sscott/Programs/ack/trex_target_rect.vtp");
 }
 
@@ -1431,7 +1431,7 @@ void example_box_of_rex() {
 	ZoningBoard zb;
 	zb.allow_rotations = true;
 
-	PointList ps = { {0,0},{110,0},{110,110},{0,110} };
+	PointList ps = { {0,0},{100,0},{100,110},{0,110} };
 	std::vector<std::vector<int>> es = { {0,1},{1,2},{2,3},{3,0} };
 	zb.annexVacancy(ps, es);
 
@@ -1445,18 +1445,46 @@ void example_box_of_rex() {
 
 	PlanarBoxBounder pbb;
 	pbb.surface_ = in_poly;
-	pbb.projection_normal_ = { 1, 1, 1 };
+	pbb.projection_normal_ = { 1,-1, 0 };
 	pbb.projection_normal_.normalize();
 	pbb.projectToHull();
 	pbb.width, pbb.height;
 
-	zb.setApplicantRectangles({ {pbb.width, pbb.height} }, { 50 });
+	zb.setApplicantRectangles({ {pbb.width, pbb.height} }, { 20 });
 	zb.zone();
 
 
 	svgvis::ZoningCartographerSVG zsvg;
 	zsvg.addZoningBoardReport(zb);
-	zsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/box_of_rex.svg");
+	zsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/rexbox.svg");
+}
+
+#include "packmesh_manager.h"
+
+void example_rexbox() {
+	//#READ#
+	boost::filesystem::path in_path = path_prefix + "/Users/sscott/Programs/ack/trex_connected.stl";
+	auto reader = vtkSmartPointer<vtkSTLReader>::New();
+	reader->SetFileName(in_path.string().c_str());
+	reader->Update();
+	auto in_poly = reader->GetOutput();
+	//#READ#
+
+	//Setup the vacancy
+	PackMeshManager pmm;
+	pmm.insertMesh(in_poly, { 1,-1, 0}, 20);
+
+	PointList ps = { {0,0},{100,0},{100,110},{0,110} };
+	pmm.insertPackspace(ps);
+
+	pmm.pack();
+	vtkSmartPointer<vtkPolyData> packed_space = pmm.getPackMesh();
+
+	auto writ = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+	boost::filesystem::path  outpath = (path_prefix + "/Users/sscott/Programs/ack/rexbox.vtp");
+	writ->SetInputData(packed_space);
+	writ->SetFileName(outpath.string().c_str());
+	writ->Write();
 }
 
 void example_rex_of_rex() {
@@ -1510,6 +1538,7 @@ int main() {
 	//example_zoning_board5();
 	//example_zoning_board6();
 	example_box_of_rex();
+	example_rexbox();
 	std::cout << "end" << std::endl;
 }
 

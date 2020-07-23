@@ -108,7 +108,12 @@ void ZoningBoard::zone(){
                     is_placed = true;
                     placement.vacancy_clone_id = zc_foo;
                     placements_[app_foo].push_back(placement);
-                    zc.zoneOff(placement.position, app.width, app.height);
+					if (placement.rotated) {
+						zc.zoneOff(placement.position, app.height, app.width);
+					}
+					else {
+						zc.zoneOff(placement.position, app.width, app.height);
+					}
                     break; //Already placed. No more commisioners need to try.
                 }
             }

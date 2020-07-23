@@ -5,9 +5,13 @@
 
 #include <vtkPolyData.h>
 
+vtkSmartPointer<vtkPolyData> applyAffineTransform(vtkSmartPointer<vtkPolyData> mesh, const Eigen::Matrix4d & transform);
+
+vtkSmartPointer<vtkPolyData> makePolydataRectangle(const Eigen::Vector3d& origin, const Eigen::Vector3d& basis0, const Eigen::Vector3d& basis1);
+
 struct PlanarBoxBounder{
     vtkSmartPointer<vtkPolyData> surface_;
-    //Probably want this to be a ugrid not a polydata
+    // Should this be a unstructured grid?
     Eigen::Vector2d z_span_;
     vtkSmartPointer<vtkPolyData> hull_;
     vtkSmartPointer<vtkPolyData> rectangle_;
@@ -19,8 +23,8 @@ struct PlanarBoxBounder{
     double width;
     double height;
     
+	void setMesh(vtkSmartPointer<vtkPolyData> mesh);
     void projectToHull();
-    vtkSmartPointer<vtkPolyData> makePolydataRectangle(Eigen::Vector3d origin, Eigen::Vector3d basis0, Eigen::Vector3d basis1);
     Eigen::Matrix4d computeMeshFrameTransform();
     vtkSmartPointer<vtkPolyData> getTransformedSurface();
 };
