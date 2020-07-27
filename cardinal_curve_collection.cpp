@@ -443,28 +443,30 @@ struct ChainForge {
 	int start = -1;
 	int start_lead_index = 0;
     for (int foo=0; foo<4; foo++){
-        if ((hits[foo].size() > 0) & (start < 0)){
-            //Find the first impact
-            start = foo;
-            foo=0;
-			start_lead_index = 1 - start / 2;
-			Eigen::Vector2d non_hit_start = 
-				hits[start][0][start_lead_index];
-			rect_remnant = { non_hit_start };
-			//list all the segments on start edge
-			for (int bar=1; bar < hits[start].size(); bar++){
-				Eigen::Vector2d rem_end =
-					hits[start][bar][1 - start_lead_index];
-                rect_remnant.push_back(rem_end);
-				//
-				chain_forge.addChain(rect_remnant);
-				//
-				Eigen::Vector2d rem_begin = hits[start][bar][start_lead_index];
-                rect_remnant = { rem_begin };
-			}
-			//See if the you need the corner
-			if ( (rect_corners[start] - rect_remnant.back()).norm() > repsilon) {
-				rect_remnant.push_back(rect_corners[start]);
+        if (start < 0){
+			if (hits[foo].size() > 0) {
+				//Find the first impact
+				start = foo;
+				foo = 0;
+				start_lead_index = 1 - start / 2;
+				Eigen::Vector2d non_hit_start =
+					hits[start][0][start_lead_index];
+				rect_remnant = { non_hit_start };
+				//list all the segments on start edge
+				for (int bar = 1; bar < hits[start].size(); bar++) {
+					Eigen::Vector2d rem_end =
+						hits[start][bar][1 - start_lead_index];
+					rect_remnant.push_back(rem_end);
+					//
+					chain_forge.addChain(rect_remnant);
+					//
+					Eigen::Vector2d rem_begin = hits[start][bar][start_lead_index];
+					rect_remnant = { rem_begin };
+				}
+				//See if the you need the corner
+				if ((rect_corners[start] - rect_remnant.back()).norm() > repsilon) {
+					rect_remnant.push_back(rect_corners[start]);
+				}
 			}
         } else {
             //traverse around the other edges and write down segments

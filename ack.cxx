@@ -1640,6 +1640,7 @@ void example_basic_zone_timed(std::vector<Eigen::Vector2d>& rects, double sqsize
 
 	if (true) {
 		svgvis::ZoningCartographerSVG zsvg;
+		zsvg.default_stroke_width_ = sqsize / 200.0;
 		zsvg.addZoningBoardReport(zb);
 		zsvg.writeScalableVectorGraphics(svgpath.string());
 	}
@@ -1661,7 +1662,7 @@ void example_zoningboard_randrects(int nsamples) {
 }
 
 
-void example_high_mult(int multiplicity) {
+void example_high_mult_ruca(int multiplicity) {
 	//#READ#
 	boost::filesystem::path in_path1 = path_prefix + "/Users/sscott/Programs/ack/fuca_real.stl";
 	auto reader1 = vtkSmartPointer<vtkSTLReader>::New();
@@ -1672,13 +1673,22 @@ void example_high_mult(int multiplicity) {
 		//Setup the vacancy
 	PackMeshManager pmm;
 	pmm.insertMesh(fuca_real, { 0, -2, -1 }, multiplicity);
-	double packspace_side = std::ceil(251 * std::sqrt(multiplicity));
+	auto rec = pmm.rectangles[0];
+	double packspace_side = 1.01 * std::sqrt(rec[0] * rec[1] * multiplicity);
 	PointList ps = { {0,0},{packspace_side,0},{packspace_side,packspace_side},{0,packspace_side} };
 	pmm.insertPackspace(ps);
 	pmm.pack();
+
+	if (true) {
+		svgvis::ZoningCartographerSVG zsvg;
+		zsvg.default_stroke_width_ = packspace_side / 200.0;
+		zsvg.addZoningBoardReport(pmm.zoning_board_);
+		boost::filesystem::path svgpath = path_prefix + "/Users/sscott/Programs/ack/ruca_multiplicity_" + std::to_string(multiplicity) + ".svg";
+		zsvg.writeScalableVectorGraphics(svgpath.string());
+	}
 }
 
-void example_benchmark_zb() {
+void example_benchmark() {
 	std::vector<int> trials = { 10,100,1000,10000,1000000,10000000 };
 	for (auto x : trials) {
 
@@ -1686,7 +1696,7 @@ void example_benchmark_zb() {
 		auto start = std::chrono::high_resolution_clock::now();
 
 		// Call the function, here sort() 
-		example_high_mult(x);
+		example_high_mult_ruca(x);
 
 		// Get ending timepoint 
 		auto stop = std::chrono::high_resolution_clock::now();
@@ -1703,7 +1713,8 @@ void example_benchmark_zb() {
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
 	//boost::filesystem::path in_path = path_prefix + "/Users/sscott/Pictures/trex_connected.stl";
-	example_zoningboard_randrects(700);
+	example_high_mult_ruca(300);
+	example_zoningboard_randrects(300);
 }
 
 
