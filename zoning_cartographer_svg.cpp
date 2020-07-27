@@ -227,7 +227,7 @@ void ZoningCartographerSVG::addZoningBoardReport(const ZoningBoard zb) {
 		//Need to do some vacancy multiplying here.
 		for (auto bar = 0; bar < zb.applicants_.size(); bar++) {
 			const Applicant& appli = zb.applicants_[bar];
-			for (const Placement& pp : zb.placements_[bar]) {
+			for (const Placement& pp : zb.placements_[appli.id]) {
 				if (pp.vacancy_clone_id == clone_foo) {
 					if (!pp.rotated) {
 						addRectangle(pp.position + vis_offsets[clone_foo], appli.width, appli.height);

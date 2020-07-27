@@ -22,12 +22,7 @@ void PackMeshManager::insertMesh(vtkSmartPointer<vtkPolyData> mesh, Eigen::Vecto
 	//rectangles.push_back()
 };
 
-
-void PackMeshManager::pack() {
-	//!!!! Add multi vacancy support
-	zoning_board_.setApplicantRectangles(rectangles, multiplicities);
-	zoning_board_.allow_rotations = true;
-	zoning_board_.zone();
+void PackMeshManager::generatePlacementTransforms() {
 	placement_transforms.resize(zoning_board_.placements_.size());
 	for (auto foo = 0; foo < meshes.size(); foo++) {
 		const std::vector<Placement>& places_foo = zoning_board_.placements_[foo];
@@ -38,8 +33,8 @@ void PackMeshManager::pack() {
 		for (const auto & place : places_foo) {
 			Eigen::Matrix4d shift_place = Eigen::Matrix4d::Identity();
 			if (place.rotated) {
-				shift_place.block(0, 0, 2, 2) << 0,-1, 1, 0;
-				shift_place.block(0, 3, 2, 1) = place.position + Eigen::Vector2d({ rect_foo[1],0});
+				shift_place.block(0, 0, 2, 2) << 0, -1, 1, 0;
+				shift_place.block(0, 3, 2, 1) = place.position + Eigen::Vector2d({ rect_foo[1],0 });
 			}
 			else {
 				shift_place.block(0, 3, 2, 1) = place.position;
@@ -47,6 +42,15 @@ void PackMeshManager::pack() {
 			placement_transforms_foo.push_back(shift_place * m_base_transform);
 		}
 	}
+}
+
+
+void PackMeshManager::pack() {
+	//!!!! Add multi vacancy support
+	zoning_board_.setApplicantRectangles(rectangles, multiplicities);
+	zoning_board_.allow_rotations = true;
+	zoning_board_.zone();
+	generatePlacementTransforms();
 };
 
 vtkSmartPointer<vtkPolyData> PackMeshManager::getPackMesh() {

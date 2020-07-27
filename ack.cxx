@@ -1456,7 +1456,7 @@ void example_box_of_rex() {
 
 	svgvis::ZoningCartographerSVG zsvg;
 	zsvg.addZoningBoardReport(zb);
-	zsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/rexbox.svg");
+	zsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/box_of_rex.svg");
 }
 
 #include "packmesh_manager.h"
@@ -1472,13 +1472,19 @@ void example_rexbox() {
 
 	//Setup the vacancy
 	PackMeshManager pmm;
-	pmm.insertMesh(in_poly, { 1,-1, 0}, 20);
+	pmm.insertMesh(in_poly, { 1,-1, 0}, 4);
+	pmm.insertMesh(in_poly, { 1, 4, 0 }, 4);
+	pmm.insertMesh(in_poly, { 2, 1, 0 }, 4);
+	pmm.insertMesh(in_poly, { 1, 0, 1 }, 4);
 
-	PointList ps = { {0,0},{100,0},{100,110},{0,110} };
+	PointList ps = { {0,0},{150,0},{150,150},{0,150} };
 	pmm.insertPackspace(ps);
 
 	pmm.pack();
 	vtkSmartPointer<vtkPolyData> packed_space = pmm.getPackMesh();
+	svgvis::ZoningCartographerSVG svgw;
+	svgw.addZoningBoardReport(pmm.zoning_board_);
+	svgw.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/rexbox.svg");
 
 	auto writ = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
 	boost::filesystem::path  outpath = (path_prefix + "/Users/sscott/Programs/ack/rexbox.vtp");
@@ -1527,19 +1533,177 @@ void example_rex_of_rex() {
 	zsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/rex_of_rex.svg");
 }
 
+void example_nitpick() {
+	//#READ#
+	boost::filesystem::path in_path = path_prefix + "/Users/sscott/Programs/ack/fuca_real.stl";
+	auto reader = vtkSmartPointer<vtkSTLReader>::New();
+	reader->SetFileName(in_path.string().c_str());
+	reader->Update();
+	auto in_poly = reader->GetOutput();
+	//#READ#
+
+	//Setup the vacancy
+	PackMeshManager pmm;
+	pmm.insertMesh(in_poly, { 0, 1, 0 }, 1);
+	pmm.insertMesh(in_poly, { 0, -1, 0 }, 1);
+
+	PointList ps = { {0,0},{1500,0},{1500,1500},{0,1500} };
+	pmm.insertPackspace(ps);
+
+	pmm.pack();
+	vtkSmartPointer<vtkPolyData> packed_space = pmm.getPackMesh();
+	svgvis::ZoningCartographerSVG svgw;
+	svgw.addZoningBoardReport(pmm.zoning_board_);
+	svgw.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/nitpick.svg");
+
+	auto writ = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+	boost::filesystem::path  outpath = (path_prefix + "/Users/sscott/Programs/ack/nitpick.vtp");
+	writ->SetInputData(packed_space);
+	writ->SetFileName(outpath.string().c_str());
+	writ->Write();
+}
+
+void example_multimodel() {
+	//#READ#
+	boost::filesystem::path in_path = path_prefix + "/Users/sscott/Programs/ack/trex_connected.stl";
+	auto reader = vtkSmartPointer<vtkSTLReader>::New();
+	reader->SetFileName(in_path.string().c_str());
+	reader->Update();
+	auto rex = reader->GetOutput();
+	//#READ#
+
+	//#READ#
+	boost::filesystem::path in_path1 = path_prefix + "/Users/sscott/Programs/ack/fuca_real.stl";
+	auto reader1 = vtkSmartPointer<vtkSTLReader>::New();
+	reader1->SetFileName(in_path1.string().c_str());
+	reader1->Update();
+	auto fuca_real = reader1->GetOutput();
+	//#READ#
+
+	//#READ#
+	boost::filesystem::path in_path2 = path_prefix + "/Users/sscott/Programs/ack/fuca_wrapped.stl";
+	auto reader2 = vtkSmartPointer<vtkSTLReader>::New();
+	reader2->SetFileName(in_path2.string().c_str());
+	reader2->Update();
+	auto fuca_wrap = reader2->GetOutput();
+	//#READ#
+
+	//Setup the vacancy
+	PackMeshManager pmm;
+	pmm.insertMesh(rex, { 1, 4, 0 }, 5);
+	pmm.insertMesh(fuca_real, { 0, -2, -1 }, 3);
+	pmm.insertMesh(fuca_wrap, { 0, -2, -1 }, 3);
+	pmm.insertMesh(fuca_real, { 1, 1, 1 }, 3);
+	pmm.insertMesh(fuca_wrap, { 1, 1, 1 }, 3);
+
+	PointList ps = { {0,0},{1000,0},{1000,1000},{0,1000} };
+	pmm.insertPackspace(ps);
+
+	pmm.pack();
+	vtkSmartPointer<vtkPolyData> packed_space = pmm.getPackMesh();
+	svgvis::ZoningCartographerSVG svgw;
+	svgw.addZoningBoardReport(pmm.zoning_board_);
+	svgw.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/multimodel.svg");
+
+	auto writ = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+	boost::filesystem::path  outpath = (path_prefix + "/Users/sscott/Programs/ack/multimodel.vtp");
+	writ->SetInputData(packed_space);
+	writ->SetFileName(outpath.string().c_str());
+	writ->Write();
+}
+
+#include <chrono>
+#include <random>
+
+void example_basic_zone_timed(std::vector<Eigen::Vector2d>& rects, double sqsize, boost::filesystem::path svgpath = "") {
+	if (svgpath.empty()) {
+		svgpath = path_prefix + "/Users/sscott/Programs/ack/rand_rects_"+std::to_string(rects.size())+".svg";
+	}
+
+	auto start = std::chrono::high_resolution_clock::now();
+
+	ZoningBoard zb;
+	PointList ps = { {0,0},{sqsize,0},{sqsize,sqsize},{0,sqsize} };
+	std::vector<std::vector<int>> es = { {0,1},{1,2},{2,3},{3,0} };
+	zb.annexVacancy(ps, es);
+	zb.setApplicantRectangles(rects);
+	zb.zone();
+
+	// Get ending timepoint 
+	auto stop = std::chrono::high_resolution_clock::now();
+
+	// Get duration. Substart timepoints to  
+	// get durarion. To cast it to proper unit 
+	// use duration cast method 
+	auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
+	std::cout << "trial, time: " << rects.size() << ", " << duration.count() << std::endl;
+
+	if (true) {
+		svgvis::ZoningCartographerSVG zsvg;
+		zsvg.addZoningBoardReport(zb);
+		zsvg.writeScalableVectorGraphics(svgpath.string());
+	}
+}
+ 
+void example_zoningboard_randrects(int nsamples) {
+	std::default_random_engine generator;
+	std::exponential_distribution<double> distribution(1);
+	std::vector<Eigen::Vector2d> rects(nsamples);
+	double totarea = 0; 
+	for (auto foo = 0; foo < rects.size(); foo++) {
+		double a0 = 1 + distribution(generator);
+		double b0 = 1 + distribution(generator);
+		rects[foo] = { a0,b0 };
+		totarea += a0 * b0;
+	}
+	double packspace_side = std::sqrt(totarea);
+	example_basic_zone_timed(rects, packspace_side);
+}
+
+
+void example_high_mult(int multiplicity) {
+	//#READ#
+	boost::filesystem::path in_path1 = path_prefix + "/Users/sscott/Programs/ack/fuca_real.stl";
+	auto reader1 = vtkSmartPointer<vtkSTLReader>::New();
+	reader1->SetFileName(in_path1.string().c_str());
+	reader1->Update();
+	auto fuca_real = reader1->GetOutput();
+	//#READ#
+		//Setup the vacancy
+	PackMeshManager pmm;
+	pmm.insertMesh(fuca_real, { 0, -2, -1 }, multiplicity);
+	double packspace_side = std::ceil(251 * std::sqrt(multiplicity));
+	PointList ps = { {0,0},{packspace_side,0},{packspace_side,packspace_side},{0,packspace_side} };
+	pmm.insertPackspace(ps);
+	pmm.pack();
+}
+
+void example_benchmark_zb() {
+	std::vector<int> trials = { 10,100,1000,10000,1000000,10000000 };
+	for (auto x : trials) {
+
+		// Get starting timepoint 
+		auto start = std::chrono::high_resolution_clock::now();
+
+		// Call the function, here sort() 
+		example_high_mult(x);
+
+		// Get ending timepoint 
+		auto stop = std::chrono::high_resolution_clock::now();
+
+		// Get duration. Substart timepoints to  
+		// get durarion. To cast it to proper unit 
+		// use duration cast method 
+		auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
+		std::cout << "trial, time: " << x << ", " << duration.count() << std::endl;
+	}
+}
+
 
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
 	//boost::filesystem::path in_path = path_prefix + "/Users/sscott/Pictures/trex_connected.stl";
-	//example_zoning_board1();
-	//example_zoning_board2();
-	//example_zoning_board3();
-	//example_zoning_board4();
-	//example_zoning_board5();
-	//example_zoning_board6();
-	example_box_of_rex();
-	example_rexbox();
-	std::cout << "end" << std::endl;
+	example_zoningboard_randrects(700);
 }
 
 

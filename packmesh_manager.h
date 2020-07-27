@@ -17,6 +17,7 @@ struct PackMeshManager{
 	std::vector<Eigen::Matrix4d> mesh_transforms;
 	std::vector<std::vector<Eigen::Matrix4d>> placement_transforms;
 	PackMeshManager(){};
+	void generatePlacementTransforms();
 	void insertMesh(vtkSmartPointer<vtkPolyData> mesh, Eigen::Vector3d z_dir = {0,0,1}, int multiplicity = 1);
 	void insertPackspace(const std::vector<Eigen::Vector2d>& grid_points, const int multiplicity = 1);
 	void pack();

@@ -1,15 +1,8 @@
-//
-//  zoning_board.cpp
-//  ack
-//
-//  Created by Shane Scott on 7/16/20.
-//
-
 #include "zoning_board.h"
 
 #include "zoning_commisioner.h"
 
-Applicant::Applicant(const double& width, const double& height, const int multiplicity) : width(width), height(height), multiplicity(multiplicity)
+Applicant::Applicant(const int id, const double& width, const double& height, const int multiplicity) : id(id), width(width), height(height), multiplicity(multiplicity)
 {};
 
 void ZoningBoard::annexVacancy(const std::vector<Eigen::Vector2d>& grid_points,
@@ -50,17 +43,18 @@ void ZoningBoard::setApplicantRectangles(const std::vector<Eigen::Vector2d>& rec
     applicants_.resize(rectangles.size());
     for (auto foo=0; foo < rectangles.size(); foo++){
 		if (rectangles[foo][0] >= rectangles[foo][1]) {
-			Applicant app(rectangles[foo][0], rectangles[foo][1], multiplicites[foo]);
+			Applicant app(foo, rectangles[foo][0], rectangles[foo][1], multiplicites[foo]);
 			applicants_[foo] = app;
 		}
 		else {
-			Applicant app(rectangles[foo][1], rectangles[foo][0], multiplicites[foo]);
+			Applicant app(foo, rectangles[foo][1], rectangles[foo][0], multiplicites[foo]);
 			applicants_[foo] = app;
 		}
 	};
     placements_.resize(rectangles.size());
     for (auto foo = 0; foo < placements_.size(); foo++){
-        placements_[foo].reserve(applicants_[foo].multiplicity);
+		Applicant & app_foo = applicants_[foo];
+        placements_[app_foo.id].reserve(app_foo.multiplicity);
     }
 };
 
@@ -107,7 +101,7 @@ void ZoningBoard::zone(){
                 if (is_placable){
                     is_placed = true;
                     placement.vacancy_clone_id = zc_foo;
-                    placements_[app_foo].push_back(placement);
+                    placements_[app.id].push_back(placement);
 					if (placement.rotated) {
 						zc.zoneOff(placement.position, app.height, app.width);
 					}
@@ -140,7 +134,7 @@ void ZoningBoard::zone(){
 							vc.num_copies_++;
 							int zc_foo = zcs.size()-1;
 							placement.vacancy_clone_id = zc_foo;
-							placements_[app_foo].push_back(placement);
+							placements_[app.id].push_back(placement);
 							break; //Already placed. No need to try more vacancies.
 						}
 					}
