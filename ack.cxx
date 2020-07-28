@@ -1713,8 +1713,8 @@ void example_benchmark() {
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
 	//boost::filesystem::path in_path = path_prefix + "/Users/sscott/Pictures/trex_connected.stl";
-	example_high_mult_ruca(300);
-	example_zoningboard_randrects(300);
+	//example_zoningboard_randrects(133);
+	example_zoningboard_randrects(125);
 }
 
 

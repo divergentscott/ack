@@ -494,6 +494,7 @@ struct ChainForge {
     }
 	if (start < 0) {
 		//The rectangle is disjoint from the chains.
+		std::cout << "Rectangle disjoint from all boundary??" << std::endl;
 		rect_remnant = { position, nw, ne, se, position };
 		chain_forge.addChain(rect_remnant);
 	}
