@@ -11,7 +11,6 @@ vtkSmartPointer<vtkPolyData> makePolydataRectangle(const Eigen::Vector3d& origin
 
 struct PlanarBoxBounder{
     vtkSmartPointer<vtkPolyData> surface_;
-    // Should this be a unstructured grid?
     Eigen::Vector2d z_span_;
     vtkSmartPointer<vtkPolyData> hull_;
     vtkSmartPointer<vtkPolyData> rectangle_;

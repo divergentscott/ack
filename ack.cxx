@@ -7,7 +7,7 @@
 
 #include "zoning_cartographer_svg.h"
 
-std::string path_prefix = "C:";
+std::string path_prefix = "";
 
 namespace exda{
     std::vector<Eigen::Vector2d> grid_points = {
@@ -649,6 +649,64 @@ void example_13() {
         }
     }
     wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example13.svg");
+}
+
+void example_132() {
+//    VACANCY POINTS
+    std::vector<Eigen::Vector2d> points = {
+
+    };
+//    VACANCY EDGES
+    std::vector<std::vector<int>> somelines = {
+
+    };
+    //
+    ZoningCommisioner wild;
+    wild.insertCurves(points, somelines);
+    wild.populateNeighbors();
+    wild.constructZoneCovering();
+    //
+    svgvis::ZoningCartographerSVG wsvg;
+    wsvg.addCardinalCurveCollection(wild.vacant_);
+    std::vector<Eigen::Vector2d> whs = {{0.4,0.4}};
+    for (auto wh : whs)  {
+        double width = wh[0];
+        double height = wh[1];
+        Eigen::Vector2d placement;
+        bool is_placable = wild.findPlacement(width, height, placement);
+        int trail_cnt = 0;
+        for (auto &t : wild.zones_) {
+            svgvis::ZoningCartographerSVG svger;
+            svger.addCardinalCurveCollection(wild.vacant_, "black");
+            svger.addCardinalPath(t.landmarks_uptown_, "blue");
+            svger.addCardinalPath(t.landmarks_downtown_, "green");
+            Surveyor caliper_hiker(t, width, height);
+            caliper_hiker.hike();
+            svger.addCardinalPath(caliper_hiker.camps_uptown_, "orange");
+            svger.addCardinalPath(caliper_hiker.camps_downtown_, "red");
+            svger.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example132_"+std::to_string(trail_cnt)+".svg");
+            trail_cnt++;
+        }
+        //for (auto &t : wild.trails_) {
+        //          wsvg.addCardinalPath(t.landmarks_uptown_, "blue");
+        //          wsvg.addCardinalPath(t.landmarks_downtown_, "green");
+        //	CaliperHiker caliper_hiker(t, width, height);
+        //	caliper_hiker.hike();
+        //	wsvg.addCardinalPath(caliper_hiker.camps_uptown_, "black");
+        //	wsvg.addCardinalPath(caliper_hiker.camps_downtown_, "red");
+        //      }
+        wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example132.svg");
+        //removeRectangle(wild.trails_, placement, width, height);
+        if (is_placable) {
+            wild.zoneOff(placement, width, height);
+            wsvg.addRectangle(placement, width, height);
+            wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example132.svg");
+        } else {
+            wsvg.addRectangle({11,0}, width, height);
+            wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example132.svg");
+        }
+    }
+    wsvg.writeScalableVectorGraphics(path_prefix + "/Users/sscott/Programs/ack/example132.svg");
 }
 
 void example_135() {
@@ -1652,8 +1710,8 @@ void example_zoningboard_randrects(int nsamples) {
 	std::vector<Eigen::Vector2d> rects(nsamples);
 	double totarea = 0; 
 	for (auto foo = 0; foo < rects.size(); foo++) {
-		double a0 = 1 + distribution(generator);
-		double b0 = 1 + distribution(generator);
+		double a0 = distribution(generator);
+		double b0 = distribution(generator);
 		rects[foo] = { a0,b0 };
 		totarea += a0 * b0;
 	}
@@ -1688,6 +1746,60 @@ void example_high_mult_ruca(int multiplicity) {
 	}
 }
 
+void example_ruca_rand_z(int sample_count) {
+    //
+    std::default_random_engine generator;
+    std::uniform_real_distribution<double> distribution(0.0,1.0);
+    std::vector<Eigen::Vector3d> zdirs(sample_count);
+    //
+    const double CONSTANT_TAO = 6.28318530718;
+    for (auto foo = 0; foo < zdirs.size(); foo++) {
+        double theta = CONSTANT_TAO * distribution(generator);
+        double phi = acos(1 - 2 * distribution(generator));
+        double x = sin(phi) * cos(theta);
+        double y = sin(phi) * sin(theta);
+        double z = cos(phi);
+        zdirs[foo] = {x,y,z};
+    }
+
+    double sqsize = 300 * std::sqrt(sample_count);
+    PackMeshManager pmm;
+    PointList ps = {{0,0},{sqsize,0},{sqsize,sqsize},{0,sqsize}};
+    std::vector<std::vector<int>> es = { {0,1},{1,2},{2,3},{3,0} };
+    pmm.insertPackspace(ps);
+
+    
+    //#READ#
+    boost::filesystem::path in_path1 = path_prefix + "/Users/sscott/Programs/ack/fuca_real.stl";
+    auto reader1 = vtkSmartPointer<vtkSTLReader>::New();
+    reader1->SetFileName(in_path1.string().c_str());
+    reader1->Update();
+    auto fuca_real = reader1->GetOutput();
+    //#READ#
+        //Setup the vacancy
+    for (auto foo=0; foo<sample_count; foo++){
+        pmm.insertMesh(fuca_real, zdirs[foo]);
+    }
+    
+    pmm.pack();
+    
+    vtkSmartPointer<vtkPolyData> packed_space = pmm.getPackMesh();
+    auto writ = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+    boost::filesystem::path  outpath = (path_prefix +"/Users/sscott/Programs/ack/rand_dir" + std::to_string(sample_count) + ".vtp");
+    writ->SetInputData(packed_space);
+    writ->SetFileName(outpath.string().c_str());
+    writ->Write();
+    
+    if (true) {
+        svgvis::ZoningCartographerSVG zsvg;
+        zsvg.default_stroke_width_ = sqsize / 200.0;
+        zsvg.addZoningBoardReport(pmm.zoning_board_);
+        boost::filesystem::path svgpath = path_prefix + "/Users/sscott/Programs/ack/rand_dir" + std::to_string(sample_count) + ".svg";
+        zsvg.writeScalableVectorGraphics(svgpath.string());
+    }
+
+}
+
 void example_benchmark() {
 	std::vector<int> trials = { 10,100,1000,10000,1000000,10000000 };
 	for (auto x : trials) {
@@ -1709,12 +1821,84 @@ void example_benchmark() {
 	}
 }
 
+void example_slm500() {
+    //
+    PackMeshManager pmm;
+    PointList ps = {
+        {-230,-120},
+        {-230,-140},
+        {230,-140},
+        {230,-120},
+        {250,-120},
+        {250,120},
+        {230,120},
+        {230,140},
+        {-230,140},
+        {-230,120},
+        {-250,120},
+        {-250,-120},
+    };
+    PointList ps2;
+    for (auto p : ps) ps2.push_back(2*p);
+    pmm.insertPackspace(ps2);
+
+    
+    //#READ#
+    boost::filesystem::path in_path1 = path_prefix + "/Users/sscott/Programs/ack/fuca_real.stl";
+    auto reader1 = vtkSmartPointer<vtkSTLReader>::New();
+    reader1->SetFileName(in_path1.string().c_str());
+    reader1->Update();
+    auto fuca_real = reader1->GetOutput();
+    //#READ#
+        //Setup the vacancy
+    pmm.insertMesh(fuca_real, {0,-1,0}, 20);
+    pmm.pack();
+    
+    vtkSmartPointer<vtkPolyData> packed_space = pmm.getPackMesh();
+    auto writ = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+    boost::filesystem::path  outpath = (path_prefix +"/Users/sscott/Programs/ack/slm500.vtp");
+    writ->SetInputData(packed_space);
+    writ->SetFileName(outpath.string().c_str());
+    writ->Write();
+    
+    if (true) {
+        svgvis::ZoningCartographerSVG zsvg;
+        zsvg.default_stroke_width_ = 2;
+        zsvg.addZoningBoardReport(pmm.zoning_board_);
+        boost::filesystem::path svgpath = path_prefix + "/Users/sscott/Programs/ack/slm500.svg";
+        zsvg.writeScalableVectorGraphics(svgpath.string());
+    }
+
+}
 
 int main() {
     std::cout << "Saluton Mundo!" << std::endl;
+//    example1();
+//    example2();
+//    example4();
+//    example5();
+//    example7();
+//    example_9();
+    example_10();
+    example_11();
+    example_12();
+    example_125();
+    example_13();
+    example_135();
+    example_15();
+    example_tpix_zoner();
+    example_nitpick();
+    example_why_is_trail_fail();
+    example_zoning_board1();
+    example_zoning_board2();
+    example_zoning_board3();
+    example_zoning_board4();
+    example_zoning_board5();
+
+
 	//boost::filesystem::path in_path = path_prefix + "/Users/sscott/Pictures/trex_connected.stl";
-	//example_zoningboard_randrects(133);
-	example_zoningboard_randrects(125);
+//	example_zoningboard_randrects(150);
+//    example_slm500();
 }
 
 
