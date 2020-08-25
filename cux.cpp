@@ -5,9 +5,9 @@
 #include <vtkGLTFExporter.h>
 
 #include <vtkSmartPointer.h>
-#include "vtkGLTFExporter.h"
 
 #include <vtkArrowSource.h>
+#include <vtkGeometryFilter.h>
 #include <vtkSphereSource.h>
 #include <vtkMath.h>
 #include <vtkMinimalStandardRandomSequence.h>
@@ -23,6 +23,8 @@
 #include <vtkInteractorStyleTrackballCamera.h>
 #include <vtkTransform.h>
 #include <vtkTransformPolyDataFilter.h>
+#include <vtkXMLUnstructuredGridReader.h>
+#include <vtkUnstructuredGrid.h>
 
 #include <array>
 
@@ -174,6 +176,55 @@ int vtk_example(){
 }
 
 
+int cuby(){
+    std::string cube_path = "/Users/sscott/Desktop/cux/27cubes.vtu";
+    auto reader = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
+    reader->SetFileName(cube_path.c_str());
+    reader->Update();
+    auto ugrid = reader->GetOutput();
+
+    //Create a renderer, render window, and interactor
+    vtkSmartPointer<vtkRenderer> renderer =
+            vtkSmartPointer<vtkRenderer>::New();
+    vtkSmartPointer<vtkRenderWindow> renderWindow =
+            vtkSmartPointer<vtkRenderWindow>::New();
+    renderWindow->AddRenderer(renderer);
+    renderWindow->SetSize(640, 480);
+    renderWindow->SetWindowName("Oriented Arrow");
+
+    auto goer = vtkSmartPointer<vtkGeometryFilter>::New();
+    goer->SetInputData(ugrid);
+    goer->Update();
+
+    auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    mapper->SetInputConnection(goer->GetOutputPort());
+    mapper->Update();
+    vtkSmartPointer<vtkActor> actor =
+            vtkSmartPointer<vtkActor>::New();
+    actor->SetMapper(mapper);
+
+    //Add the actor to the scene
+    renderer->AddActor(actor);
+
+    //Render and interact
+    renderWindow->Render();
+    renderer->GetActiveCamera()->Azimuth(30);
+    renderer->GetActiveCamera()->Elevation(30);
+    renderer->GetActiveCamera()->Roll(30);
+    renderer->ResetCameraClippingRange();
+
+
+    auto writer =
+            vtkSmartPointer<vtkGLTFExporter>::New();
+    writer->SetFileName("/Users/sscott/Desktop/cux/27_cube.gltf");
+    writer->InlineDataOn();
+    writer->SetRenderWindow(renderWindow);
+    writer->Write();
+
+    return 0;
+}
+
 int main() {
-    vtk_example();
+//    vtk_example();
+    cuby();
 }
