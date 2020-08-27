@@ -26,6 +26,8 @@
 #include <vtkXMLUnstructuredGridReader.h>
 #include <vtkUnstructuredGrid.h>
 
+#include "Eigen/Dense"
+
 #include <array>
 
 int vtk_example(){
@@ -224,7 +226,73 @@ int cuby(){
     return 0;
 }
 
+Eigen::MatrixXd getIntEvalMat(const int n){
+    Eigen::MatrixXd m(n,n);
+    for (auto foo=0; foo<n; foo++){
+        double prod = 1;
+        for (auto bar=0; bar<n; bar++){
+            m(foo,bar) = prod;
+            prod *= foo+1;
+        }
+    }
+    return m;
+};
+
+Eigen::VectorXd getPolyApprox(Eigen::VectorXd sequence){
+    const int nn = static_cast<int>(sequence.size());
+    Eigen::MatrixXd pim = getIntEvalMat(nn);
+    Eigen::ColPivHouseholderQR<Eigen::MatrixXd> dec(pim);
+    Eigen::VectorXd coeffs = dec.solve(sequence);
+    return coeffs;
+}
+
+double evaluatePoly(Eigen::VectorXd coeffs, double x){
+    double summer = 0;
+    for (auto foo = coeffs.size()-1; foo>=0; foo--){
+        summer *= x;
+        summer += coeffs(foo);
+    }
+    return summer;
+}
+
+double sumOfIncorrectTerms(Eigen::VectorXd sequence){
+    double sum = 0;
+    int seqsize = sequence.size();
+    for (int foo=1; foo<seqsize; foo++){
+        Eigen::VectorXd subseq = sequence.block(0,0,foo,1);
+        std::cout << "Subsequence: " << std::endl << subseq << std::endl;
+        Eigen::VectorXd papprox = getPolyApprox(subseq);
+        std::cout << "Approx: " << std::endl << papprox << std::endl;
+        double err = evaluatePoly(papprox, foo+1);
+        std::cout << "Err: " <<  err << std::endl;
+        std::cout << std::endl;
+        sum += err;
+        std::cout << "sum: " << static_cast<long long int>(sum) << std::endl;
+    }
+    return sum;
+}
+
+Eigen::VectorXd Zevaluatepoly(Eigen::VectorXd x){
+    Eigen::VectorXd evals(x.size());
+    for(auto foo=0; foo<x.size(); foo++){
+        evals(foo) = evaluatePoly(x, foo+1);
+    }
+    return evals;
+}
+
+void example_leonid(){
+//    Eigen::VectorXd fullpoly(4);
+//    fullpoly << 0, 0, 0, 1;
+    Eigen::VectorXd fullpoly(11);
+    fullpoly << 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1;
+    Eigen::VectorXd evals = Zevaluatepoly(fullpoly);
+    std::cout << "ZZ evaluation is" << std::endl << evals << std::endl;
+    double sumtot = sumOfIncorrectTerms(evals);
+    std::cout << "Total sum is " << sumtot << std::endl;
+}
+
 int main() {
+    example_leonid();
+    return 0;
 //    vtk_example();
-    cuby();
 }
