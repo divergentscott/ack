@@ -291,8 +291,41 @@ void example_leonid(){
     std::cout << "Total sum is " << sumtot << std::endl;
 }
 
+#include "boost/lexical_cast.hpp"
+#include "boost/algorithm/string.hpp"
+
+std::vector<double> stringSplitDoubles(std::string x){
+    std::vector<double> y;
+    std::string onedub;
+    std::string xx(x);
+    boost::algorithm::trim(xx);
+    for(auto it = xx.begin(); it!=xx.end(); ++it){
+        if (std::isspace(*it)){
+            if (onedub.empty()) continue;
+        } else if (*it=='e' | *it=='E'){
+            // assuming you hit E+** or e-**
+            onedub += *it;
+            ++it;
+            onedub += *it;
+            ++it;
+            onedub += *it;
+            ++it;
+            onedub += *it;
+        } else {
+            onedub += *it;
+            continue;
+        }
+        y.push_back(boost::lexical_cast<double>(onedub));
+        onedub.clear();
+    }
+    return y;
+}
+
+
 int main() {
-    example_leonid();
+    std::string ss = "7.74737E-03 4.41489E-03-2.80180E-04 0.00000E+00 0.00000E+00 0.00000E+00";
+    for (auto z : stringSplitDoubles(ss)){
+        std::cout << z << std::endl;
+    }
     return 0;
-//    vtk_example();
 }
